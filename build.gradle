@@ -1,0 +1,224 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'jacoco'
+    id 'com.diffplug.spotless' version '6.22.0'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Database
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // JUnit5
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    // Mockito
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+
+    // AssertJ
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+
+    // Cucumber
+    testImplementation 'io.cucumber:cucumber-java:7.14.0'
+    testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.14.0'
+    testImplementation 'io.cucumber:cucumber-spring:7.14.0'
+
+    // RestAssured
+    testImplementation 'io.rest-assured:rest-assured:5.3.2'
+    testImplementation 'io.rest-assured:json-path:5.3.2'
+
+    // TestContainers (for integration tests)
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    testImplementation 'org.testcontainers:mysql:1.19.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+
+    // H2 (for unit tests)
+    testRuntimeOnly 'com.h2database:h2'
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        excludeTags 'integration', 'e2e'
+    }
+    finalizedBy jacocoTestReport
+}
+
+// Integration Test Task
+tasks.register('integrationTest', Test) {
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter test
+}
+
+// Cucumber E2E Test Task
+tasks.register('cucumber', JavaExec) {
+    dependsOn 'compileTestJava'
+    group = 'verification'
+    description = 'Runs Cucumber E2E tests'
+
+    mainClass = 'org.junit.platform.console.ConsoleLauncher'
+    classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+
+    args = [
+        '--include-engine', 'cucumber',
+        '--scan-classpath', sourceSets.test.output.resourcesDir.path
+    ]
+
+    shouldRunAfter integrationTest
+}
+
+// Check task runs all tests
+tasks.named('check') {
+    dependsOn 'test', 'integrationTest', 'cucumber'
+}
+
+// JaCoCo Configuration
+jacoco {
+    toolVersion = '0.8.11'
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/Application.class',
+                '**/config/**',
+                '**/dto/**',
+                '**/exception/**'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80
+            }
+        }
+
+        rule {
+            element = 'CLASS'
+            excludes = [
+                'com.example.Application',
+                'com.example.config.*',
+                'com.example.dto.*',
+                'com.example.exception.*'
+            ]
+            limit {
+                minimum = 0.70
+            }
+        }
+    }
+}
+
+// Spotless Configuration
+spotless {
+    java {
+        target 'src/**/*.java'
+
+        // Remove unused imports
+        removeUnusedImports()
+
+        // Import ordering
+        importOrder('java', 'javax', 'org', 'com', '')
+
+        // Google Java Format
+        googleJavaFormat('1.17.0').aosp()
+
+        // Format annotations
+        formatAnnotations()
+
+        // Trim trailing whitespace
+        trimTrailingWhitespace()
+
+        // Ensure files end with newline
+        endWithNewline()
+    }
+
+    groovyGradle {
+        target '*.gradle'
+        greclipse()
+    }
+}
+
+tasks.register('spotlessCheckAndApply') {
+    dependsOn 'spotlessCheck'
+    doLast {
+        exec {
+            commandLine './gradlew', 'spotlessApply'
+        }
+    }
+}
+
+// Pre-commit hook
+tasks.register('installGitHooks', Copy) {
+    from 'scripts/pre-commit'
+    into '.git/hooks'
+    fileMode 0755
+}
+
+tasks.named('build') {
+    dependsOn 'spotlessCheck'
+}
+
+// BootRun for development
+tasks.named('bootRun') {
+    systemProperty 'spring.profiles.active', 'dev'
+}
+
+// Test Logging
+tasks.withType(Test).configureEach {
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        exceptionFormat 'full'
+    }
+}
