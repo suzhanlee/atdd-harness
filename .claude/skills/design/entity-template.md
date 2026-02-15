@@ -1,5 +1,67 @@
 # Entity Template
 
+## Rich Domain Model 원칙
+
+**Entity에 비즈니스 로직을 포함** (Anemic Domain Model 지양)
+
+### ❌ Anemic Domain Model (피해야 할 패턴)
+
+```java
+@Entity
+public class User {
+    private String email;
+    private String password;
+    private String status;
+
+    // getter/setter만 존재, 로직이 Service에 위치
+}
+```
+
+### ✅ Rich Domain Model (권장 패턴)
+
+```java
+@Entity
+public class User {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Embedded
+    private Email email;
+
+    @Embedded
+    private Password password;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+
+    // 기본 생성자 (JPA용)
+    protected User() {}
+
+    // 정적 팩토리 메서드
+    public static User register(Email email, Password password) {
+        User user = new User();
+        user.email = email;
+        user.password = password;
+        user.status = UserStatus.PENDING;
+        return user;
+    }
+
+    // 비즈니스 메서드
+    public void verifyEmail() {
+        if (this.status != UserStatus.PENDING) {
+            throw new IllegalStateException("이미 인증된 사용자입니다.");
+        }
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public boolean isActive() {
+        return this.status == UserStatus.ACTIVE;
+    }
+}
+```
+
+---
+
 ## Basic Entity Template
 
 ```java
@@ -369,13 +431,275 @@ SELECT * FROM entity_name WHERE deleted_at IS NULL;
 
 ## Checklist
 
+### Entity 설계
 - [ ] 기본키 (id) 존재
 - [ ] 생성/수정 시간 필드 (created_at, updated_at)
 - [ ] 소프트 삭제 필드 (deleted_at)
-- [ ] 정적 팩토리 메서드 (create)
+- [ ] 정적 팩토리 메서드 (create, register)
 - [ ] 검증 로직 포함
-- [ ] 비즈니스 메서드 (update*, delete)
-- [ ] 상태 확인 메서드 (is*)
+- [ ] 비즈니스 메서드 (update*, delete, verify*)
+- [ ] 상태 확인 메서드 (is*, has*)
 - [ ] 적절한 인덱스 정의
 - [ ] 제약조건 정의 (nullable, length, unique)
 - [ ] 연관관계 매핑 (필요시)
+
+### Rich Domain Model
+- [ ] Anemic Domain Model이 아님 (getter/setter만 있는 경우)
+- [ ] 비즈니스 로직이 Entity에 위치
+- [ ] 불변식(Invariant) 검증 코드 포함
+- [ ] 상태 전이 메서드 존재
+- [ ] Value Object 활용
+
+---
+
+## Entity Unit Test Template (Inside-Out TDD)
+
+Entity 단위 테스트는 비즈니스 로직을 검증합니다.
+
+```java
+package com.example.domain.entity;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.*;
+
+@DisplayName("User Entity 테스트")
+class UserTest {
+
+    // ========== 정적 팩토리 메서드 테스트 ==========
+
+    @Test
+    @DisplayName("정상적인 사용자 등록")
+    void register_success() {
+        // given
+        Email email = Email.of("test@test.com");
+        Password password = Password.of("password123!");
+
+        // when
+        User user = User.register(email, password);
+
+        // then
+        assertThat(user.getEmail()).isEqualTo(email);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PENDING);
+        assertThat(user.isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("잘못된 이메일로 등록 실패")
+    void register_invalidEmail_throwsException() {
+        // given
+        Email invalidEmail = Email.of("invalid-email");
+
+        // when & then
+        assertThatThrownBy(() -> User.register(invalidEmail, Password.of("password123!")))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("올바른 이메일 형식이 아닙니다");
+    }
+
+    // ========== 불변식 테스트 ==========
+
+    @Test
+    @DisplayName("이메일 인증 성공")
+    void verifyEmail_success() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("password123!"));
+
+        // when
+        user.verifyEmail();
+
+        // then
+        assertThat(user.isActive()).isTrue();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("이미 인증된 사용자는 인증 실패")
+    void verifyEmail_alreadyVerified_throwsException() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("password123!"));
+        user.verifyEmail();
+
+        // when & then
+        assertThatThrownBy(user::verifyEmail)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("이미 인증된 사용자입니다.");
+    }
+
+    // ========== 상태 전이 테스트 ==========
+
+    @Test
+    @DisplayName("사용자 비활성화")
+    void deactivate_success() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("password123!"));
+        user.verifyEmail();
+
+        // when
+        user.deactivate();
+
+        // then
+        assertThat(user.isActive()).isFalse();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.INACTIVE);
+    }
+
+    @Test
+    @DisplayName("PENDING 상태에서는 비활성화 불가")
+    void deactivate_pendingUser_throwsException() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("password123!"));
+
+        // when & then
+        assertThatThrownBy(user::deactivate)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("활성화된 사용자만 비활성화할 수 있습니다.");
+    }
+
+    // ========== 비즈니스 메서드 테스트 ==========
+
+    @Test
+    @DisplayName("비밀번호 변경 성공")
+    void changePassword_success() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("oldPassword123!"));
+        Password newPassword = Password.of("newPassword456!");
+
+        // when
+        user.changePassword(newPassword);
+
+        // then
+        assertThat(user.getPassword()).isEqualTo(newPassword);
+    }
+
+    // ========== 소프트 삭제 테스트 ==========
+
+    @Test
+    @DisplayName("사용자 삭제 (Soft Delete)")
+    void delete_success() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("password123!"));
+
+        // when
+        user.delete();
+
+        // then
+        assertThat(user.isDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("삭제된 사용자 복구")
+    void restore_success() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("password123!"));
+        user.delete();
+
+        // when
+        user.restore();
+
+        // then
+        assertThat(user.isDeleted()).isFalse();
+    }
+}
+```
+
+---
+
+## Value Object Template
+
+Entity에서 사용하는 Value Object는 불변이어야 합니다.
+
+```java
+package com.example.domain.vo;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.regex.Pattern;
+
+@Embeddable
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode
+public class Email {
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+        "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
+    );
+
+    @Column(name = "email", nullable = false, unique = true)
+    private String value;
+
+    private Email(String value) {
+        validate(value);
+        this.value = value;
+    }
+
+    public static Email of(String value) {
+        return new Email(value);
+    }
+
+    private static void validate(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
+        }
+        if (!EMAIL_PATTERN.matcher(value).matches()) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다: " + value);
+        }
+        if (value.length() > 255) {
+            throw new IllegalArgumentException("이메일은 255자를 초과할 수 없습니다.");
+        }
+    }
+
+    public String getDomain() {
+        return value.substring(value.indexOf("@") + 1);
+    }
+}
+```
+
+---
+
+## Service는 Entity에 로직을 위임
+
+Service 계층에서는 비즈니스 로직을 직접 구현하지 않고 Entity에 위임합니다.
+
+```java
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    // ❌ 잘못된 예: Service에 로직이 위치
+    public void verifyEmail_bad(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        if (user.getStatus() == UserStatus.ACTIVE) {  // 로직이 Service에
+            throw new IllegalStateException("이미 인증된 사용자입니다.");
+        }
+        user.setStatus(UserStatus.ACTIVE);  // 상태 직접 변경
+    }
+
+    // ✅ 좋은 예: Entity에 로직 위임
+    public void verifyEmail_good(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.verifyEmail();  // 로직은 Entity에
+        userRepository.save(user);
+    }
+
+    public Long register(RegisterRequest request) {
+        // 요청 검증 및 변환
+        Email email = Email.of(request.getEmail());
+        Password password = Password.of(request.getPassword());
+
+        // Entity 생성 (정적 팩토리 메서드)
+        User user = User.register(email, password);
+
+        // 저장
+        return userRepository.save(user).getId();
+    }
+}
+```

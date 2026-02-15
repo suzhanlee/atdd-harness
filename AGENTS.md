@@ -30,7 +30,7 @@
 완료 → `/validate` 호출 가능
 
 ---
-
+하
 ## Phase 2: Validation Agent
 
 ### 목표
@@ -73,7 +73,47 @@
 ## Phase 2.5: Design Agent
 
 ### 목표
-Entity와 DDD 도메인 모델을 설계한다.
+Entity와 DDD 도메인 모델을 설계하고 검증한다.
+
+### Entity 설계 원칙: Rich Domain Model
+
+**Entity에 비즈니스 로직을 포함** (Anemic Domain Model 지양)
+
+```java
+// ✅ Rich Domain Model (권장)
+@Entity
+public class User {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Embedded
+    private Email email;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+
+    // 정적 팩토리 메서드
+    public static User register(Email email, Password password) {
+        User user = new User();
+        user.email = email;
+        user.password = password;
+        user.status = UserStatus.PENDING;
+        return user;
+    }
+
+    // 비즈니스 메서드
+    public void verifyEmail() {
+        if (this.status != UserStatus.PENDING) {
+            throw new IllegalStateException("이미 인증된 사용자입니다.");
+        }
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public boolean isActive() {
+        return this.status == UserStatus.ACTIVE;
+    }
+}
+```
 
 ### 입력
 - `.atdd/requirements/refined-requirements.md`
@@ -93,10 +133,11 @@ Entity와 DDD 도메인 모델을 설계한다.
    - 인덱스 정의
    - 제약조건 정의
 
-4. **JPA Entity 클래스 생성**
+4. **JPA Entity 클래스 생성 (Rich Domain Model)**
    - @Entity, @Table 어노테이션
    - 필드 매핑
    - 연관관계 매핑
+   - 비즈니스 메서드 포함
 
 5. **Bounded Context 정의**
    - 도메인 경계 설정
@@ -106,18 +147,45 @@ Entity와 DDD 도메인 모델을 설계한다.
    - 트랜잭션 경계
    - 일관성 경계
 
+7. **[검증] 요구사항-도메인 매핑 검증**
+   - Must Have 요구사항 → Entity 메서드/VO 매핑 확인
+   - 검증 규칙 → @NotNull, @Size, 불변식 코드 확인
+
+8. **SQL Sample Data 생성**
+   - 비즈니스 규칙 준수 데이터
+
+9. **[검증] SQL Sample Data 요구사항 준수 검증**
+   - NOT NULL, UNIQUE, CHECK, FK 무결성 확인
+   - 비즈니스 규칙 준수 확인
+
+### 검증 합격 기준
+
+| 검증 항목 | 기준 |
+|-----------|------|
+| Must Have 매핑 | 100% |
+| Should Have 매핑 | 80% 이상 |
+| NOT NULL 준수 | 100% |
+| UNIQUE 준수 | 100% |
+| FK 무결성 | 100% |
+| 비즈니스 규칙 | 100% |
+
 ### 참조 파일
 - [ddd-patterns.md](.claude/skills/design/ddd-patterns.md)
 - [entity-template.md](.claude/skills/design/entity-template.md)
+- [validation-guide.md](.claude/skills/design/validation-guide.md)
 
 ### 출력
 - `.atdd/design/erd.md`
 - `.atdd/design/domain-model.md`
+- `.atdd/design/traceability-matrix.md`
+- `.atdd/design/design-validation-report.md`
 - `sql/schema/*.sql`
+- `sql/data/*.sql`
 - `src/main/java/**/domain/entity/*.java`
 
 ### 상태 전이
-완료 → `/gherkin` 호출 가능
+- 검증 통과 → `/gherkin` 호출 가능
+- 검증 실패 → 설계 수정 후 재검증
 
 ---
 
@@ -172,49 +240,68 @@ Entity와 DDD 도메인 모델을 설계한다.
 
 ---
 
-## Phase 4: TDD Agent
+## Phase 4: TDD Agent (Inside-Out)
 
 ### 목표
-TDD 사이클을 통해 코드를 구현한다.
+Inside-Out TDD 사이클을 통해 코드를 구현한다.
 
 ### 입력
 - `src/test/resources/features/**/*.feature`
 - `src/main/java/**/domain/entity/*.java`
+- `.atdd/design/design-validation-report.md`
 
-### TDD 사이클
+### TDD 사이클 (Inside-Out 접근)
 1. **RED**: 실패하는 테스트 작성
 2. **GREEN**: 최소 코드로 테스트 통과
 3. **REFACTOR**: (Phase 5에서 진행)
 
-### 프로세스
-1. **Step Definition 생성**
-   - Cucumber Step Definitions
-   - Given/When/Then 매핑
+### 프로세스 (Inside-Out 순서)
+1. **Entity 단위 테스트 작성**
+   - 정적 팩토리 메서드 테스트
+   - 불변식(Invariant) 테스트
+   - 상태 전이 테스트
 
-2. **단위 테스트 작성**
-   - JUnit5 테스트
-   - Mock/Stub 활용
+2. **Entity 구현 (Rich Domain Model)**
+   - 비즈니스 로직 포함
+   - 테스트 통과 확인
 
-3. **프로덕션 코드 구현**
-   - Repository 구현
-   - Service 구현
+3. **Repository 통합 테스트 작성**
+   - CRUD 테스트
+   - Query 테스트
+
+4. **Repository 구현**
+   - JPA Repository 구현
+   - 테스트 통과 확인
+
+5. **Service 단위 테스트 작성**
+   - 유스케이스 테스트
+   - Mock Repository 사용
+
+6. **Service 구현**
+   - 비즈니스 로직은 Entity에 위임
+   - 테스트 통과 확인
+
+7. **E2E 테스트 통과 확인**
+   - Step Definition 생성
    - Controller 구현
-
-4. **테스트 통과 확인**
-   - 모든 테스트 통과
-   - 커버리지 80% 이상
+   - Cucumber 테스트 통과
 
 ### 테스트 레이어
 ```
 src/test/java/
-├── unit/           # 단위 테스트 (Service, Entity)
-├── integration/    # 통합 테스트 (Repository)
-└── e2e/            # E2E 테스트 (Cucumber)
+├── unit/
+│   ├── entity/        # Entity 단위 테스트 (비즈니스 로직)
+│   └── service/       # Service 단위 테스트
+├── integration/
+│   └── repository/    # Repository 통합 테스트
+└── e2e/               # E2E 테스트 (Cucumber)
 ```
 
 ### 출력
+- `src/test/java/**/unit/entity/**/*.java` (Entity Tests)
+- `src/test/java/**/integration/**/*.java` (Integration Tests)
+- `src/test/java/**/unit/service/**/*.java` (Service Tests)
 - `src/test/java/**/e2e/**/*.java` (Step Definitions)
-- `src/test/java/**/unit/**/*.java` (Unit Tests)
 - `src/main/java/**/*.java` (Production Code)
 
 ### 상태 전이

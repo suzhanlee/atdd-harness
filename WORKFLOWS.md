@@ -9,11 +9,13 @@
 └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
        │                   │                   │                   │                   │                   │                   │
        ▼                   ▼                   ▼                   ▼                   ▼                   ▼                   ▼
- requirements/       validation/          design/           scenarios/            TDD Cycle          refactoring/        reports/
-   ├─ draft.md         ├─ report.md         ├─ erd.md           ├─ *.feature        1. RED              ├─ log.md           ├─ verification.md
-   └─ log.md           └─ refined.md        ├─ domain.md        └─ summary.md       2. GREEN            └─ checklist.md     └─ coverage/
-                                             ├─ *.sql                                3. REFACTOR
-                                             └─ *.java                               (Phase 5)
+ requirements/       validation/          design/           scenarios/        Inside-Out TDD      refactoring/        reports/
+   ├─ draft.md         ├─ report.md         ├─ erd.md           ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
+   └─ log.md           └─ refined.md        ├─ domain.md        └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
+                                             ├─ traceability.md                    3. Service Test
+                                             ├─ validation.md                      4. E2E Test
+                                             ├─ *.sql
+                                             └─ *.java
 ```
 
 ---
@@ -186,6 +188,65 @@
 - `.atdd/requirements/refined-requirements.md` 존재
 - 검증 리포트 PASS
 
+### Entity 설계 원칙: Rich Domain Model
+
+**Entity에 비즈니스 로직을 포함** (Anemic Domain Model 지양)
+
+```java
+// ❌ Anemic (피해야 할 패턴)
+@Entity
+public class User {
+    private String email;
+    private String password;
+    // getter/setter만 존재
+}
+
+// ✅ Rich Domain Model (권장)
+@Entity
+public class User {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Embedded
+    private Email email;
+
+    @Embedded
+    private Password password;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+
+    // 기본 생성자 (JPA용)
+    protected User() {}
+
+    // 정적 팩토리 메서드
+    public static User register(Email email, Password password) {
+        User user = new User();
+        user.email = email;
+        user.password = password;
+        user.status = UserStatus.PENDING;
+        return user;
+    }
+
+    // 비즈니스 메서드
+    public void verifyEmail() {
+        if (this.status != UserStatus.PENDING) {
+            throw new IllegalStateException("이미 인증된 사용자입니다.");
+        }
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void changePassword(Password newPassword, PasswordEncoder encoder) {
+        validatePasswordChange(newPassword, encoder);
+        this.password = newPassword;
+    }
+
+    public boolean isActive() {
+        return this.status == UserStatus.ACTIVE;
+    }
+}
+```
+
 ### 실행 흐름
 
 ```
@@ -207,8 +268,8 @@
    ├─▶ sql/schema/002_role.sql
    └─▶ sql/schema/003_session.sql
 
-5. JPA Entity 생성
-   ├─▶ User.java
+5. JPA Entity 생성 (Rich Domain Model)
+   ├─▶ User.java (비즈니스 로직 포함)
    ├─▶ Role.java
    └─▶ Session.java
 
@@ -218,14 +279,68 @@
 7. Aggregate 경계 설정
    └─▶ User Aggregate: User, Session
 
-8. 산출물 생성
-   ├─▶ .atdd/design/erd.md
-   ├─▶ .atdd/design/domain-model.md
-   └─▶ Entity Classes
+8. [검증] 요구사항-도메인 매핑 검증 ← 신규
+   ├─▶ Must Have 요구사항 → Entity 메서드/VO 매핑 확인
+   ├─▶ 검증 규칙 → @NotNull, @Size, 불변식 코드 확인
+   └─▶ traceability-matrix.md 생성
 
-9. 완료 알림
-   └─▶ "설계 완료. 다음 단계: /gherkin"
+9. [신규] SQL Sample Data 생성
+   ├─▶ sql/data/001_user_data.sql
+   ├─▶ sql/data/002_role_data.sql
+   └─▶ 비즈니스 규칙 준수 데이터
+
+10. [검증] SQL Sample Data 요구사항 준수 검증 ← 신규
+    ├─▶ NOT NULL, UNIQUE, CHECK, FK 무결성 확인
+    ├─▶ 비즈니스 규칙 준수 확인
+    └─▶ design-validation-report.md 생성
+
+11. 산출물 생성
+    ├─▶ .atdd/design/erd.md
+    ├─▶ .atdd/design/domain-model.md
+    ├─▶ .atdd/design/traceability-matrix.md (신규)
+    ├─▶ .atdd/design/design-validation-report.md (신규)
+    └─▶ Entity Classes
+
+12. 완료 알림
+    └─▶ "설계 및 검증 완료. 다음 단계: /gherkin"
 ```
+
+### 검증 Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 8: 요구사항-도메인 매핑 검증                               │
+│  ├─▶ Must Have 요구사항 → Entity 메서드/VO 매핑 확인             │
+│  ├─▶ 검증 규칙 → @NotNull, @Size, 불변식 코드 확인               │
+│  └─▶ traceability-matrix.md 생성                                │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                    PASS (100% Must Have)
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 10: SQL Sample Data 검증                                  │
+│  ├─▶ NOT NULL, UNIQUE, CHECK, FK 무결성 확인                    │
+│  ├─▶ 비즈니스 규칙 준수 확인                                    │
+│  └─▶ design-validation-report.md 생성                           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                           PASS
+                              │
+                              ▼
+                      Phase 3: Gherkin
+```
+
+### 합격 기준
+
+| 검증 항목 | 기준 |
+|-----------|------|
+| Must Have 매핑 | 100% |
+| Should Have 매핑 | 80% 이상 |
+| NOT NULL 준수 | 100% |
+| UNIQUE 준수 | 100% |
+| FK 무결성 | 100% |
+| 비즈니스 규칙 | 100% |
 
 ### ERD 예시
 
@@ -365,24 +480,33 @@ Feature: 회원 관리
 
 ---
 
-## Phase 4: TDD Workflow
+## Phase 4: TDD Workflow (Inside-Out)
 
 ### 진입 조건
 - `src/test/resources/features/**/*.feature` 존재
+- `.atdd/design/design-validation-report.md` PASS
 
-### TDD 사이클
+### TDD 사이클 (Inside-Out 접근)
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                      TDD Cycle                           │
-│                                                          │
-│    ┌─────────┐         ┌─────────┐         ┌─────────┐   │
-│    │   RED   │ ──────▶ │  GREEN  │ ──────▶ │REFACTOR │   │
-│    │ 실패하는 │         │ 최소 구현 │         │ 코드 개선 │   │
-│    │ 테스트   │         │         │         │(Phase 5)│   │
-│    └─────────┘         └─────────┘         └─────────┘   │
-│         ▲                                       │        │
-│         └───────────────────────────────────────┘        │
+│                 Inside-Out TDD Cycle                      │
+│                                                           │
+│   Layer 1: Entity (Domain Core)                           │
+│   ├─▶ 비즈니스 로직 단위 테스트                            │
+│   └─▶ Entity 구현                                         │
+│                                                           │
+│   Layer 2: Repository (Persistence)                       │
+│   ├─▶ CRUD 통합 테스트                                    │
+│   └─▶ Repository 구현                                     │
+│                                                           │
+│   Layer 3: Service (Application)                          │
+│   ├─▶ 유스케이스 단위 테스트                              │
+│   └─▶ Service 구현 (Entity 위임)                          │
+│                                                           │
+│   Layer 4: Controller/E2E (Interface)                     │
+│   ├─▶ E2E 테스트 (Cucumber)                               │
+│   └─▶ Controller 구현                                     │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -392,34 +516,105 @@ Feature: 회원 관리
 1. Feature 파일 분석
    └─▶ Read *.feature files
 
-2. Step Definition 생성 (RED)
+2. [Inside-Out] Entity 단위 테스트 작성 (RED)
+   ├─▶ 정적 팩토리 메서드 테스트
+   ├─▶ 불변식(Invariant) 테스트
+   ├─▶ 상태 전이 테스트
+   └─▶ 테스트 실행 → 실패 확인
+
+3. [Inside-Out] Entity 구현 (GREEN)
+   ├─▶ Rich Domain Model 구현
+   ├─▶ 비즈니스 메서드 구현
+   └─▶ Entity 단위 테스트 통과
+
+4. [Inside-Out] Repository 통합 테스트 작성 (RED)
+   ├─▶ CRUD 테스트
+   ├─▶ Query 테스트
+   └─▶ 테스트 실행 → 실패 확인
+
+5. [Inside-Out] Repository 구현 (GREEN)
+   ├─▶ JPA Repository 구현
+   └─▶ Repository 통합 테스트 통과
+
+6. [Inside-Out] Service 단위 테스트 작성 (RED)
+   ├─▶ 유스케이스 테스트
+   ├─▶ Mock Repository 사용
+   └─▶ 테스트 실행 → 실패 확인
+
+7. [Inside-Out] Service 구현 (GREEN)
+   ├─▶ 비즈니스 로직은 Entity에 위임
+   ├─▶ 트랜잭션 관리
+   └─▶ Service 단위 테스트 통과
+
+8. Step Definition 생성 (RED)
    ├─▶ Given/When/Then 메서드 작성
    └─▶ 테스트 실행 → 실패 확인
 
-3. 단위 테스트 작성 (RED)
-   ├─▶ Service 테스트 작성
-   └─▶ 테스트 실행 → 실패 확인
+9. Controller 구현 (GREEN)
+   ├─▶ REST API 구현
+   └─▶ E2E 테스트 통과
 
-4. 프로덕션 코드 구현 (GREEN)
-   ├─▶ Repository 구현
-   ├─▶ Service 구현
-   └─▶ Controller 구현
+10. 커버리지 확인
+    └─▶ 80% 이상 달성
 
-5. 테스트 통과 확인 (GREEN)
-   ├─▶ ./gradlew test
-   ├─▶ ./gradlew integrationTest
-   └─▶ ./gradlew cucumber
+11. 산출물 생성
+    ├─▶ Entity Unit Tests
+    ├─▶ Repository Integration Tests
+    ├─▶ Service Unit Tests
+    ├─▶ Step Definitions
+    └─▶ Production Code
 
-6. 커버리지 확인
-   └─▶ 80% 이상 달성
+12. 완료 알림
+    └─▶ "TDD 완료. 다음 단계: /refactor"
+```
 
-7. 산출물 생성
-   ├─▶ Step Definitions
-   ├─▶ Unit Tests
-   └─▶ Production Code
+### Entity 단위 테스트 예시
 
-8. 완료 알림
-   └─▶ "TDD 완료. 다음 단계: /refactor"
+```java
+@DisplayName("User Entity 테스트")
+class UserTest {
+
+    @Test
+    @DisplayName("정상적인 사용자 등록")
+    void register_success() {
+        // given
+        Email email = Email.of("test@test.com");
+        Password password = Password.of("password123!");
+
+        // when
+        User user = User.register(email, password);
+
+        // then
+        assertThat(user.getEmail()).isEqualTo(email);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("이메일 인증 성공")
+    void verifyEmail_success() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("password123!"));
+
+        // when
+        user.verifyEmail();
+
+        // then
+        assertThat(user.isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("이미 인증된 사용자는 인증 실패")
+    void verifyEmail_alreadyVerified_throwsException() {
+        // given
+        User user = User.register(Email.of("test@test.com"), Password.of("password123!"));
+        user.verifyEmail();
+
+        // when & then
+        assertThatThrownBy(user::verifyEmail)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("이미 인증된 사용자입니다.");
+    }
+}
 ```
 
 ### 테스트 실행 명령
