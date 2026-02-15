@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "atdd-harness",
+    "description": "ATDD Harness for Java/Spring",
+    "techStack": ["Java 17+", "Spring Boot 3.x", "MySQL", "Cucumber", "RestAssured", "JUnit5"]
+  },
+  "phases": {
+    "interview": {
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null,
+      "outputs": []
+    },
+    "validate": {
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null,
+      "outputs": []
+    },
+    "design": {
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null,
+      "outputs": []
+    },
+    "gherkin": {
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null,
+      "outputs": []
+    },
+    "tdd": {
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null,
+      "outputs": []
+    },
+    "refactor": {
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null,
+      "outputs": []
+    },
+    "verify": {
+      "status": "pending",
+      "startedAt": null,
+      "completedAt": null,
+      "outputs": []
+    }
+  },
+  "currentPhase": null,
+  "history": []
+}
