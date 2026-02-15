@@ -1,0 +1,99 @@
+{
+  "hooks": [
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "interview",
+      "after": [
+        {
+          "action": "notify",
+          "message": "요구사항 인터뷰 완료. 다음 단계: /validate"
+        }
+      ]
+    },
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "validate",
+      "after": [
+        {
+          "action": "read_file",
+          "path": ".atdd/validation/validation-report.md",
+          "check": "status == 'PASS'",
+          "on_success": {
+            "action": "notify",
+            "message": "검증 통과. 다음 단계: /design"
+          },
+          "on_failure": {
+            "action": "notify",
+            "message": "검증 실패. 요구사항 수정 필요."
+          }
+        }
+      ]
+    },
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "design",
+      "after": [
+        {
+          "action": "notify",
+          "message": "Entity/Domain 설계 완료. 다음 단계: /gherkin"
+        }
+      ]
+    },
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "gherkin",
+      "after": [
+        {
+          "action": "notify",
+          "message": "Gherkin 시나리오 작성 완료. 다음 단계: /tdd"
+        }
+      ]
+    },
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "tdd",
+      "after": [
+        {
+          "action": "notify",
+          "message": "TDD 구현 완료. 다음 단계: /refactor"
+        }
+      ]
+    },
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "refactor",
+      "after": [
+        {
+          "action": "notify",
+          "message": "리팩토링 완료. 다음 단계: /verify"
+        }
+      ]
+    },
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "verify",
+      "after": [
+        {
+          "action": "read_file",
+          "path": ".atdd/reports/VERIFICATION-report.md",
+          "check": "status == 'PASS'",
+          "on_success": {
+            "action": "notify",
+            "message": "모든 검증 통과! ATDD 사이클 완료."
+          },
+          "on_failure": {
+            "action": "notify",
+            "message": "검증 실패. 수정이 필요합니다."
+          }
+        }
+      ]
+    }
+  ]
+}
