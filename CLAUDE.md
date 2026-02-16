@@ -9,12 +9,18 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 
 ## ATDD 워크플로우
 ```
-/interview → /validate → /design → /gherkin → /tdd → /refactor → /verify
+/interview → /validate → /adr → /redteam → /design → /gherkin → /tdd → /refactor → /verify
+                              ↑___________|
+                               (반복 루프)
 ```
 
 ## 주요 디렉토리
 - `.atdd/`: ATDD 메타데이터 (요구사항, 설계, 리포트)
+  - `.atdd/design/adr/`: ADR 문서들
+  - `.atdd/design/redteam/`: Red Team Critique 결과
 - `.claude/skills/`: 각 Phase별 Skill 정의
+  - `.claude/skills/adr/`: ADR 작성 Skill
+  - `.claude/skills/redteam/`: Red Team Critique Skill
 - `src/main/java/**/domain/`: DDD Domain Layer
 - `src/test/resources/features/`: Gherkin Feature Files
 
@@ -28,6 +34,8 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 |--------|------|
 | `/interview` | 요구사항 인터뷰 |
 | `/validate` | 요구사항 검증 |
+| `/adr` | ADR(Architecture Decision Record) 작성 |
+| `/redteam` | Red Team Critique (6관점 비평) |
 | `/design` | Entity/Domain 설계 |
 | `/gherkin` | Gherkin 시나리오 추출 |
 | `/tdd` | TDD 코드 구현 |

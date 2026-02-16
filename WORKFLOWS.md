@@ -3,19 +3,29 @@
 ## 전체 워크플로우
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  /interview │ ──▶ │  /validate  │ ──▶ │   /design   │ ──▶ │   /gherkin  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
-│   Phase 1   │     │   Phase 2   │     │  Phase 2.5  │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │     │   Phase 6   │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │                   │                   │                   │                   │
-       ▼                   ▼                   ▼                   ▼                   ▼                   ▼                   ▼
- requirements/       validation/          design/           scenarios/        Inside-Out TDD      refactoring/        reports/
-   ├─ draft.md         ├─ report.md         ├─ erd.md           ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
-   └─ log.md           └─ refined.md        ├─ domain.md        └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
-                                             ├─ traceability.md                    3. Service Test
-                                             ├─ validation.md                      4. E2E Test
-                                             ├─ *.sql
-                                             └─ *.java
+┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────────────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  /interview │ ──▶ │  /validate  │ ──▶ │                       /design                           │ ──▶ │   /gherkin  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
+│   Phase 1   │     │   Phase 2   │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │     │   Phase 6   │
+└─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │  (반복 루프)            │     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+       │                   │             │  │ Phase2.5a│    │ Phase2.5b │                         │           │                   │                   │                   │
+       ▼                   ▼             │  └──────────┘    └───────────┘                         │           ▼                   ▼                   ▼                   ▼
+ requirements/       validation/         └─────────────────────────────────────────────────────────┘       scenarios/        Inside-Out TDD      refactoring/        reports/
+   ├─ draft.md         ├─ report.md                      │                                                  ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
+   └─ log.md           └─ refined.md                     ▼                                                  └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
+                                                        design/
+                                                          ├─ erd.md
+                                                          ├─ domain.md
+                                                          ├─ traceability.md
+                                                          ├─ validation.md
+                                                          ├─ adr/               # ADR 문서들
+                                                          │   ├─ 001-*.md
+                                                          │   └─ index.md
+                                                          ├─ redteam/           # Red Team 결과
+                                                          │   ├─ critique-*.md
+                                                          │   ├─ decisions.md
+                                                          │   └─ backlog.md
+                                                          ├─ *.sql
+                                                          └─ *.java
 ```
 
 ---
@@ -178,6 +188,244 @@
 ## 조치 사항
 1. 로그아웃 기능 명세 보완
 2. "빠른 응답" → "200ms 이하"로 구체화
+```
+
+---
+
+## Phase 2.5a: ADR Workflow
+
+### 진입 조건
+- `.atdd/requirements/refined-requirements.md` 존재
+- 검증 리포트 PASS
+
+### 실행 흐름
+
+```
+1. 요구사항 분석
+   └─▶ Read refined-requirements.md
+
+2. 결정 사항 식별
+   ├─▶ 기술 스택 선택 필요 여부
+   ├─▶ 데이터 모델링 결정 필요 여부
+   ├─▶ API 설계 결정 필요 여부
+   └─▶ 아키텍처 결정 필요 여부
+
+3. ADR 번호 할당
+   └─▶ 다음 순번 확인 (001, 002, ...)
+
+4. ADR 작성 가이드
+   ├─▶ 템플릿 제공
+   ├─▶ 필수 섹션 안내
+   └─▶ 작성 예시 제공
+
+5. 사용자 ADR 작성
+   ├─▶ Context: 결정 배경 작성
+   ├─▶ Decision: 결정 사항 작성
+   ├─▶ Alternatives: 대안 분석 작성
+   └─▶ Consequences: 결과 작성
+
+6. ADR 저장
+   ├─▶ .atdd/design/adr/[번호]-[제목].md
+   └─▶ .atdd/design/adr/index.md 업데이트
+
+7. 완료 알림
+   └─▶ "ADR 작성 완료. 다음 단계: /redteam"
+```
+
+### ADR 작성 예시
+
+**001-데이터베이스-선택.md**
+```markdown
+# 001. 데이터베이스 선택
+
+## Status
+Proposed
+
+## Context
+사용자 관리 시스템의 데이터베이스를 선택해야 한다.
+요구사항:
+- 동시 사용자 1,000명 지원
+- 응답 시간 200ms 이하
+- 트랜잭션 무결성 필요
+
+## Decision
+MySQL 8.0을 사용한다.
+
+## Alternatives Considered
+
+### PostgreSQL
+- 장점: JSON 지원 우수, 확장성 높음
+- 단점: 팀 경험 부족
+- 선택하지 않은 이유: 팀의 MySQL 경험이 풍부함
+
+### MongoDB
+- 장점: 스키마 유연성
+- 단점: 트랜잭션 지원 제한적
+- 선택하지 않은 이유: ACID 트랜잭션 필요
+
+## Consequences
+
+### 긍정적
+- 팀의 MySQL 노하우 활용 가능
+- 안정적인 운영 환경
+
+### 부정적
+- 수평 확장 시 복잡도 증가
+
+### 위험
+- 트래픽 급증 시 샤딩 필요
+```
+
+---
+
+## Phase 2.5b: Red Team Workflow
+
+### 진입 조건
+- `.atdd/design/adr/*.md` 존재
+
+### 실행 흐름
+
+```
+1. ADR 로드
+   └─▶ Read .atdd/design/adr/*.md
+
+2. 6관점 분석
+   ├─▶ Security: 보안 취약점 검토
+   ├─▶ Performance: 성능 이슈 검토
+   ├─▶ Scalability: 확장성 검토
+   ├─▶ Maintainability: 유지보수성 검토
+   ├─▶ Business: 요구사항 충족도 검토
+   └─▶ Reliability: 신뢰성 검토
+
+3. 이슈 식별
+   ├─▶ 잠재적 문제 목록화
+   ├─▶ 심각도 분류 (HIGH/MEDIUM/LOW)
+   └─▶ 개선 제안 작성
+
+4. Critique Report 생성
+   ├─▶ .atdd/design/redteam/critique-[번호].md
+   └─▶ 이슈 요약 테이블 작성
+
+5. 사용자 결정 수집
+   ├─▶ 각 이슈에 대한 결정 요청
+   ├─▶ ACCEPT/DEFER/REJECT 선택
+   └─▶ .atdd/design/redteam/decisions.md 업데이트
+
+6. 분기 처리
+   ├─▶ ACCEPT 있음 → ADR 수정 → Step 1로 돌아감
+   ├─▶ 모두 DEFER/REJECT → 다음 단계 진행
+   └─▶ 완료 알림
+```
+
+### Critique Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Red Team Critique                                              │
+│  ├─▶ Security 체크리스트 실행                                    │
+│  ├─▶ Performance 체크리스트 실행                                 │
+│  ├─▶ Scalability 체크리스트 실행                                 │
+│  ├─▶ Maintainability 체크리스트 실행                             │
+│  ├─▶ Business 체크리스트 실행                                    │
+│  └─▶ Reliability 체크리스트 실행                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Critique Report 생성                                           │
+│  ├─▶ 이슈 목록 (ID, 관점, 심각도, 설명, 제안)                     │
+│  ├─▶ 요약 테이블                                                │
+│  └─▶ 권장 사항                                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  사용자 결정                                                     │
+│  ├─▶ ACCEPT → ADR 수정 → Critique 재실행                        │
+│  ├─▶ DEFER → Backlog 추가 → 진행                                │
+│  └─▶ REJECT → 거부 사유 기록 → 진행                              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                     모든 이슈 처리 완료
+                              │
+                              ▼
+                      Phase 2.5: Design (Entity/Domain)
+```
+
+### Critique Report 예시
+
+**critique-001.md**
+```markdown
+# Critique Report: ADR-001
+
+## 개요
+- **ADR**: 001. 데이터베이스 선택
+- **검토 일시**: 2024-01-15 16:00:00
+- **전체 위험도**: MEDIUM
+
+## 이슈 목록
+
+### [SEC-1] 비밀번호 저장 방식 미정의
+- **관점**: Security
+- **심각도**: HIGH
+- **설명**: ADR에서 비밀번호 저장 방식이 명시되지 않음
+- **영향**: 평문 저장 시 보안 사고 위험
+- **제안**: bcrypt 또는 argon2 사용 명시
+
+### [PERF-1] 인덱스 전략 미정의
+- **관점**: Performance
+- **심각도**: MEDIUM
+- **설명**: 주요 쿼리 패턴에 대한 인덱스 전략 없음
+- **영향**: 응답 시간 200ms 목표 달성 불가능할 수 있음
+- **제안**: 이메일로 조회频繁 → email 컬럼 인덱스 추가
+
+### [SCAL-1] 샤딩 전략 미정의
+- **관점**: Scalability
+- **심각도**: LOW
+- **설명**: 트래픽 증가 시 샤딩 전략이 없음
+- **영향**: 장기적으로 확장성 제약
+- **제안**: 향후 ADR에서 다루거나 Backlog에 추가
+
+## 요약
+
+| 관점 | 이슈 수 | HIGH | MEDIUM | LOW |
+|------|---------|------|--------|-----|
+| Security | 1 | 1 | 0 | 0 |
+| Performance | 1 | 0 | 1 | 0 |
+| Scalability | 1 | 0 | 0 | 1 |
+| Maintainability | 0 | 0 | 0 | 0 |
+| Business | 0 | 0 | 0 | 0 |
+| Reliability | 0 | 0 | 0 | 0 |
+| **Total** | **3** | **1** | **1** | **1** |
+
+## 권장 사항
+1. **[필수]** 비밀번호 저장 방식 명시 (bcrypt 권장)
+2. **[권장]** 인덱스 전략 추가
+3. **[선택]** 샤딩 전략은 Backlog에 추가
+```
+
+### 사용자 결정 예시
+
+**decisions.md**
+```markdown
+# 사용자 결정 로그
+
+## ADR-001 Critique 결정 (2024-01-15)
+
+### [SEC-1] 비밀번호 저장 방식 미정의
+- **결정**: ACCEPT
+- **이유**: 명백한 보안 취약점
+- **조치**: ADR에 bcrypt 사용 명시 추가
+
+### [PERF-1] 인덱스 전략 미정의
+- **결정**: ACCEPT
+- **이유**: 성능 목표 달성을 위해 필요
+- **조치**: ADR에 인덱스 전략 섹션 추가
+
+### [SCAL-1] 샤딩 전략 미정의
+- **결정**: DEFER
+- **이유**: MVP 단계에서는 과도한 엔지니어링
+- **조치**: Backlog에 추가
 ```
 
 ---

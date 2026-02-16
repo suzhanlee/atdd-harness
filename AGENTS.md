@@ -70,6 +70,139 @@
 
 ---
 
+## Phase 2.5a: ADR Agent
+
+### 목표
+사용자가 직접 Architecture Decision Record(ADR)를 작성하여 설계 의사결정 능력을 향상시킨다.
+
+### 입력
+- `.atdd/requirements/refined-requirements.md`
+- `.atdd/validation/validation-report.md`
+
+### 프로세스
+1. **결정 사항 식별**
+   - 기술 스택 선택
+   - 데이터 모델링
+   - API 설계
+   - 보안 아키텍처
+   - 확장성 전략
+
+2. **ADR 작성 가이드 제공**
+   - 템플릿 제공
+   - 작성 예시 안내
+   - 좋은 ADR 특징 설명
+
+3. **ADR 번호 할당**
+   - 순차적 번호 부여
+   - kebab-case 파일명
+
+4. **ADR 초안 검토**
+   - 필수 섹션 확인
+   - 대안 분석 검토
+   - 결과 명시 확인
+
+### ADR 구조
+```markdown
+# [번호]. [제목]
+
+## Status
+[Proposed | Accepted | Deprecated | Superseded]
+
+## Context
+결정이 필요한 상황과 배경
+
+## Decision
+내린 결정
+
+## Alternatives Considered
+고려한 대안들과 선택하지 않은 이유
+
+## Consequences
+결정의 결과 (긍정/부정/위험)
+```
+
+### 참조 파일
+- [SKILL.md](.claude/skills/adr/SKILL.md)
+- [adr-template.md](.claude/skills/adr/adr-template.md)
+
+### 출력
+- `.atdd/design/adr/[번호]-[제목].md`
+- `.atdd/design/adr/index.md`
+
+### 상태 전이
+완료 → `/redteam` 호출 가능
+
+---
+
+## Phase 2.5b: Red Team Agent
+
+### 목표
+Red Team 관점에서 ADR을 비판적으로 검토하여 설계 품질을 향상시킨다.
+
+### 입력
+- `.atdd/design/adr/*.md` (ADR 문서들)
+
+### Red Team 6가지 관점
+
+| 관점 | 초점 | 예시 질문 |
+|------|------|-----------|
+| **Security** | 보안 취약점 | "SQL Injection 가능한가?" |
+| **Performance** | 성능 이슈 | "N+1 Query 문제가 있는가?" |
+| **Scalability** | 확장성 제약 | "트래픽 10배 증가 시 문제는?" |
+| **Maintainability** | 유지보수성 | "6개월 후 누가 유지보수할 것인가?" |
+| **Business** | 요구사항 충족도 | "에지 케이스가 처리되었는가?" |
+| **Reliability** | 신뢰성 | "장애 시 복구는 어떻게?" |
+
+### 프로세스
+1. **ADR 로드**
+   - ADR 문서 읽기
+   - 결정 사항 파악
+
+2. **6관점 분석**
+   - Security 체크리스트 실행
+   - Performance 체크리스트 실행
+   - Scalability 체크리스트 실행
+   - Maintainability 체크리스트 실행
+   - Business 체크리스트 실행
+   - Reliability 체크리스트 실행
+
+3. **이슈 식별 및 분류**
+   - 잠재적 문제 식별
+   - 심각도 평가 (HIGH/MEDIUM/LOW)
+   - 개선 제안 작성
+
+4. **Critique Report 생성**
+   - 이슈 목록 작성
+   - 요약 테이블 생성
+   - 권장 사항 작성
+
+5. **사용자 결정 대기**
+   - ACCEPT/DEFER/REJECT 수집
+   - 결정 로그 업데이트
+
+### 사용자 결정 옵션
+
+| 결정 | 동작 |
+|------|------|
+| **ACCEPT** | 비평 수용 → ADR 수정 → `/redteam` 재실행 |
+| **DEFER** | 나중에 처리 → Backlog 추가 → 다음 단계 진행 |
+| **REJECT** | 거부 → 거부 사유 문서화 → 다음 단계 진행 |
+
+### 참조 파일
+- [SKILL.md](.claude/skills/redteam/SKILL.md)
+- [critique-perspectives.md](.claude/skills/redteam/critique-perspectives.md)
+
+### 출력
+- `.atdd/design/redteam/critique-[번호].md`
+- `.atdd/design/redteam/decisions.md`
+- `.atdd/design/redteam/backlog.md`
+
+### 상태 전이
+- 모든 이슈 처리 완료 → `/design` 계속 진행
+- ACCEPT로 인한 ADR 수정 → `/redteam` 재실행
+
+---
+
 ## Phase 2.5: Design Agent
 
 ### 목표

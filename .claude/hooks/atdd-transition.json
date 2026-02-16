@@ -22,12 +22,34 @@
           "check": "status == 'PASS'",
           "on_success": {
             "action": "notify",
-            "message": "검증 통과. 다음 단계: /design"
+            "message": "검증 통과. 다음 단계: /adr"
           },
           "on_failure": {
             "action": "notify",
             "message": "검증 실패. 요구사항 수정 필요."
           }
+        }
+      ]
+    },
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "adr",
+      "after": [
+        {
+          "action": "notify",
+          "message": "ADR 작성 완료. 다음 단계: /redteam"
+        }
+      ]
+    },
+    {
+      "event": "tool_use",
+      "tool": "Skill",
+      "when": "redteam",
+      "after": [
+        {
+          "action": "notify",
+          "message": "Red Team Critique 완료. ACCEPT/DEFER/REJECT 결정 후 진행."
         }
       ]
     },
