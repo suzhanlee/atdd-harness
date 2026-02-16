@@ -23,9 +23,25 @@
 ## 프로젝트 개요
 ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터 최종 검증까지 자동화된 워크플로우 제공.
 
-## 기술 스택
+## 사용자 컨텍스트
+- **역할**: 백엔드 개발자 + DevOps
+- **캠프 목표**: 운영 오류 감지 → 수정 코드 제안 → 자동 PR 생성 (자가 치유까지)
+- **소통 스타일**: 질문환영형 - 모르면 계속 질문하고 함께 탐색
+
+## 전제 조건 (이미 구성됨)
+- AWS: ECS, ALB, RDS
+- Monitoring: Prometheus, Loki, Promtail, Grafana
+
+## 하네스 기술 스택
 - Java 17+, Spring Boot 3.x, Spring Data JPA
 - MySQL, Cucumber, RestAssured, JUnit5
+- GitHub Actions (PR 자동화)
+
+## 하네스 자동화 범위
+```
+운영 로그 오류 감지 → 실패 시나리오 추출 → Gherkin 생성
+→ 수정 코드 작성 → 자동 PR 생성 (사람 승인)
+```
 
 ## ATDD 워크플로우
 ```

@@ -1,0 +1,6 @@
+# Fixes History Directory
+
+이 디렉토리는 `/fix` skill로 생성된 수정 이력을 저장합니다.
+
+## 파일 목록
+- `fix-{error-id}.md`: 수정 완료 이력

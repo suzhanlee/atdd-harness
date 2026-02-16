@@ -12,6 +12,9 @@ build/
 *.ipr
 .vscode/
 
+# Claude Code
+.claude/settings.json
+
 # OS
 .DS_Store
 Thumbs.db
