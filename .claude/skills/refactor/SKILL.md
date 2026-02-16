@@ -6,6 +6,9 @@ user-invocable: true
 context: fork
 agent: general-purpose
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash
+references:
+  - references/clean-code.md
+  - references/ddd-tactical.md
 ---
 
 # Clean Code 리팩토링
@@ -18,8 +21,8 @@ Clean Code 원칙과 DDD 패턴을 적용하여 코드 품질을 개선한다.
 - `src/test/java/**/*.java`
 
 ## 상세 가이드
-- Clean Code 체크리스트: [clean-code.md](clean-code.md)
-- DDD 전술적 패턴: [ddd-tactical.md](ddd-tactical.md)
+- Clean Code 체크리스트: [clean-code.md](references/clean-code.md)
+- DDD 전술적 패턴: [ddd-tactical.md](references/ddd-tactical.md)
 
 ## 트리거
 - `/refactor` 명령어 실행
@@ -323,7 +326,7 @@ public class UserService {
 리팩토링 완료 후 `/verify` 실행
 
 ## 참조
-- Clean Code 체크리스트: [clean-code.md](clean-code.md)
-- DDD 전술적 패턴: [ddd-tactical.md](ddd-tactical.md)
+- Clean Code 체크리스트: [clean-code.md](references/clean-code.md)
+- DDD 전술적 패턴: [ddd-tactical.md](references/ddd-tactical.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

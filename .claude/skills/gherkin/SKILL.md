@@ -4,6 +4,8 @@ description: Gherkin 시나리오를 추출한다. 요구사항을 테스트 시
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit
+references:
+  - references/scenario-template.md
 ---
 
 # Gherkin 시나리오 추출
@@ -18,7 +20,7 @@ allowed-tools: Read, Grep, Glob, Write, Edit
 - `src/main/java/**/domain/entity/*.java`
 
 ## 템플릿
-- 시나리오 템플릿: [scenario-template.md](scenario-template.md)
+- 시나리오 템플릿: [scenario-template.md](references/scenario-template.md)
 
 ## 트리거
 - `/gherkin` 명령어 실행
@@ -178,6 +180,6 @@ Feature: [기능명]
 시나리오 작성 완료 후 `/tdd` 실행
 
 ## 참조
-- 시나리오 템플릿: [scenario-template.md](scenario-template.md)
+- 시나리오 템플릿: [scenario-template.md](references/scenario-template.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

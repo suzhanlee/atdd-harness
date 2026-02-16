@@ -6,6 +6,8 @@ user-invocable: true
 context: fork
 agent: general-purpose
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash
+references:
+  - references/test-template.md
 ---
 
 # TDD 코드 구현
@@ -19,7 +21,7 @@ TDD 사이클을 통해 코드를 구현한다.
 - `src/main/java/**/domain/entity/*.java`
 
 ## 템플릿
-- 테스트 템플릿: [test-template.md](test-template.md)
+- 테스트 템플릿: [test-template.md](references/test-template.md)
 
 ## 트리거
 - `/tdd` 명령어 실행
@@ -244,6 +246,6 @@ Step Definition 클래스들
 모든 테스트 통과 후 `/refactor` 실행
 
 ## 참조
-- 테스트 템플릿: [test-template.md](test-template.md)
+- 테스트 템플릿: [test-template.md](references/test-template.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

@@ -4,6 +4,8 @@ description: Architecture Decision Record (ADR) 작성 가이드. 설계 의사�
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit
+references:
+  - references/adr-template.md
 ---
 
 # ADR (Architecture Decision Record) 작성
@@ -16,7 +18,7 @@ allowed-tools: Read, Grep, Glob, Write, Edit
 - `.atdd/validation/validation-report.md`
 
 ## 상세 가이드
-- ADR 템플릿: [adr-template.md](adr-template.md)
+- ADR 템플릿: [adr-template.md](references/adr-template.md)
 
 ## 트리거
 - `/adr` 명령어 실행
@@ -128,6 +130,6 @@ MySQL 8.0을 사용한다.
 ADR 작성 완료 후 `/redteam` 실행하여 설계 비평 수행
 
 ## 참조
-- ADR 템플릿: [adr-template.md](adr-template.md)
+- ADR 템플릿: [adr-template.md](references/adr-template.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

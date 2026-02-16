@@ -4,6 +4,10 @@ description: Entity와 DDD 도메인 모델을 설계한다. 데이터베이스 
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit
+references:
+  - references/ddd-patterns.md
+  - references/entity-template.md
+  - references/validation-guide.md
 ---
 
 # Entity & Domain 설계
@@ -16,9 +20,9 @@ allowed-tools: Read, Grep, Glob, Write, Edit
 - `.atdd/validation/validation-report.md`
 
 ## 상세 가이드
-- DDD 패턴: [ddd-patterns.md](ddd-patterns.md)
-- Entity 템플릿: [entity-template.md](entity-template.md)
-- 검증 가이드: [validation-guide.md](validation-guide.md)
+- DDD 패턴: [ddd-patterns.md](references/ddd-patterns.md)
+- Entity 템플릿: [entity-template.md](references/entity-template.md)
+- 검증 가이드: [validation-guide.md](references/validation-guide.md)
 
 ## 트리거
 - `/design` 명령어 실행
@@ -172,7 +176,7 @@ public class User {
 
 ### 7. [검증] 요구사항-도메인 매핑 검증
 
-**상세 가이드**: [validation-guide.md](validation-guide.md)
+**상세 가이드**: [validation-guide.md](references/validation-guide.md)
 
 ```
 검증 항목:
@@ -197,7 +201,7 @@ VALUES
 
 ### 9. [검증] SQL Sample Data 요구사항 준수 검증
 
-**상세 가이드**: [validation-guide.md](validation-guide.md)
+**상세 가이드**: [validation-guide.md](references/validation-guide.md)
 
 ```
 검증 항목:
@@ -341,8 +345,8 @@ JPA Entity 클래스 (Rich Domain Model)
 설계 및 검증 완료 후 `/gherkin` 실행
 
 ## 참조
-- DDD 패턴: [ddd-patterns.md](ddd-patterns.md)
-- Entity 템플릿: [entity-template.md](entity-template.md)
-- 검증 가이드: [validation-guide.md](validation-guide.md)
+- DDD 패턴: [ddd-patterns.md](references/ddd-patterns.md)
+- Entity 템플릿: [entity-template.md](references/entity-template.md)
+- 검증 가이드: [validation-guide.md](references/validation-guide.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

@@ -4,6 +4,8 @@ description: Red Team Critique - 설계에 대한 비판적 검토를 수행. 6�
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit
+references:
+  - references/critique-perspectives.md
 ---
 
 # Red Team Critique
@@ -15,7 +17,7 @@ Red Team 관점에서 ADR(설계 결정)을 비판적으로 검토하여 설계 
 - `.atdd/design/adr/*.md` (ADR 문서들)
 
 ## 상세 가이드
-- 6가지 관점: [critique-perspectives.md](critique-perspectives.md)
+- 6가지 관점: [critique-perspectives.md](references/critique-perspectives.md)
 
 ## 트리거
 - `/redteam` 명령어 실행
@@ -159,6 +161,6 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 모든 결정 완료 후 `/design` 계속 진행 (Entity/Domain 구현)
 
 ## 참조
-- 6관점 체크리스트: [critique-perspectives.md](critique-perspectives.md)
+- 6관점 체크리스트: [critique-perspectives.md](references/critique-perspectives.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)
