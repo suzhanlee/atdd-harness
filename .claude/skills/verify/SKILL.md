@@ -1,28 +1,35 @@
 ---
 name: verify
-description: 최종 검증을 수행한다. 모든 테스트 실행 및 품질 확인 시 사용.
+description: 최종 검증을 수행한다. 모든 테스트 실행, 코드 품질 확인 및 운영 회귀 테스트(Loki 연동)까지 포함.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash
 ---
 
-# 최종 검증
+# Verify Skill
 
-## 목표
-모든 테스트를 실행하고 최종 품질을 확인한다.
+최종 검증 단계에서 로컬 테스트와 운영 로그 기반 회귀 테스트를 수행합니다.
+
+## 트리거
+- `/verify`
+- "검증해줘"
+- "최종 검증 실행"
+- "배포 전 검증"
+
+## 전제 조건
+- TDD/리팩토링 단계가 완료되어야 함
+- 또는 `/fix` 완료 후 검증이 필요한 경우
 
 ## 입력
 - `src/main/java/**/*.java`
 - `src/test/java/**/*.java`
 - `src/test/resources/features/**/*.feature`
 
-## 트리거
-- `/verify` 명령어 실행
-- 리팩토링 완료 후 자동 제안
+## 프로세스
 
-## 검증 항목
+### Phase 1: 로컬 테스트 실행
 
-### 1. Unit Tests
+#### Unit Tests
 ```bash
 ./gradlew test
 ```
@@ -31,7 +38,7 @@ allowed-tools: Read, Grep, Glob, Bash
 - 모든 테스트 통과
 - 0 Failures, 0 Errors
 
-### 2. Integration Tests
+#### Integration Tests
 ```bash
 ./gradlew integrationTest
 ```
@@ -40,7 +47,7 @@ allowed-tools: Read, Grep, Glob, Bash
 - 모든 테스트 통과
 - DB 연동 정상
 
-### 3. E2E Tests (Cucumber)
+#### E2E Tests (Cucumber)
 ```bash
 ./gradlew cucumber
 ```
@@ -49,7 +56,7 @@ allowed-tools: Read, Grep, Glob, Bash
 - 모든 시나리오 통과
 - 0 Failed Scenarios
 
-### 4. Coverage
+#### Coverage Report
 ```bash
 ./gradlew jacocoTestReport
 ```
@@ -58,116 +65,120 @@ allowed-tools: Read, Grep, Glob, Bash
 - Line Coverage ≥ 80%
 - Branch Coverage ≥ 75%
 
-### 5. Lint
+### Phase 2: 코드 품질 검사
+
+#### 정적 분석
 ```bash
-./gradlew spotlessCheck
+./gradlew spotlessCheck    # 코드 스타일
+./gradlew detekt           # 정적 분석 (Kotlin)
+./gradlew pmdMain          # PMD 검사
 ```
 
-**목표**:
-- 0 Errors
-- 0 Warnings (권장)
+#### 커버리지 확인
+- 최소 커버리지: 80%
+- 새로운 코드: 90% 이상 권장
 
-## 프로세스
+### Phase 3: 운영 로그 기반 회귀 테스트 (Loki 연동)
 
-### 1. 전체 테스트 실행
+수정 후 운영 환경에서 동일한 에러가 발생하지 않는지 확인합니다.
 
+#### S3 로그 조회
 ```bash
-# 순차 실행
-./gradlew test
-./gradlew integrationTest
-./gradlew cucumber
+# 최근 1시간 로그에서 해당 에러 패턴 검색
+aws s3api select-object-content \
+  --bucket ${LOKI_BUCKET} \
+  --key logs/app.json \
+  --expression "SELECT * FROM s3object s WHERE s.level = 'ERROR' AND s.timestamp > '${LAST_DEPLOY_TIME}'" \
+  --expression-type SQL \
+  --input-serialization '{"JSON": {"Type": "LINES"}}' \
+  --output-serialization '{"JSON": {}}' \
+  recent-errors.json
 ```
 
-또는 한 번에:
-```bash
-./gradlew check
-```
+#### 회귀 확인 항목
+| 항목 | 기준 |
+|------|------|
+| 동일 에러 발생 | 0건 (통과) |
+| 유사 에러 발생 | 0건 (통과) |
+| 새로운 에러 | 분석 필요 |
 
-### 2. 커버리지 분석
-
-```bash
-./gradlew jacocoTestReport
-```
-
-리포트 위치: `build/reports/jacoco/test/html/index.html`
-
-### 3. 코드 품질 체크
-
-```bash
-./gradlew spotlessCheck
-```
-
-### 4. Gherkin 시나리오 커버리지
+### Phase 4: Gherkin 시나리오 커버리지
 
 모든 시나리오가 실행되었는지 확인:
 - Feature 파일 수 = 실행된 Feature 수
 - Scenario 수 = 실행된 Scenario 수
 
-### 5. 검증 리포트 작성
+### Phase 5: 검증 리포트 생성
 
-## 검증 리포트 예시
+`.atdd/reports/verification-{timestamp}.md` 파일 생성
 
+## 출력 형식
+
+### 콘솔 출력
+```
+✅ 최종 검증 시작
+
+📋 Phase 1: 로컬 테스트
+┌─────────────────────────────────────────────────────┐
+│ Unit Tests          ✅ 45/45 통과                    │
+│ Integration Tests   ✅ 12/12 통과                    │
+│ Cucumber Tests      ✅ 8/8 통과                      │
+│ Coverage            ✅ 85% (기준: 80%)               │
+└─────────────────────────────────────────────────────┘
+
+🔍 Phase 2: 코드 품질
+┌─────────────────────────────────────────────────────┐
+│ Spotless            ✅ 스타일 검사 통과              │
+│ PMD                 ✅ 정적 분석 통과                │
+│ Security Scan       ✅ 취약점 없음                   │
+└─────────────────────────────────────────────────────┘
+
+📊 Phase 3: 운영 회귀 테스트 (Loki)
+┌─────────────────────────────────────────────────────┐
+│ 조회 기간           2026-02-16 14:00 ~ 15:00        │
+│ 분석 대상           NullPointerException (ERR-001)  │
+│                                                      │
+│ 동일 에러           0건 ✅                           │
+│ 유사 에러           0건 ✅                           │
+│ 새로운 에러         0건 ✅                           │
+│                                                      │
+│ 결론: 회귀 없음, 수정 성공                          │
+└─────────────────────────────────────────────────────┘
+
+📁 검증 리포트: .atdd/reports/verification-20260216-150000.md
+
+🎉 모든 검증 통과 - 배포 준비 완료
+```
+
+### 검증 리포트 파일 구조
 ```markdown
-# 최종 검증 리포트
+# 검증 리포트 - 2026-02-16
 
-## 검증 일시
-2024-01-20 16:00:00
+## 개요
+- 검증 시간: 2026-02-16 15:00:00
+- 검증 대상: fix/claude-loki-error-NullPointerException-20260216
+- 관련 PR: #42
 
-## 검증 결과: ✅ ALL PASS
+## Phase 1: 로컬 테스트
 
-## 1. Unit Tests
+### Unit Tests
+- 실행: 45개
+- 통과: 45개
+- 실패: 0개
+- 스킵: 0개
 
-\`\`\`
-./gradlew test
+### Integration Tests
+- 실행: 12개
+- 통과: 12개
+- 실패: 0개
 
-BUILD SUCCESSFUL
+### E2E Tests (Cucumber)
+- Features: 8개
+- Scenarios: 15개
+- 통과: 15개
+- 실패: 0개
 
-Tests: 45
-- Passed: 45
-- Failed: 0
-- Skipped: 0
-
-Time: 3.5s
-\`\`\`
-
-**결과**: ✅ PASS
-
-## 2. Integration Tests
-
-\`\`\`
-./gradlew integrationTest
-
-BUILD SUCCESSFUL
-
-Tests: 12
-- Passed: 12
-- Failed: 0
-- Skipped: 0
-
-Time: 15.2s
-\`\`\`
-
-**결과**: ✅ PASS
-
-## 3. E2E Tests (Cucumber)
-
-\`\`\`
-./gradlew cucumber
-
-BUILD SUCCESSFUL
-
-Features: 5
-Scenarios: 15
-- Passed: 15
-- Failed: 0
-
-Time: 28.7s
-\`\`\`
-
-**결과**: ✅ PASS
-
-## 4. Coverage
-
+### Coverage
 | Package | Line | Branch |
 |---------|------|--------|
 | domain.entity | 95% | 90% |
@@ -180,18 +191,47 @@ Time: 28.7s
 
 **결과**: ✅ PASS (80% 이상)
 
-## 5. Lint
+## Phase 2: 코드 품질
 
-\`\`\`
-./gradlew spotlessCheck
+### 정적 분석 결과
+| 항목 | 결과 |
+|------|------|
+| Spotless | ✅ 통과 |
+| PMD | ✅ 통과 |
+| Security Scan | ✅ 통과 |
 
-BUILD SUCCESSFUL
+### 발견된 이슈
+없음
 
-Errors: 0
-Warnings: 0
-\`\`\`
+## Phase 3: 운영 회귀 테스트 (Loki)
 
-**결과**: ✅ PASS
+### 조회 조건
+- 기간: 2026-02-16 14:00 ~ 15:00
+- 대상 에러: NullPointerException (ERR-001)
+
+### 결과
+| 항목 | 발생 횟수 | 상태 |
+|------|----------|------|
+| 동일 에러 | 0 | ✅ 통과 |
+| 유사 에러 | 0 | ✅ 통과 |
+| 새로운 에러 | 0 | ✅ 통과 |
+
+### 상세 로그 분석
+```
+조회된 에러 로그 없음
+```
+
+## 종합 평가
+
+| 항목 | 결과 |
+|------|------|
+| 모든 테스트 통과 | ✅ |
+| 커버리지 기준 충족 | ✅ (85% > 80%) |
+| 코드 품질 통과 | ✅ |
+| 운영 회귀 없음 | ✅ |
+
+## 결론
+🎉 **배포 준비 완료**
 
 ## 완료 조건 체크리스트
 
@@ -199,15 +239,32 @@ Warnings: 0
 - [x] 커버리지 ≥ 80%
 - [x] Lint 에러 0개
 - [x] 모든 Gherkin 시나리오 통과
+- [x] 운영 회귀 없음
 
-## ATDD 사이클 완료 🎉
+---
+생성 시간: 2026-02-16 15:00:00
+```
 
-모든 검증 항목을 통과했습니다.
+## 환경 변수
+```bash
+# 필수
+LOKI_BUCKET=your-loki-bucket-name
+
+# 선택
+COVERAGE_THRESHOLD=80          # 최소 커버리지
+VERIFICATION_WINDOW_HOURS=1    # Loki 조회 기간
 ```
 
 ## 실패 시 대응
 
-### 테스트 실패
+| 실패 항목 | 대응 |
+|----------|------|
+| 테스트 실패 | `/tdd`로 돌아가서 수정 |
+| 커버리지 미달 | 테스트 케이스 추가 |
+| 코드 품질 실패 | `/refactor`로 수정 |
+| 운영 회귀 발견 | `/analyze-error`로 원인 분석 |
+
+### 테스트 실패 예시
 ```
 ❌ Unit Tests: 2 Failures
 
@@ -218,7 +275,7 @@ Failed Tests:
 조치: 테스트 실패 원인 분석 후 수정
 ```
 
-### 커버리지 미달
+### 커버리지 미달 예시
 ```
 ❌ Coverage: 72% (목표: 80%)
 
@@ -229,7 +286,7 @@ Failed Tests:
 조치: 테스트 케이스 추가 필요
 ```
 
-### Lint 에러
+### Lint 에러 예시
 ```
 ❌ Lint: 3 Errors
 
@@ -240,40 +297,21 @@ Failed Tests:
 조치: ./gradlew spotlessApply 실행
 ```
 
-## 출력 파일
-
-### VERIFICATION-report.md
-```markdown
-# 최종 검증 리포트
-
-## 검증 일시
-[날짜 시간]
-
-## 검증 결과: ✅ ALL PASS / ❌ FAIL
-
-## 상세 결과
-[위 예시 참조]
-
-## 완료 조건
-- [ ] 모든 테스트 통과
-- [ ] 커버리지 ≥ 80%
-- [ ] Lint 에러 0개
-- [ ] 모든 Gherkin 시나리오 통과
-```
-
-### coverage-report/
-JaCoCo HTML 리포트 복사
-
 ## 완료 조건
 
 - [x] 모든 테스트 통과
 - [x] 커버리지 ≥ 80%
 - [x] Lint 에러 0개
 - [x] 모든 Gherkin 시나리오 통과
+- [x] 운영 회귀 없음 (Loki)
 
 ## ATDD 사이클 완료
 
 모든 검증 항목 통과 시 ATDD 사이클 종료 🎉
+
+## 다음 단계
+- 배포 진행 (수동)
+- 추가 모니터링: `/monitor`
 
 ## 참조
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)

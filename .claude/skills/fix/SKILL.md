@@ -1,3 +1,11 @@
+---
+name: fix
+description: 에러 분석을 바탕으로 Gherkin 시나리오 생성, 테스트 작성, 수정 코드 구현, PR 생성까지 자동화하는 Self-Healing 스킬.
+disable-model-invocation: true
+user-invocable: true
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash
+---
+
 # Fix Skill (Self-Healing)
 
 에러 분석을 바탕으로 Gherkin 시나리오 생성 → 테스트 작성 → 수정 코드 구현 → PR 생성까지 자동화합니다.
