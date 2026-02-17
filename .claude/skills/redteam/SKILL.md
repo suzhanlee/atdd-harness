@@ -3,7 +3,7 @@ name: redteam
 description: Red Team Critique - 설계에 대한 비판적 검토를 수행. 6가지 관점에서 설계 품질 평가.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Edit
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestions
 references:
   - references/critique-perspectives.md
 ---
@@ -15,9 +15,6 @@ Red Team 관점에서 ADR(설계 결정)을 비판적으로 검토하여 설계 
 
 ## 입력
 - `.atdd/design/adr/*.md` (ADR 문서들)
-
-## 상세 가이드
-- 6가지 관점: [critique-perspectives.md](references/critique-perspectives.md)
 
 ## 트리거
 - `/redteam` 명령어 실행
@@ -39,6 +36,9 @@ Red Team은 설계에 대한 "악의적" 또는 "비판적" 관점을 취하여 
 | **Business** | 요구사항 충족도 | "에지 케이스가 처리되었는가?" |
 | **Reliability** | 신뢰성 | "장애 시 복구는 어떻게?" |
 
+## 상세 가이드
+- 6가지 관점: [critique-perspectives.md](references/critique-perspectives.md)
+
 ## Critique 프로세스
 
 ### 1. ADR 로드
@@ -58,7 +58,7 @@ Read .atdd/design/adr/*.md
 ```
 
 ### 4. 사용자 결정 대기
-각 이슈에 대해 사용자가 결정:
+각 이슈에 대해 사용자가 결정
 - **ACCEPT**: 비평 수용, ADR 수정
 - **DEFER**: 나중에 처리, Backlog 추가
 - **REJECT**: 거부, 사유 문서화
