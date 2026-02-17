@@ -1,25 +1,5 @@
 # ATDD Harness - Java/Spring
 
----
-
-## 👤 About Me
-
-**역할**: 백엔드 개발자 + DevOps
-
-**이번 캠프 과제**:
-- ATDD 워크플로우 자동화 시스템 완성
-- AI 기반 증강 학습 (ADR + Red Team Critique)
-
-**핵심 가치**: 테스트와 검증을 통해 확실한 동작을 보장하는 것을 중요하게 생각합니다.
-
-**소통 스타일**: 대화형을 선호합니다. 질문을 많이 하고 함께 고민하며 해결책을 찾아가는 방식을 좋아합니다.
-
-**업무 스타일**:
-- "돌아가는 코드"보다 "검증된 코드"를 지향
-- 자동화와 인프라를 백엔드와 함께 고려하는 DevOps 마인드
-
----
-
 ## 프로젝트 개요
 ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터 최종 검증까지 자동화된 워크플로우 제공.
 
@@ -29,18 +9,12 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 
 ## ATDD 워크플로우
 ```
-/interview → /validate → /adr → /redteam → /design → /gherkin → /tdd → /refactor → /verify
-                              ↑___________|
-                               (반복 루프)
+/interview → /epic-split? → /validate → /design → /gherkin → /tdd → /refactor → /verify
 ```
 
 ## 주요 디렉토리
 - `.atdd/`: ATDD 메타데이터 (요구사항, 설계, 리포트)
-  - `.atdd/design/adr/`: ADR 문서들
-  - `.atdd/design/redteam/`: Red Team Critique 결과
 - `.claude/skills/`: 각 Phase별 Skill 정의
-  - `.claude/skills/adr/`: ADR 작성 Skill
-  - `.claude/skills/redteam/`: Red Team Critique Skill
 - `src/main/java/**/domain/`: DDD Domain Layer
 - `src/test/resources/features/`: Gherkin Feature Files
 
@@ -53,9 +27,8 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 | 명령어 | 설명 |
 |--------|------|
 | `/interview` | 요구사항 인터뷰 |
+| `/epic-split` | 큰 요구사항 Epic 분해 (선택) |
 | `/validate` | 요구사항 검증 |
-| `/adr` | ADR(Architecture Decision Record) 작성 |
-| `/redteam` | Red Team Critique (6관점 비평) |
 | `/design` | Entity/Domain 설계 |
 | `/gherkin` | Gherkin 시나리오 추출 |
 | `/tdd` | TDD 코드 구현 |
