@@ -73,64 +73,102 @@
 ## Phase 2.5a: ADR Agent
 
 ### 목표
-사용자가 직접 Architecture Decision Record(ADR)를 작성하여 설계 의사결정 능력을 향상시킨다.
+사용자가 직접 Architecture Decision Record(ADR)를 작성하여 **설계 의사결정 능력**을 향상시킨다.
+단순 문서화가 아닌, 깊은 사고와 분석을 통한 의사결정 훈련을 제공한다.
+
+### 바람직한 어려움 (Desirable Difficulties) 적용
+Robert Bjork의 학습 원칙을 적용하여 인지 부하를 높이고 깊은 학습 유도:
+- Pre-Mortem: 템플릿 보기 전 실패 상상
+- Trade-off Matrix: 최소 3개 대안 강제 분석
+- Self-Critique: 작성 후 자가 비평 과정
 
 ### 입력
 - `.atdd/requirements/refined-requirements.md`
 - `.atdd/validation/validation-report.md`
 
-### 프로세스
-1. **결정 사항 식별**
-   - 기술 스택 선택
-   - 데이터 모델링
-   - API 설계
-   - 보안 아키텍처
-   - 확장성 전략
+### 4-Phase 프로세스
 
-2. **ADR 작성 가이드 제공**
-   - 템플릿 제공
-   - 작성 예시 안내
-   - 좋은 ADR 특징 설명
+#### Phase A: Pre-Mortem (사전 실패 분석)
+**목적**: 템플릿을 보기 전에 먼저 "실패를 상상"하여 깊은 사고 유도
 
-3. **ADR 번호 할당**
-   - 순차적 번호 부여
-   - kebab-case 파일명
+**질문**:
+```
+Q1: 이 결정이 1년 후 실패한다면 가장 가능성 높은 이유는?
+Q2: 실패 당시 상황은? (트래픽, 팀 규모, 데이터 크기, 비즈니스 변화)
+Q3: 미리 알았다면 어떤 다른 선택을 했을까?
+```
 
-4. **ADR 초안 검토**
-   - 필수 섹션 확인
-   - 대안 분석 검토
-   - 결과 명시 확인
+**STOP Protocol**: Phase A 완료 후 사용자 입력 대기
 
-### ADR 구조
+---
+
+#### Phase B: Trade-off Matrix (대안 분석)
+**목적**: 최소 3개 대안을 객관적 기준으로 비교 평가
+
+```markdown
+| 평가기준 | 대안1 (선택) | 대안2 | 대안3 |
+|----------|--------------|-------|-------|
+| 성능     | ⭐⭐⭐      | ⭐⭐  | ⭐⭐⭐⭐ |
+| 확장성   | ⭐⭐        | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| 팀 친숙도| ⭐⭐⭐⭐⭐   | ⭐    | ⭐⭐   |
+| **총점** | **12**      | **8** | **13** |
+
+### 선택 설명 (트레이드오프)
+왜 총점이 낮은 대안을 선택했나요?
+```
+
+**STOP Protocol**: Phase B 완료 후 사용자 입력 대기
+
+---
+
+#### Phase C: ADR 본문 작성
+**목적**: 템플릿 기반으로 ADR 본문 작성
+
+Phase A, B 결과를 통합하여 아래 구조로 작성:
 ```markdown
 # [번호]. [제목]
 
-## Status
-[Proposed | Accepted | Deprecated | Superseded]
-
+## Metadata
+## Pre-Mortem (Phase A 결과)
 ## Context
-결정이 필요한 상황과 배경
-
 ## Decision
-내린 결정
-
+## Trade-off Matrix (Phase B 결과)
 ## Alternatives Considered
-고려한 대안들과 선택하지 않은 이유
-
 ## Consequences
-결정의 결과 (긍정/부정/위험)
+## Reconsideration Trigger (정량적 임계값)
+## Self-Critique Score (Phase D 결과)
 ```
+
+---
+
+#### Phase D: Self-Critique (자가 평가)
+**목적**: 작성한 ADR을 스스로 비평하여 품질 검증
+
+| # | 질문 | 점수(1~5) |
+|---|------|-----------|
+| 1 | Context 충분성 (6개월 후 이해 가능?) | |
+| 2 | 대안 분석 깊이 (정말 최선인가?) | |
+| 3 | Consequences 솔직성 (부정적 결과 포함?) | |
+| 4 | Reconsideration 구체성 (재검토 조건 명확?) | |
+| 5 | 설득력 (반대 의견에 대응 가능?) | |
+
+**품질 기준**: 평균 4점 이상 달성 시 Accept 가능
+
+---
 
 ### 참조 파일
 - [SKILL.md](.claude/skills/adr/SKILL.md)
-- [adr-template.md](.claude/skills/adr/adr-template.md)
+- [adr-template.md](.claude/skills/adr/references/adr-template.md)
+- [adr-premortem-questions.md](.claude/skills/adr/references/adr-premortem-questions.md)
+- [adr-tradeoff-matrix.md](.claude/skills/adr/references/adr-tradeoff-matrix.md)
+- [adr-self-critique.md](.claude/skills/adr/references/adr-self-critique.md)
 
 ### 출력
 - `.atdd/design/adr/[번호]-[제목].md`
 - `.atdd/design/adr/index.md`
 
 ### 상태 전이
-완료 → `/redteam` 호출 가능
+완료 (Self-Critique 평균 4점 이상) → `/redteam` 호출 가능
 
 ---
 
