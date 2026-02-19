@@ -3,7 +3,7 @@ name: redteam
 description: Red Team Critique - 설계에 대한 비판적 검토를 수행. 6가지 관점에서 설계 품질 평가.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestions
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, EnterPlanMode
 references:
   - references/critique-perspectives.md
 ---
@@ -115,8 +115,11 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 
 ### ACCEPT (수용)
 ```
-비평을 수용하고 ADR을 수정
-→ ADR 수정 후 /redteam 재실행
+비평을 수용하고 Plan Mode에서 수정 계획 수립
+→ `EnterPlanMode` 툴로 Plan Mode 진입
+→ 수정 계획 작성 (어떤 섹션을, 어떻게 수정할지)
+→ 사용자 승인 후 ADR 수정
+→ /redteam 재실행
 ```
 
 ### DEFER (보류)

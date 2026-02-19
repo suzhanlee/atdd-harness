@@ -3,7 +3,7 @@ name: adr
 description: Architecture Decision Record (ADR) 작성 가이드. 설계 의사결정을 문서화하고 추적. 바람직한 어려움(Desirable Difficulties)을 적용한 4-Phase 워크플로우.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Edit
+allowed-tools: Read, Grep, Glob, Write, Edit, EnterPlanMode
 references:
   - references/adr-template.md
   - references/adr-premortem-questions.md
@@ -27,7 +27,7 @@ references:
 ```
 Phase A (Pre-Mortem)    → 사용자 입력 대기 → "완료"/"다음" → Phase B
 Phase B (Trade-off)     → 사용자 입력 대기 → "완료"/"다음" → Phase C
-Phase C (ADR 작성)      → Phase D 즉시 진행 (대기 없음)
+Phase C (ADR 작성)      → EnterPlanMode → 사용자 승인 → Phase D
 Phase D (Self-Critique) → ADR 완료
 ```
 
@@ -116,12 +116,16 @@ Q3: 미리 알았다면 어떤 다른 선택을 했을까?
 
 ### Phase C: ADR 본문 작성
 
-**목적**: 템플릿 기반으로 ADR 본문 작성
+**목적**: Plan Mode에서 ADR 작성 계획을 수립하고 사용자 승인 후 작성
 
 **진행 방식**:
-1. Phase A, B 결과를 템플릿에 통합
-2. Context, Decision, Alternatives, Consequences 작성
-3. Reconsideration Trigger (재검토 조건) 추가
+1. `EnterPlanMode` 툴로 Plan Mode 진입
+2. Plan 파일에 ADR 작성 계획 작성:
+   - ADR 번호 및 제목
+   - Phase A, B 결과 통합 방안
+   - 각 섹션별 작성 내용 요약
+3. 사용자 승인 후 ADR 파일 작성
+4. Phase D 진행
 
 **ADR 구조**:
 ```markdown
@@ -140,8 +144,8 @@ Q3: 미리 알았다면 어떤 다른 선택을 했을까?
 **상세 템플릿**: [adr-template.md](references/adr-template.md)
 
 **Phase C 완료 후**:
-- STOP Protocol 없음
-- 즉시 Phase D 진행
+- Plan Mode로 전환하여 사용자 승인 대기
+- 승인 후 ADR 파일 작성 및 Phase D 진행
 
 ---
 
