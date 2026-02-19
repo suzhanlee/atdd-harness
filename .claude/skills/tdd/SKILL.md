@@ -11,6 +11,7 @@ references:
   - references/unit-test-template.md
   - references/integration-test-template.md
   - references/sql-data-guide.md
+  - ../gherkin/references/step-naming-convention.md
 ---
 
 # TDD 코드 구현
@@ -85,6 +86,12 @@ Read src/test/resources/features/*.feature
 ```
 
 ### 2. Step Definition 생성 (RED)
+
+**Step 패턴 준수**:
+- [step-naming-convention.md](../gherkin/references/step-naming-convention.md)에 정의된 패턴 사용
+- Gherkin 시나리오의 Step이 Convention을 따르는지 확인
+- Convention을 벗어난 Step이 있으면 경고 후 수정 제안
+
 Cucumber Step Definitions 작성
 
 ```java
@@ -256,5 +263,6 @@ Step Definition 클래스들
 - 단위 템플릿: [unit-test-template.md](references/unit-test-template.md)
 - 통합 템플릿: [integration-test-template.md](references/integration-test-template.md)
 - SQL 가이드: [sql-data-guide.md](references/sql-data-guide.md)
+- Step 네이밍 컨벤션: [step-naming-convention.md](../gherkin/references/step-naming-convention.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

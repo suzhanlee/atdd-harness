@@ -9,6 +9,7 @@ references:
   - references/edge-case-checklist.md
   - references/coverage-matrix.md
   - references/scenario-template.md
+  - references/step-naming-convention.md
 ---
 
 # Gherkin 시나리오 추출
@@ -225,13 +226,37 @@ Write: .atdd/scenarios/draft-edge-cases.md
 **진행 방식**:
 1. `.atdd/scenarios/draft-happy-path.md` 읽기
 2. `.atdd/scenarios/draft-edge-cases.md` 읽기
-3. 사용자 작성 내용을 통합하여 .feature 파일 생성
-4. Scenario Outline로 데이터 기반 테스트 작성
+3. **Step 정규화** (Step Naming Convention 적용)
+4. **Data Table 구조화**
+5. .feature 파일 생성
 
 **파일 읽기 액션**:
 ```
 Read: .atdd/scenarios/draft-happy-path.md
 Read: .atdd/scenarios/draft-edge-cases.md
+```
+
+**Step 정규화 규칙**:
+
+| 원본 | 정규화 |
+|------|--------|
+| `유저를 만든다` | `사용자 생성 요청을 보낸다` |
+| `성공한다` | `상태 코드 201를 받는다` |
+| `실패한다` | `상태 코드 400를 받는다` |
+
+**Data Table 변환**:
+
+```gherkin
+# 변환 전 (Markdown)
+**When (행동)**:
+- [x] POST /api/v1/users
+      email: test@test.com
+      password: password123!
+
+# 변환 후 (Gherkin)
+When 회원가입 요청을 보낸다
+  | email         | password     |
+  | test@test.com | password123! |
 ```
 
 **시나리오 작성 원칙**:
@@ -244,6 +269,7 @@ Read: .atdd/scenarios/draft-edge-cases.md
 | 구체적인 데이터 | "어떤 데이터" |
 
 **상세 가이드**: [scenario-template.md](references/scenario-template.md)
+**Step Convention**: [step-naming-convention.md](references/step-naming-convention.md)
 
 **Phase C 완료 후**:
 - STOP Protocol 없음
@@ -251,9 +277,38 @@ Read: .atdd/scenarios/draft-edge-cases.md
 
 ---
 
-### Phase D: Coverage Check (커버리지 검증)
+### Phase D: Validation & Coverage (검증 및 커버리지)
 
-**목적**: 모든 요구사항이 시나리오로 커버되었는지 검증
+**목적**: Gherkin 품질 검증과 요구사항 커버리지 확인
+
+**진행 방식**:
+
+#### Step 1: Gherkin 품질 검증
+
+**검증 항목**:
+
+| 항목 | 검증 내용 | 합격 기준 |
+|------|-----------|-----------|
+| Step 패턴 | TDD 인식 가능한 패턴 사용 | 100% 준수 |
+| Data Table | 올바른 형식의 테이블 | 필수 필드 포함 |
+| 상태 코드 | `{int}` 파라미터 사용 | 모든 Then에 명시 |
+| 중복 Step | 동일 의미의 다른 표현 | 없음 |
+
+**검증 결과**:
+```
+Gherkin 품질 검증 ✅
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Step 패턴 | ✅ | 12/12 준수 |
+| Data Table | ✅ | 8개 테이블 확인 |
+| 상태 코드 | ✅ | 12개 시나리오 모두 명시 |
+| 중복 Step | ✅ | 중복 없음 |
+```
+
+**상세 가이드**: [step-naming-convention.md](references/step-naming-convention.md)
+
+#### Step 2: Coverage Check
 
 **진행 방식**:
 1. 요구사항-시나리오 매핑 검증
@@ -397,5 +452,6 @@ Feature: 회원가입
 - 예외 케이스 체크리스트: [edge-case-checklist.md](references/edge-case-checklist.md)
 - 커버리지 매트릭스: [coverage-matrix.md](references/coverage-matrix.md)
 - 시나리오 템플릿: [scenario-template.md](references/scenario-template.md)
+- Step 네이밍 컨벤션: [step-naming-convention.md](references/step-naming-convention.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)
