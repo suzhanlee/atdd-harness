@@ -3,30 +3,34 @@
 ## 전체 워크플로우
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────────────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  /interview │ ──▶ │  /validate  │ ──▶ │                       /design                           │ ──▶ │   /gherkin  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
-│   Phase 1   │     │   Phase 2   │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │     │   Phase 6   │
-└─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │  (반복 루프)            │     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-       │                   │             │  │ Phase2.5a│    │ Phase2.5b │                         │           │                   │                   │                   │
-       ▼                   ▼             │  └──────────┘    └───────────┘                         │           ▼                   ▼                   ▼                   ▼
- requirements/       validation/         └─────────────────────────────────────────────────────────┘       scenarios/        Inside-Out TDD      refactoring/        reports/
-   ├─ draft.md         ├─ report.md                      │                                                  ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
-   └─ log.md           └─ refined.md                     ▼                                                  └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
-                                                        design/
-                                                          ├─ erd.md
+┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────────────────────────┐     ┌─────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  /interview │ ──▶ │  /validate  │ ──▶ │                       /design                           │ ──▶ │ /redteam-design │ ──▶ │   /gherkin  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
+│   Phase 1   │     │   Phase 2   │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 2.6     │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │     │   Phase 6   │
+└─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │  (반복 루프)            │     └─────────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+       │                   │             │  │ Phase2.5a│    │ Phase2.5b │                         │            │                    │                   │                   │                   │
+       ▼                   ▼             │  └──────────┘    └───────────┘                         │            ▼                    ▼                   ▼                   ▼                   ▼
+ requirements/       validation/         └─────────────────────────────────────────────────────────┘    design/redteam/        scenarios/        Inside-Out TDD      refactoring/        reports/
+   ├─ draft.md         ├─ report.md                      │                                               ├─ design-          ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
+   └─ log.md           └─ refined.md                     ▼                                               │  critique-*.md    └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
+                                                        design/                                         ├─ decisions.md
+                                                          ├─ erd.md                                      └─ backlog.md
                                                           ├─ domain.md
                                                           ├─ traceability.md
                                                           ├─ validation.md
                                                           ├─ adr/               # ADR 문서들
                                                           │   ├─ 001-*.md
                                                           │   └─ index.md
-                                                          ├─ redteam/           # Red Team 결과
+                                                          ├─ redteam/           # Red Team 결과 (ADR)
                                                           │   ├─ critique-*.md
                                                           │   ├─ decisions.md
                                                           │   └─ backlog.md
                                                           ├─ *.sql
                                                           └─ *.java
 ```
+
+**Red Team 계열 스킬 분담**:
+- `/redteam` (Phase 2.5b): ADR(설계 의사결정) 비평 - Security, Performance, Scalability 등
+- `/redteam-design` (Phase 2.6): 도메인 모델 비평 - Responsibility, Aggregate, Invariants 등 (RRAIRU)
 
 ---
 
@@ -550,7 +554,7 @@ public class User {
     └─▶ Entity Classes
 
 12. 완료 알림
-    └─▶ "설계 및 검증 완료. 다음 단계: /gherkin"
+    └─▶ "설계 및 검증 완료. 다음 단계: /redteam-design"
 ```
 
 ### 검증 Flow
@@ -576,7 +580,7 @@ public class User {
                            PASS
                               │
                               ▼
-                      Phase 3: Gherkin
+              Phase 2.6: /redteam-design (도메인 모델 비평)
 ```
 
 ### 합격 기준
@@ -589,6 +593,208 @@ public class User {
 | UNIQUE 준수 | 100% |
 | FK 무결성 | 100% |
 | 비즈니스 규칙 | 100% |
+
+---
+
+## Phase 2.6: Red Team Design Critique Workflow
+
+### 진입 조건
+- `.atdd/design/domain-model.md` 존재
+- `.atdd/design/erd.md` 존재
+- `/design` Phase D 완료
+
+### 기존 `/redteam`과의 차이
+
+| 항목 | /redteam | /redteam-design |
+|------|----------|-----------------|
+| 검토 대상 | ADR (설계 의사결정) | 도메인 모델 (Entity, VO, Aggregate) |
+| 관점 | Security, Performance, Scalability, Maintainability, Business, Reliability | Responsibility, Requirements Fit, Aggregate Boundary, Invariants, Relationships, Ubiquitous Language |
+| 목적 | 아키텍처/기술 결정 검증 | DDD 원칙 준수 검증 |
+
+### 실행 흐름
+
+```
+1. 설계 산출물 로드
+   ├─▶ Read .atdd/design/erd.md
+   ├─▶ Read .atdd/design/domain-model.md
+   ├─▶ Read .atdd/requirements/refined-requirements.md
+   └─▶ Read src/main/java/**/domain/entity/*.java
+
+2. 6관점 분석 (RRAIRU)
+   ├─▶ Responsibility: 책임 분배 적절성
+   ├─▶ Requirements Fit: 요구사항 적합성
+   ├─▶ Aggregate Boundary: Aggregate 경계 적절성
+   ├─▶ Invariants: 불변식 완전성
+   ├─▶ Relationships: 연관관계 설계 적절성
+   └─▶ Ubiquitous Language: 보편 언어 일치
+
+3. Self-Reflection 질문 준비
+   ├─▶ "왜 이 메서드가 이 Entity에 위치해야 하나요?"
+   ├─▶ "이 Entity들이 항상 함께 변경되나요?"
+   └─▶ "이 상태 변경 시 항상 유효한가요?"
+
+4. Critique Report 생성
+   ├─▶ .atdd/design/redteam/design-critique-[날짜].md
+   ├─▶ 이슈 목록 (ID, 관점, 심각도, 설명, 제안)
+   └─▶ Self-Reflection 질문 포함
+
+5. 사용자 Self-Reflection
+   └─▶ 각 이슈에 대해 사용자에게 질문
+
+6. 사용자 결정 수집
+   ├─▶ ACCEPT: 설계 수정
+   ├─▶ DEFER: Backlog 추가
+   └─▶ REJECT: 거부 사유 기록
+
+7. 분기 처리
+   ├─▶ ACCEPT 있음 → 설계 수정 → Step 1로 돌아감
+   ├─▶ 모두 DEFER/REJECT → 다음 단계 진행
+   └─▶ 완료 알림
+```
+
+### Critique Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Red Team Design Critique (RRAIRU)                              │
+│  ├─▶ Responsibility 체크리스트 실행                              │
+│  ├─▶ Requirements Fit 체크리스트 실행                            │
+│  ├─▶ Aggregate Boundary 체크리스트 실행                          │
+│  ├─▶ Invariants 체크리스트 실행                                  │
+│  ├─▶ Relationships 체크리스트 실행                               │
+│  └─▶ Ubiquitous Language 체크리스트 실행                         │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Design Critique Report 생성                                    │
+│  ├─▶ Self-Reflection Questions                                  │
+│  ├─▶ 이슈 목록 (ID, 관점, 심각도, 안티패턴, 권장패턴)            │
+│  ├─▶ 요약 테이블                                                │
+│  └─▶ 권장 사항                                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  사용자 결정                                                     │
+│  ├─▶ ACCEPT → 설계 수정 → Critique 재실행                       │
+│  ├─▶ DEFER → Backlog 추가 → 진행                                │
+│  └─▶ REJECT → 거부 사유 기록 → 진행                              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                     모든 이슈 처리 완료
+                              │
+                              ▼
+                      Phase 3: Gherkin
+```
+
+### Design Critique Report 예시
+
+**design-critique-2024-01-15.md**
+```markdown
+# Design Critique Report
+
+## 개요
+- **검토 일시**: 2024-01-15 16:00:00
+- **검토 대상**: domain-model.md, erd.md, User.java
+- **전체 위험도**: MEDIUM
+
+---
+
+## Self-Reflection Questions
+설계를 다시 생각해볼 질문들입니다:
+
+1. "User가 비밀번호 검증 책임을 직접 가져야 하나요?"
+2. "User와 Session이 하나의 Aggregate여야 할까요?"
+3. "상태 전이 시 불변식이 항상 유지되나요?"
+
+---
+
+## 이슈 목록
+
+### [RESP-1] User Entity의 과도한 책임
+- **관점**: Responsibility
+- **심각도**: HIGH
+- **설명**: User Entity가 로그인 검증, 상태 관리, 비밀번호 변경 등 너무 많은 책임을 가짐
+- **현재 코드**:
+  ```java
+  // 안티패턴: God Entity
+  public class User {
+      public boolean validatePassword(String raw, PasswordEncoder encoder) { ... }
+      public boolean canLogin() { ... }
+      public void lock() { ... }
+      public void changePassword(...) { ... }
+      public void updateProfile(...) { ... }
+  }
+  ```
+- **권장 패턴**:
+  ```java
+  // VO로 책임 분산
+  public class User {
+      @Embedded private LoginStatus loginStatus;
+      @Embedded private Password password;
+
+      public void login(Password input, PasswordEncoder encoder) {
+          loginStatus.attemptLogin(password, input, encoder);
+      }
+  }
+  ```
+- **Self-Reflection**: "왜 이 메서드들이 User에 있어야 하나요? VO로 분리할 수 없나요?"
+- **제안**: LoginStatus VO 생성, 로그인 관련 책임 이동
+
+### [INV-1] 주문 취소 시 총액 재계산 누락
+- **관점**: Invariants
+- **심각도**: HIGH
+- **설명**: Order.cancel()에서 총액을 0으로 설정하지 않음
+- **Self-Reflection**: "취소된 주문의 총액이 0이어야 한다는 규칙이 보장되나요?"
+- **제안**: cancel() 메서드에서 totalAmount = Money.zero() 추가
+
+## 요약
+
+| 관점 | 이슈 수 | HIGH | MEDIUM | LOW |
+|------|---------|------|--------|-----|
+| Responsibility | 1 | 1 | 0 | 0 |
+| Requirements Fit | 0 | 0 | 0 | 0 |
+| Aggregate Boundary | 0 | 0 | 0 | 0 |
+| Invariants | 1 | 1 | 0 | 0 |
+| Relationships | 0 | 0 | 0 | 0 |
+| Ubiquitous Language | 0 | 0 | 0 | 0 |
+| **Total** | **2** | **2** | **0** | **0** |
+
+## 권장 사항
+1. **[필수]** User Entity 책임 분산 (LoginStatus VO 생성)
+2. **[필수]** Order.cancel() 불변식 보완
+```
+
+### 사용자 결정 예시
+
+**decisions.md**
+```markdown
+# 사용자 결정 로그
+
+## Design Critique 2024-01-15
+
+### [RESP-1] User Entity의 과도한 책임
+- **결정**: ACCEPT
+- **이유**: 단일 책임 원칙 위반
+- **조치**: LoginStatus VO 생성, 로그인 관련 로직 이동
+
+### [INV-1] 주문 취소 시 총액 재계산 누락
+- **결정**: ACCEPT
+- **이유**: 불변식 누락으로 무효 상태 가능
+- **조치**: cancel() 메서드에 totalAmount = Money.zero() 추가
+```
+
+### 바람직한 어려움 적용
+
+| 원칙 | 적용 방식 | 훈련 효과 |
+|------|-----------|-----------|
+| Self-Explanation | Self-Reflection 질문 | 메타인지 향상 |
+| Contrastive Cases | 안티패턴 vs 권장 패턴 비교 | 좋은 설계 학습 |
+| Feedback Loop | 즉각적 Critique Report | 실수 인지 및 수정 훈련 |
+| Retrieval Practice | "왜 이렇게 설계했나요?" 질문 | 설계 지식 인출 |
+
+---
 
 ### ERD 예시
 
