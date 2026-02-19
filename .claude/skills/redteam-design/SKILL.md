@@ -1,9 +1,9 @@
 ---
 name: redteam-design
-description: Red Team Design Critique - 도메인 모델(Entity, VO, Aggregate)에 대한 비판적 검토를 수행. 6가지 DDD 관점(RRAIRU)에서 설계 품질 평가.
+description: This skill should be used when the user asks to "/redteam-design", "도메인 모델 비평", "RRAIRU", "설계 비판적 검토", or needs to critically review domain models using DDD perspectives.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, EnterPlanMode
 references:
   - references/design-critique-perspectives.md
 ---
@@ -77,6 +77,16 @@ Glob src/main/java/**/domain/entity/*.java → Read each file
 - Self-Reflection 질문 준비
 
 ### 3. Critique Report 생성
+
+**진행 방식**:
+1. **EnterPlanMode 호출** - 출력 파일 작성 계획 수립
+2. 작성할 파일 목록 정리:
+   - design-critique-[날짜].md
+   - decisions.md
+   - backlog.md
+3. 각 파일의 구조 및 내용 계획
+4. 사용자 승인 후 일괄 파일 생성
+
 ```
 .atdd/design/redteam/design-critique-[날짜].md
 ```

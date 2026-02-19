@@ -1,9 +1,9 @@
 ---
 name: design
-description: DDD 기반 포괄적 도메인 설계. Entity, DomainService, EventHandler, Parser, Extractor 등 모든 도메인 객체를 4-Phase 워크플로우로 사용자가 직접 설계. 바람직한 어려움(Desirable Difficulties) 적용.
+description: This skill should be used when the user asks to "/design", "도메인 설계", "Entity 설계", "DDD 설계", or needs to design domain models using DDD patterns.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, EnterPlanMode
 references:
   - references/domain-questions.md
   - references/blank-erd-template.md
@@ -206,10 +206,18 @@ Phase C (Interface Definition)로 진행합니다.
 **목적**: 사용자가 작성한 설계안을 바탕으로 인터페이스와 메서드 시그니처만 정의
 
 **진행 방식**:
-1. Entity 클래스 골격 생성 (속성만, 메서드는 빈 구현)
-2. Repository 인터페이스 정의 (메서드 시그니처만)
-3. Service 인터페이스 정의 (메서드 시그니처만)
-4. 실제 구현은 `/tdd`에서 수행
+1. **EnterPlanMode 호출** - 인터페이스 정의 계획 수립
+2. 사용자 승인 후 계획 실행
+3. Entity 클래스 골격 생성 (속성만, 메서드는 빈 구현)
+4. Repository 인터페이스 정의 (메서드 시그니처만)
+5. Service 인터페이스 정의 (메서드 시그니처만)
+6. 실제 구현은 `/tdd`에서 수행
+
+**Plan Mode에서 수행할 작업**:
+- 작성할 Entity/VO/Repository/Service 목록 정리
+- 각 클래스의 속성 및 메서드 시그니처 계획
+- 파일 경로 및 패키지 구조 결정
+- 사용자 승인 후 일괄 파일 생성
 
 **인터페이스 정의 원칙**:
 - 메서드 시그니처와 반환 타입만 정의
