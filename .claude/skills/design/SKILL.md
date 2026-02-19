@@ -3,7 +3,7 @@ name: design
 description: DDD 기반 포괄적 도메인 설계. Entity, DomainService, EventHandler, Parser, Extractor 등 모든 도메인 객체를 4-Phase 워크플로우로 사용자가 직접 설계. 바람직한 어려움(Desirable Difficulties) 적용.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Edit
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
 references:
   - references/domain-questions.md
   - references/blank-erd-template.md
@@ -27,19 +27,13 @@ AI가 설계안을 제시하는 방식이 아닌, 사용자가 주도적으로 �
 각 Phase는 반드시 **별도 턴**으로 진행한다. 사용자가 다음 단계로 진행할 준비가 될 때까지 대기한다.
 
 ```
-Phase A (Domain Q&A)      → 사용자 입력 대기 → "완료"/"다음" → Phase B
+Phase A (Domain Q&A)      → AskUserQuestion으로 1개씩 질문 → 자동 Phase B 진행
 Phase B (Blank Model)     → 사용자 입력 대기 → "완료"/"다음" → Phase C
 Phase C (Implementation)  → Phase D 즉시 진행 (대기 없음)
 Phase D (Validation)      → 설계 완료
 ```
 
-### Phase A 종료 필수 문구
-```
----
-👆 도메인 질문에 답변해주세요.
-답변 완료 후 "완료" 또는 "다음"이라고 입력해주세요.
-Phase B (Blank Model)로 진행합니다.
-```
+**Phase A**: AskUserQuestion을 통해 질문을 하나씩 진행하므로 별도 대기 불필요. 모든 질문 완료 시 자동으로 Phase B 진행.
 
 ### Phase B 종료 필수 문구
 ```
@@ -65,48 +59,40 @@ Phase C (Implementation)로 진행합니다.
 
 **진행 방식**:
 1. 요구사항 분석
-2. 사용자에게 도메인 질문 제시
-3. 사용자가 답변
+2. AskUserQuestion 도구를 사용하여 각 질문을 하나씩 제시
+3. 사용자가 각 질문에 주관식으로 답변
+4. 답변 완료 후 자동으로 다음 질문 진행
+5. 모든 질문 완료 후 Phase B 진행
 
-**핵심 도메인 질문**:
+**질문 순서**:
 
+| 순서 | 질문 | 목적 |
+|------|------|------|
+| Q1 | 비즈니스에서 다루는 핵심 "사물"이나 "개념"은 무엇인가요? | Entity 후보 식별 |
+| Q2 | 이 개체들을 어떻게 구분하나요? | 식별자(ID) 결정 |
+| Q3 | 개체 간 어떤 관계가 있나요? | 1:1, 1:N, N:M 관계 파악 |
+| Q4 | 각 개체가 수행하는 핵심 행동은 무엇인가요? | 비즈니스 메서드 식별 |
+| Q5 | 어떤 규칙이 행동을 제약하나요? | 불변식(Invariant) 파악 |
+| Q6 | 어떤 개체들이 함께 생성/수정/삭제되나요? | Aggregate 경계 식별 |
+| Q7 | 두 개 이상 Entity가 관여하는 로직이 있나요? | Domain Service 후보 |
+| Q8 | 상태 변경 시 다른 시스템/사용자에게 알려야 하나요? | Domain Event 후보 |
+| Q9 | 외부에서 데이터를 받아오나요? 어떤 형식인가요? | Parser/Extractor 후보 |
+| Q10 | 복잡한 비즈니스 규칙이 있나요? | Policy/Specification 후보 |
+
+**AskUserQuestion 사용법**:
 ```
-Q1: 비즈니스에서 다루는 핵심 "사물"이나 "개념"은 무엇인가요?
-    → Entity 후보 식별
-
-Q2: 이 개체들을 어떻게 구분하나요?
-    → 식별자(ID) 결정
-
-Q3: 개체 간 어떤 관계가 있나요?
-    → 1:1, 1:N, N:M 관계 파악
-
-Q4: 각 개체가 수행하는 핵심 행동은 무엇인가요?
-    → 비즈니스 메서드 식별
-
-Q5: 어떤 규칙이 행동을 제약하나요?
-    → 불변식(Invariant) 파악
-
-Q6: 어떤 개체들이 함께 생성/수정/삭제되나요?
-    → Aggregate 경계 식별
-
-Q7: 두 개 이상 Entity가 관여하는 로직이 있나요?
-    → Domain Service 후보
-
-Q8: 상태 변경 시 다른 시스템/사용자에게 알려야 하나요?
-    → Domain Event 후보
-
-Q9: 외부에서 데이터를 받아오나요? 어떤 형식인가요?
-    → Parser/Extractor 후보
-
-Q10: 복잡한 비즈니스 규칙이 있나요?
-     → Policy/Specification 후보
+각 질문마다 AskUserQuestion 도구를 호출:
+- question: 질문 내용
+- header: "Q1", "Q2" 등
+- multiSelect: false
+- options: 주관식 입력을 위해 빈 배열 []
 ```
-
-**상세 가이드**: [domain-questions.md](references/domain-questions.md)
 
 **Phase A 종료 후**:
-- STOP Protocol 적용 → 사용자 입력 대기
-- "완료" 또는 "다음" 입력 시 Phase B 진행
+- 모든 질문 답변 완료 시 자동으로 Phase B 진행
+- 별도의 STOP Protocol 불필요 (AskUserQuestion이 대기 역할 수행)
+
+**상세 가이드**: [domain-questions.md](references/domain-questions.md)
 
 ---
 
