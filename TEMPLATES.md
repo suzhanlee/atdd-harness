@@ -315,7 +315,7 @@ class EntityNameServiceTest {
                     .willAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            var response = service.create(new EntityNameRequest("test"));
+            EntityNameResponse response = service.create(new EntityNameRequest("test"));
 
             // then
             assertThat(response.getFieldName()).isEqualTo("test");
@@ -335,7 +335,7 @@ class EntityNameServiceTest {
             given(repository.findById(1L)).willReturn(Optional.of(entity));
 
             // when
-            var response = service.findById(1L);
+            EntityNameResponse response = service.findById(1L);
 
             // then
             assertThat(response.getFieldName()).isEqualTo("test");
@@ -393,7 +393,7 @@ public class EntityNameStepDefinitions {
 
     @When("Entity 생성 요청을 보낸다")
     public void sendCreateRequest(DataTable dataTable) {
-        var request = dataTable.asMaps().get(0);
+        Map<String, String> request = dataTable.asMaps().get(0);
 
         response = RestAssured.given()
                 .port(port)

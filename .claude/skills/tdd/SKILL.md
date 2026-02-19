@@ -86,7 +86,7 @@ public class UserStepDefinitions {
 
     @When("회원가입 요청을 보낸다")
     public void sendCreateRequest(DataTable dataTable) {
-        var request = dataTable.asMaps().get(0);
+        Map<String, String> request = dataTable.asMaps().get(0);
         response = RestAssured.given()
             .contentType("application/json")
             .body(request)
