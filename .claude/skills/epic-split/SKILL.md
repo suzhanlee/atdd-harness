@@ -1,6 +1,6 @@
 ---
 name: epic-split
-description: 큰 요구사항을 1시간 단위 Epic으로 분해한다. /interview 완료 후 요구사항이 클 때 실행. 기능이 4개 이상이거나 예상 소요가 4시간 이상일 때 사용. 작은 요구사항이면 /validate로 바로 진행. "에픽 분해", "요구사항 쪼개", "Epic 나눠" 요청에 사용.
+description: This skill should be used when the user asks to "/epic-split", "에픽 분해", "요구사항 쪼개", "Epic 나눠", or needs to split large requirements into manageable epics.
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Write, Glob

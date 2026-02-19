@@ -1,6 +1,6 @@
 ---
 name: validate
-description: 요구사항 검증을 수행한다. 바람직한 어려움(Desirable Difficulties)을 적용한 4-Phase 워크플로우로 사용자의 비판적 사고를 훈련한다. /interview 완료 후 /design 전에 실행. Epic 모드에서는 병렬 검증 지원.
+description: This skill should be used when the user asks to "/validate", "요구사항 검증", "검증해줘", or needs to validate requirements before design phase.
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit

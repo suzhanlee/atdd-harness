@@ -1,6 +1,6 @@
 ---
 name: interview
-description: 요구사항 인터뷰를 진행한다. 바람직한 어려움(Desirable Difficulties)을 적용한 4-Phase 워크플로우로 사용자의 지시 역량을 훈련한다. 사용자가 기능 요청, 새 프로젝트, 요구사항 정리를 요청할 때 사용.
+description: This skill should be used when the user asks to "/interview", "요구사항 인터뷰", "새 기능", "프로젝트 시작", "요구사항 정리", or needs to gather and clarify requirements.
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit

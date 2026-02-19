@@ -1,6 +1,6 @@
 ---
 name: adr
-description: Architecture Decision Record (ADR) 작성 가이드. 설계 의사결정을 문서화하고 추적. 바람직한 어려움(Desirable Difficulties)을 적용한 4-Phase 워크플로우.
+description: This skill should be used when the user asks to "/adr", "ADR 작성", "설계 의사결정", "아키텍처 결정 문서화", or needs to document architecture decisions.
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, EnterPlanMode
