@@ -91,10 +91,24 @@ Glob src/main/java/**/domain/entity/*.java → Read each file
 .atdd/design/redteam/design-critique-[날짜].md
 ```
 
-### 4. 사용자 Self-Reflection
-각 이슈에 대해 사용자에게 질문:
-- "왜 이렇게 설계하셨나요?"
-- "대안을 고려해보셨나요?"
+### 4. Reflection Before Decision (증강 학습)
+각 이슈를 ACCEPT/DEFER/REJECT하기 전에 **반영 방향을 스스로 생각**합니다:
+
+**목적**: Conceptual Inquiry 패턴으로 65% 학습 보존
+
+**진행 방식**:
+1. Critique Report의 각 이슈 제시
+2. 사용자에게 **"이 이슈를 어떻게 해결할까?"** 질문
+3. 1~2문장으로 반영 방향 작성 (AI 도움 없이)
+4. 그 후 ACCEPT/DEFER/REJECT 결정
+
+**예시 질문**:
+- "[INV-2] 상태 전이 규칙 미구현 → 어떻게 수정하시겠습니까?"
+- "[REQ-1] Enum 불일치 → 어떤 Enum으로 변경하시겠습니까?"
+
+**사용자 응답 예시**:
+- "canTransitionTo() 메서드를 추가하고 상태 전이 테이블을 정의"
+- "Status Enum을 ADR 기준인 INIT/PROCESSING/EXHAUSTED로 변경"
 
 ### 5. 사용자 결정 대기
 각 이슈에 대해 사용자가 결정:
@@ -204,20 +218,68 @@ Glob src/main/java/**/domain/entity/*.java → Read each file
 
 ---
 
+## 반영 방향 작성 (Reflection Before Decision)
+
+각 이슈를 결정하기 전에 **반영 방향을 1~2문장으로 작성**해주세요:
+
+| 이슈 ID | 이슈 요약 | 반영 방향 (스스로 작성) | 결정 |
+|---------|-----------|------------------------|------|
+| [REQ-1] | Enum 불일치 | ________________________ | ☐ ACCEPT / DEFER / REJECT |
+| [INV-2] | 상태 전이 규칙 | ________________________ | ☐ ACCEPT / DEFER / REJECT |
+| ... | ... | ... | ... |
+
+**작성 가이드**:
+- AI 도움 없이 스스로 작성 (10~30초)
+- 구체적인 수정 방향이나 메서드명 등
+- "모르겠음"도 허용 → 이 경우 AI에게 개념 질문 가능
+
+---
+
 ## 다음 단계
-이슈 검토 후 각 항목에 대해 결정해주세요.
+반영 방향 작성 후 각 항목에 대해 결정해주세요.
 ```
 
 ---
 
 ## 사용자 결정 프로세스
 
-Critique Report를 받은 후, 각 이슈에 대해 결정:
+Critique Report를 받은 후, 각 이슈에 대해 **AskUserQuestion**으로 결정 수집:
+
+### 결정 수집 방식
+
+각 이슈에 대해 다음과 같이 AskUserQuestion 호출:
+
+```
+AskUserQuestion:
+  questions:
+    - question: "[REQ-1] Status Enum 불일치 - 어떻게 처리하시겠습니까?"
+      header: "REQ-1 결정"
+      multiSelect: false
+      options:
+        - label: "ACCEPT (수용)"
+          description: "비평 수용, 설계 수정"
+          markdown: |
+            ## 반영 방향 (필수 작성)
+            - 수정할 내용: _______________
+            - 예상 소요 시간: _______________
+        - label: "DEFER (보류)"
+          description: "나중에 처리, Backlog 추가"
+          markdown: |
+            ## 보류 사유 (필수 작성)
+            - 보류 이유: _______________
+            - 재검토 시점: _______________
+        - label: "REJECT (거부)"
+          description: "비평 거부"
+          markdown: |
+            ## 거부 사유 (필수 작성)
+            - 거부 이유: _______________
+            - 대안 방안: _______________
+```
 
 ### ACCEPT (수용)
 ```
 비평을 수용하고 설계 수정
-→ .atdd/design/redteam/decisions.md에 ACCEPT 기록
+→ .atdd/design/redteam/decisions.md에 ACCEPT + 반영 방향 기록
 → domain-model.md 또는 Entity 코드 수정
 → /redteam-design 재실행으로 검증
 ```
@@ -225,6 +287,7 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 ### DEFER (보류)
 ```
 나중에 처리
+→ .atdd/design/redteam/decisions.md에 DEFER + 보류 사유 기록
 → .atdd/design/redteam/backlog.md에 추가
 → 다음 단계 진행
 ```
@@ -232,7 +295,7 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 ### REJECT (거부)
 ```
 비평을 거부
-→ .atdd/design/redteam/decisions.md에 거부 사유 기록
+→ .atdd/design/redteam/decisions.md에 REJECT + 거부 사유 + 대안 기록
 → 다음 단계 진행
 ```
 
@@ -248,19 +311,30 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 
 ### [RESP-1] User Entity의 비밀번호 검증 책임
 - **결정**: ACCEPT
-- **이유**: Password VO로 책임 이동이 더 적절함
-- **조치**: Password VO 생성, 검증 로직 이동
+- **반영 방향**: Password VO를 생성하고 검증 로직을 User에서 Password로 이동
+- **예상 소요**: 1시간
+- **결정 일시**: 2024-01-15
 
 ### [AGG-1] Order와 OrderItem Aggregate 경계
 - **결정**: DEFER
-- **이유**: 현재 트랜잭션 경계로 충분
-- **조치**: 추후 성능 이슈 시 재검토
+- **보류 사유**: 현재 트랜잭션 경계로 충분, 성능 이슈 발생 시 재검토
+- **재검토 시점**: Phase 2 개발 전
+- **결정 일시**: 2024-01-15
 
 ### [UBIQ-1] status 필드명
 - **결정**: REJECT
-- **이유**: paymentStatus는 비즈니스 용어와 일치함
-- **사유**: 결제팀에서 사용하는 용어 그대로 사용
+- **거부 사유**: paymentStatus는 결제팀에서 사용하는 비즈니스 용어와 일치함
+- **대안 방안**: 용어집(ubiquitous-language.md)에 명시적으로 정의하여 오해 방지
+- **결정 일시**: 2024-01-15
 ```
+
+**Notes 매핑 규칙**:
+- ACCEPT → `notes["수정할 내용"]` → 반영 방향
+- ACCEPT → `notes["예상 소요 시간"]` → 예상 소요
+- DEFER → `notes["보류 이유"]` → 보류 사유
+- DEFER → `notes["재검토 시점"]` → 재검토 시점
+- REJECT → `notes["거부 이유"]` → 거부 사유
+- REJECT → `notes["대안 방안"]` → 대안 방안
 
 ---
 
@@ -272,8 +346,9 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 ## MUST 체크리스트 (실행 후)
 - [ ] 6관점 분석 완료
 - [ ] Critique Report 생성
-- [ ] 사용자 Self-Reflection 질문 제시
-- [ ] 각 이슈에 대한 사용자 결정 기록
+- [ ] 반영 방향 테이블 제시 (Reflection Before Decision)
+- [ ] 각 이슈에 대해 AskUserQuestion으로 결정 수집
+- [ ] 사용자의 notes를 포함한 decisions.md 생성
 
 ---
 
