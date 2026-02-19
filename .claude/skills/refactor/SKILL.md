@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: Clean Code와 DDD 패턴으로 리팩토링한다. 코드 품질 개선 시 사용.
+description: This skill should be used when the user asks to "/refactor", "리팩토링", "Clean Code 적용", "코드 개선", or needs to improve code quality using Clean Code and DDD patterns.
 disable-model-invocation: true
 user-invocable: true
 context: fork

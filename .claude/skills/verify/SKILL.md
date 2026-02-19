@@ -1,6 +1,6 @@
 ---
 name: verify
-description: 최종 검증을 수행한다. 모든 테스트 실행, 코드 품질 확인 및 운영 회귀 테스트(Loki 연동)까지 포함.
+description: This skill should be used when the user asks to "/verify", "검증", "최종 검증", "배포 전 검증", or needs to run all tests and verify code quality before deployment.
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash

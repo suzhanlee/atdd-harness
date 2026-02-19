@@ -1,6 +1,6 @@
 ---
 name: gherkin
-description: Gherkin 시나리오를 추출한다. 바람직한 어려움(Desirable Difficulties)을 적용한 4-Phase 워크플로우로 사용자의 테스트 사고력과 예외 케이스 탐지 능력을 훈련한다. 요구사항을 테스트 시나리오로 변환할 때 사용.
+description: This skill should be used when the user asks to "/gherkin", "시나리오 추출", "Gherkin 시나리오 작성", "테스트 시나리오 변환", or needs to convert requirements to test scenarios.
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit

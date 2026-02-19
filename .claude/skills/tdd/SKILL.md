@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: TDD 사이클로 코드를 구현한다. 테스트 기반 개발을 진행할 때 사용.
+description: This skill should be used when the user asks to "/tdd", "TDD 구현", "테스트 기반 개발", "Red-Green-Refactor", or needs to implement code using TDD cycle.
 disable-model-invocation: true
 user-invocable: true
 context: fork
