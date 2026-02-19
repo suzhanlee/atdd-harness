@@ -17,6 +17,14 @@ references:
 사용자가 직접 Architecture Decision Record를 작성하여 **설계 의사결정 능력**을 향상시킨다.
 단순 문서화가 아닌, 깊은 사고와 분석을 통한 의사결정 훈련을 제공한다.
 
+## 범위
+이 스킬은 **의사결정 문서화**에 집중합니다.
+- ✅ Pre-Mortem 분석
+- ✅ Trade-off Matrix 작성
+- ✅ ADR 본문 작성
+- ✅ Self-Critique 수행
+- ❌ 구현 가이드 제공 (별도 `/design`, `/tdd` 스킬 사용)
+
 ---
 
 ## STOP PROTOCOL
