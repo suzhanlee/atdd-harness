@@ -1,12 +1,13 @@
 ---
 name: design
-description: Entity와 DDD 도메인 모델을 설계한다. 바람직한 어려움(Desirable Difficulties)을 적용한 4-Phase 워크플로우로 사용자의 도메인 모델링 역량을 훈련한다. 데이터베이스 스키마, 도메인 구조 설계 시 사용.
+description: DDD 기반 포괄적 도메인 설계. Entity, DomainService, EventHandler, Parser, Extractor 등 모든 도메인 객체를 4-Phase 워크플로우로 사용자가 직접 설계. 바람직한 어려움(Desirable Difficulties) 적용.
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit
 references:
   - references/domain-questions.md
   - references/blank-erd-template.md
+  - references/blank-architecture-template.md
   - references/ddd-patterns.md
   - references/entity-template.md
   - references/validation-guide.md
@@ -43,7 +44,7 @@ Phase B (Blank Model)로 진행합니다.
 ### Phase B 종료 필수 문구
 ```
 ---
-👆 빈 ERD/도메인 모델을 작성해주세요.
+👆 빈 아키텍처 템플릿을 작성해주세요.
 작성 완료 후 "완료" 또는 "다음"이라고 입력해주세요.
 Phase C (Implementation)로 진행합니다.
 ```
@@ -87,6 +88,18 @@ Q5: 어떤 규칙이 행동을 제약하나요?
 
 Q6: 어떤 개체들이 함께 생성/수정/삭제되나요?
     → Aggregate 경계 식별
+
+Q7: 두 개 이상 Entity가 관여하는 로직이 있나요?
+    → Domain Service 후보
+
+Q8: 상태 변경 시 다른 시스템/사용자에게 알려야 하나요?
+    → Domain Event 후보
+
+Q9: 외부에서 데이터를 받아오나요? 어떤 형식인가요?
+    → Parser/Extractor 후보
+
+Q10: 복잡한 비즈니스 규칙이 있나요?
+     → Policy/Specification 후보
 ```
 
 **상세 가이드**: [domain-questions.md](references/domain-questions.md)
@@ -97,61 +110,104 @@ Q6: 어떤 개체들이 함께 생성/수정/삭제되나요?
 
 ---
 
-### Phase B: Blank Model (빈 모델 작성)
+### Phase B: Blank Architecture (빈 아키텍처 작성)
 
-**목적**: 사용자가 직접 ERD와 도메인 모델을 스케치
+**목적**: 사용자가 직접 전체 아키텍처를 스케치
 
 **진행 방식**:
-1. 빈 템플릿 제시
-2. 사용자가 직접 ERD/도메인 모델 작성
+1. 빈 아키텍처 템플릿 제시
+2. 사용자가 직접 전체 계층 구조 작성
 
-**빈 ERD 템플릿**:
-
-```markdown
-# ERD 스케치
-
-## 테이블 목록
-1. [테이블명1]
-2. [테이블명2]
-3. ...
-
-## [테이블명1]
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | | | |
-| [필드명] | | | |
-| created_at | | | |
-| updated_at | | | |
-
-### 인덱스
-- idx_[테이블]_[컬럼]: [목적]
-
-### 관계
-- → [다른 테이블]: [관계 유형]
-```
-
-**빈 도메인 모델 템플릿**:
+**빈 아키텍처 템플릿**:
 
 ```markdown
-# 도메인 모델 스케치
+# 아키텍처 스케치
 
-## Aggregate: [Aggregate명]
+## 1. Domain Layer
 
-### Root Entity: [Entity명]
-#### 속성
-- [속성명]: [타입]
+### Entities
+| Entity | 식별자 | 핵심 속성 | 핵심 행동 |
+|--------|--------|----------|----------|
+|        |        |          |          |
 
-#### 행동 (메서드)
-- [메서드명](): [설명]
+### Value Objects
+| VO | 속성 | 불변식 |
+|----|------|--------|
+|    |      |        |
 
-#### 불변식
-- [규칙]
+### Domain Services
+| Service | 책임 | 사용 Entity |
+|---------|------|-------------|
+|         |      |             |
 
-### 구성요소
-- [Entity/VO명]: [설명]
+### Domain Events
+| Event | 발생 시점 | 포함 정보 |
+|-------|----------|----------|
+|       |          |           |
+
+### Policies / Specifications
+| 이름 | 규칙/조건 |
+|------|----------|
+|      |          |
+
+---
+
+## 2. Application Layer
+
+### Use Cases / Application Services
+| UseCase | 사용자 행동 | 참여 객체 |
+|---------|-------------|----------|
+|         |             |          |
+
+### Event Handlers
+| Handler | 처리 Event | 후속 작업 |
+|---------|-----------|----------|
+|         |           |          |
+
+---
+
+## 3. Infrastructure Layer
+
+### Parsers
+| Parser | 입력 형식 | 출력 |
+|--------|----------|------|
+|        |          |      |
+
+### Extractors
+| Extractor | 소스 | 추출 대상 |
+|-----------|------|----------|
+|           |      |          |
+
+### External Clients
+| Client | 외부 시스템 | 통신 방식 |
+|--------|-----------|----------|
+|        |           |          |
+
+---
+
+## 4. Interface Layer
+
+### Controllers
+| Controller | API 그룹 | 주요 Endpoint |
+|------------|---------|---------------|
+|            |         |               |
+
+---
+
+## 5. 협력 흐름도 (Collaboration Flow)
+
+### [유스케이스명] 흐름
+```
+[사용자가 직접 그리는 영역 - Mermaid 또는 텍스트]
 ```
 
-**상세 가이드**: [blank-erd-template.md](references/blank-erd-template.md)
+### 이벤트 흐름
+```
+[사용자가 직접 그리는 영역]
+```
+```
+
+**상세 가이드**: [blank-architecture-template.md](references/blank-architecture-template.md)
 
 **Phase B 종료 후**:
 - STOP Protocol 적용 → 사용자 입력 대기
@@ -161,46 +217,15 @@ Q6: 어떤 개체들이 함께 생성/수정/삭제되나요?
 
 ### Phase C: Implementation (구현)
 
-**목적**: 사용자가 작성한 설계안을 바탕으로 실제 코드 생성
+**목적**: 사용자가 작성한 설계안을 바탕으로 코드 작성
 
 **진행 방식**:
-1. Phase A, B 결과를 바탕으로 DDL 생성
-2. JPA Entity 클래스 생성 (Rich Domain Model)
-3. Value Object 생성
+1. 사용자가 Phase B 결과를 바탕으로 직접 코드 작성
+2. 각 계층별 구현 (Domain → Application → Infrastructure → Interface)
+3. 테스트 작성
 
-**Rich Domain Model 원칙**:
-
-```java
-// ✅ Rich Domain Model (권장)
-@Entity
-public class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Embedded
-    private Email email;
-
-    @Enumerated(EnumType.STRING)
-    private UserStatus status;
-
-    // 정적 팩토리 메서드
-    public static User register(Email email, Password password) {
-        User user = new User();
-        user.email = email;
-        user.password = password;
-        user.status = UserStatus.PENDING;
-        return user;
-    }
-
-    // 비즈니스 메서드
-    public void verifyEmail() {
-        if (this.status != UserStatus.PENDING) {
-            throw new IllegalStateException("이미 인증된 사용자입니다.");
-        }
-        this.status = UserStatus.ACTIVE;
-    }
-}
-```
+**구현 순서 참고** (Inside-Out):
+- Entity/VO → Domain Service → Repository → UseCase → Controller
 
 **상세 가이드**:
 - DDD 패턴: [ddd-patterns.md](references/ddd-patterns.md)
@@ -223,13 +248,18 @@ public class User {
 
 **검증 항목**:
 
-| 항목 | 합격 기준 |
-|------|-----------|
-| Must Have 매핑 | 100% |
-| Should Have 매핑 | 80% 이상 |
-| NOT NULL 준수 | 100% |
-| UNIQUE 준수 | 100% |
-| FK 무결성 | 100% |
+| 계층 | 검증 항목 | 합격 기준 |
+|------|----------|----------|
+| Domain | Must Have 매핑 | 100% |
+| Domain | Should Have 매핑 | 80% 이상 |
+| Domain | Entity 불변식 | 100% |
+| Domain | VO 유효성 검증 | 100% |
+| Application | UseCase 커버리지 | 80% 이상 |
+| Infrastructure | Parser 예외 처리 | 100% |
+| Infrastructure | NOT NULL 준수 | 100% |
+| Infrastructure | UNIQUE 준수 | 100% |
+| Infrastructure | FK 무결성 | 100% |
+| Interface | API 스펙 준수 | 100% |
 
 **상세 가이드**: [validation-guide.md](references/validation-guide.md)
 
@@ -374,6 +404,7 @@ JPA Entity 클래스
 ## 참조
 - 도메인 질문 가이드: [domain-questions.md](references/domain-questions.md)
 - 빈 ERD 템플릿: [blank-erd-template.md](references/blank-erd-template.md)
+- 빈 아키텍처 템플릿: [blank-architecture-template.md](references/blank-architecture-template.md)
 - DDD 패턴: [ddd-patterns.md](references/ddd-patterns.md)
 - Entity 템플릿: [entity-template.md](references/entity-template.md)
 - 검증 가이드: [validation-guide.md](references/validation-guide.md)
