@@ -7,7 +7,10 @@ context: fork
 agent: general-purpose
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash
 references:
-  - references/test-template.md
+  - references/e2e-test-template.md
+  - references/unit-test-template.md
+  - references/integration-test-template.md
+  - references/sql-data-guide.md
 ---
 
 # TDD 코드 구현
@@ -21,7 +24,10 @@ TDD 사이클을 통해 코드를 구현한다.
 - `src/main/java/**/domain/entity/*.java`
 
 ## 템플릿
-- 테스트 템플릿: [test-template.md](references/test-template.md)
+- E2E 테스트: [e2e-test-template.md](references/e2e-test-template.md)
+- 단위 테스트: [unit-test-template.md](references/unit-test-template.md)
+- 통합 테스트: [integration-test-template.md](references/integration-test-template.md)
+- SQL 데이터: [sql-data-guide.md](references/sql-data-guide.md)
 
 ## 트리거
 - `/tdd` 명령어 실행
@@ -246,6 +252,9 @@ Step Definition 클래스들
 모든 테스트 통과 후 `/refactor` 실행
 
 ## 참조
-- 테스트 템플릿: [test-template.md](references/test-template.md)
+- E2E 템플릿: [e2e-test-template.md](references/e2e-test-template.md)
+- 단위 템플릿: [unit-test-template.md](references/unit-test-template.md)
+- 통합 템플릿: [integration-test-template.md](references/integration-test-template.md)
+- SQL 가이드: [sql-data-guide.md](references/sql-data-guide.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

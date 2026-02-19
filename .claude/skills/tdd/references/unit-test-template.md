@@ -1,6 +1,6 @@
-# Test Template
+# Unit Test Template (JUnit5 + Mockito)
 
-## Unit Test Template (JUnit5 + Mockito)
+## Service Unit Test Template
 
 ```java
 package com.example.unit;
@@ -10,7 +10,6 @@ import com.example.application.dto.EntityNameResponse;
 import com.example.application.service.EntityNameService;
 import com.example.domain.entity.EntityName;
 import com.example.domain.repository.EntityNameRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -45,10 +44,7 @@ class EntityNameServiceTest {
             // given
             EntityNameRequest request = new EntityNameRequest("test");
             given(repository.save(any(EntityName.class)))
-                    .willAnswer(invocation -> {
-                        EntityName entity = invocation.getArgument(0);
-                        return entity;
-                    });
+                    .willAnswer(invocation -> invocation.getArgument(0));
 
             // when
             EntityNameResponse response = service.create(request);
@@ -109,213 +105,7 @@ class EntityNameServiceTest {
 
 ---
 
-## Integration Test Template (DataJpaTest)
-
-```java
-package com.example.integration;
-
-import com.example.domain.entity.EntityName;
-import com.example.domain.repository.EntityNameRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
-
-@DataJpaTest
-@DisplayName("EntityNameRepository 통합 테스트")
-class EntityNameRepositoryIntegrationTest {
-
-    @Autowired
-    private TestEntityManager entityManager;
-
-    @Autowired
-    private EntityNameRepository repository;
-
-    @BeforeEach
-    void setUp() {
-        entityManager.clear();
-    }
-
-    @Test
-    @DisplayName("Entity 저장 및 ID로 조회")
-    void saveAndFindById() {
-        // given
-        EntityName entity = EntityName.create("test");
-        EntityName saved = entityManager.persist(entity);
-        entityManager.flush();
-
-        // when
-        Optional<EntityName> found = repository.findById(saved.getId());
-
-        // then
-        assertThat(found).isPresent();
-        assertThat(found.get().getFieldName()).isEqualTo("test");
-    }
-
-    @Test
-    @DisplayName("필드명으로 조회")
-    void findByFieldName() {
-        // given
-        EntityName entity = EntityName.create("test");
-        entityManager.persist(entity);
-        entityManager.flush();
-
-        // when
-        Optional<EntityName> found = repository.findByFieldName("test");
-
-        // then
-        assertThat(found).isPresent();
-    }
-
-    @Test
-    @DisplayName("페이징 조회")
-    void findAllWithPaging() {
-        // given
-        for (int i = 0; i < 15; i++) {
-            entityManager.persist(EntityName.create("test" + i));
-        }
-        entityManager.flush();
-
-        // when
-        Page<EntityName> page = repository.findAll(PageRequest.of(0, 10));
-
-        // then
-        assertThat(page.getContent()).hasSize(10);
-        assertThat(page.getTotalElements()).isEqualTo(15);
-        assertThat(page.getTotalPages()).isEqualTo(2);
-    }
-}
-```
-
----
-
-## Cucumber Step Definition Template
-
-```java
-package com.example.e2e;
-
-import com.example.application.dto.EntityNameRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.Before;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.server.LocalServerPort;
-
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.hamcrest.Matchers.*;
-
-public class EntityNameStepDefinitions {
-
-    @LocalServerPort
-    private int port;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private Response response;
-
-    @Before
-    public void setUp() {
-        RestAssured.port = port;
-        RestAssured.basePath = "/api/v1";
-    }
-
-    @Given("데이터베이스가 초기화되어 있다")
-    public void databaseIsInitialized() {
-        // Database cleanup logic
-        // Example: repository.deleteAll();
-    }
-
-    @Given("다음 Entity가 존재한다")
-    public void entityExists(DataTable dataTable) {
-        // Create entities from data table
-        for (Map<String, String> row : dataTable.asMaps()) {
-            EntityNameRequest request = new EntityNameRequest(row.get("fieldName"));
-            // repository.save(EntityName.create(request.getFieldName()));
-        }
-    }
-
-    @When("Entity 생성 요청을 보낸다")
-    public void sendCreateRequest(DataTable dataTable) throws Exception {
-        Map<String, String> data = dataTable.asMaps().get(0);
-
-        response = RestAssured.given()
-                .contentType("application/json")
-                .body(objectMapper.writeValueAsString(data))
-                .when()
-                .post("/entities");
-    }
-
-    @When("Entity 조회 요청을 보낸다: {long}")
-    public void sendFindByIdRequest(Long id) {
-        response = RestAssured.given()
-                .when()
-                .get("/entities/" + id);
-    }
-
-    @When("Entity 수정 요청을 보낸다: {long}")
-    public void sendUpdateRequest(Long id, DataTable dataTable) throws Exception {
-        Map<String, String> data = dataTable.asMaps().get(0);
-
-        response = RestAssured.given()
-                .contentType("application/json")
-                .body(objectMapper.writeValueAsString(data))
-                .when()
-                .put("/entities/" + id);
-    }
-
-    @When("Entity 삭제 요청을 보낸다: {long}")
-    public void sendDeleteRequest(Long id) {
-        response = RestAssured.given()
-                .when()
-                .delete("/entities/" + id);
-    }
-
-    @Then("상태 코드 {int}를 받는다")
-    public void verifyStatusCode(int statusCode) {
-        response.then().statusCode(statusCode);
-    }
-
-    @Then("응답의 {string} 필드는 {string}이다")
-    public void verifyResponseField(String field, String value) {
-        response.then().body(field, equalTo(value));
-    }
-
-    @Then("응답의 {string} 필드는 {int}이다")
-    public void verifyResponseFieldInt(String field, int value) {
-        response.then().body(field, equalTo(value));
-    }
-
-    @Then("응답에 {string} 필드가 존재한다")
-    public void verifyFieldExists(String field) {
-        response.then().body(field, notNullValue());
-    }
-
-    @Then("에러 메시지는 {string}이다")
-    public void verifyErrorMessage(String message) {
-        response.then().body("message", containsString(message));
-    }
-}
-```
-
----
-
-## Entity Test Template
+## Entity Unit Test Template
 
 ```java
 package com.example.unit.domain;
@@ -396,6 +186,26 @@ class EntityNameTest {
 
             // then
             assertThat(entity.isDeleted()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("상태 전이")
+    class StateTransition {
+
+        @Test
+        @DisplayName("활성 상태에서 삭제 상태로 전이한다")
+        void transitionFromActiveToDeleted() {
+            // given
+            EntityName entity = EntityName.create("test");
+            assertThat(entity.isActive()).isTrue();
+
+            // when
+            entity.delete();
+
+            // then
+            assertThat(entity.isDeleted()).isTrue();
+            assertThat(entity.isActive()).isFalse();
         }
     }
 }
@@ -483,19 +293,29 @@ class EmailTest {
 
 ## Test Naming Convention
 
-| 테스트 유형 | 명명 규칙 | 예시 |
-|------------|----------|------|
-| 단위 테스트 | `{method}_{scenario}` | `create_withValidRequest` |
-| 통합 테스트 | `{action}` | `saveAndFindById` |
-| E2E 테스트 | Gherkin Step | `sendCreateRequest` |
+| 유형 | 명명 규칙 | 예시 |
+|------|----------|------|
+| Service | `{method}_{scenario}` | `create_withValidRequest` |
+| Entity | `{method}_{scenario}` | `create_withValidName` |
+| VO | `{method}_{scenario}` | `from_validEmail` |
+| 예외 케이스 | `{method}_{scenario}_throwsException` | `create_withEmptyName_throwsException` |
 
 ---
 
 ## Best Practices
 
-1. **Given-When-Then 구조 유지**
-2. **Mock은 최소한으로**
-3. **테스트 간 독립성 보장**
-4. **의미 있는 DisplayName 사용**
-5. **ParameterizedTest로 중복 제거**
-6. **AssertJ 사용으로 가독성 향상**
+1. **Given-When-Then 구조 유지** - 테스트의 가독성을 높이는 3단계 구조
+2. **Mock은 최소한으로** - 필요한 의존성만 Mocking하여 과도한 결합도 회피
+3. **테스트 간 독립성 보장** - 각 테스트가 다른 테스트에 영향을 주지 않도록 격리
+4. **의미 있는 DisplayName 사용** - 테스트의 의도를 명확히 표현
+5. **ParameterizedTest로 중복 제거** - 유사한 테스트 케이스를 파라미터화
+6. **AssertJ 사용으로 가독성 향상** - assertThat() 체이닝으로 명확한 검증
+7. **BDDMockito 활용** - given/willReturn/then 패턴으로 가독성 향상
+8. **@Nested로 그룹화** - 관련 테스트를 논리적으로 그룹화
+
+---
+
+## 관련 문서
+
+- [통합 테스트 템플릿](integration-test-template.md) - Repository 테스트
+- [E2E 테스트 템플릿](e2e-test-template.md) - Cucumber Step Definitions
