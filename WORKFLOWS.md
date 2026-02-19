@@ -520,10 +520,11 @@ public class User {
    ├─▶ sql/schema/002_role.sql
    └─▶ sql/schema/003_session.sql
 
-5. JPA Entity 생성 (Rich Domain Model)
-   ├─▶ User.java (비즈니스 로직 포함)
+5. JPA Entity 골격 생성 (인터페이스만)
+   ├─▶ User.java (메서드 시그니처만, 빈 구현)
    ├─▶ Role.java
    └─▶ Session.java
+   ※ 실제 구현은 /tdd Phase에서
 
 6. Bounded Context 정의
    └─▶ User Context (회원 관리)

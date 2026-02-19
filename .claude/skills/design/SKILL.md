@@ -29,7 +29,7 @@ AI가 설계안을 제시하는 방식이 아닌, 사용자가 주도적으로 �
 ```
 Phase A (Domain Q&A)      → AskUserQuestion으로 1개씩 질문 → 자동 Phase B 진행
 Phase B (Blank Model)     → 사용자 입력 대기 → "완료"/"다음" → Phase C
-Phase C (Implementation)  → Phase D 즉시 진행 (대기 없음)
+Phase C (Interface Def.)  → Phase D 즉시 진행 (대기 없음)
 Phase D (Validation)      → 설계 완료
 ```
 
@@ -40,7 +40,7 @@ Phase D (Validation)      → 설계 완료
 ---
 👆 빈 아키텍처 템플릿을 작성해주세요.
 작성 완료 후 "완료" 또는 "다음"이라고 입력해주세요.
-Phase C (Implementation)로 진행합니다.
+Phase C (Interface Definition)로 진행합니다.
 ```
 
 ---
@@ -201,17 +201,47 @@ Phase C (Implementation)로 진행합니다.
 
 ---
 
-### Phase C: Implementation (구현)
+### Phase C: Interface Definition (인터페이스 정의)
 
-**목적**: 사용자가 작성한 설계안을 바탕으로 코드 작성
+**목적**: 사용자가 작성한 설계안을 바탕으로 인터페이스와 메서드 시그니처만 정의
 
 **진행 방식**:
-1. 사용자가 Phase B 결과를 바탕으로 직접 코드 작성
-2. 각 계층별 구현 (Domain → Application → Infrastructure → Interface)
-3. 테스트 작성
+1. Entity 클래스 골격 생성 (속성만, 메서드는 빈 구현)
+2. Repository 인터페이스 정의 (메서드 시그니처만)
+3. Service 인터페이스 정의 (메서드 시그니처만)
+4. 실제 구현은 `/tdd`에서 수행
 
-**구현 순서 참고** (Inside-Out):
-- Entity/VO → Domain Service → Repository → UseCase → Controller
+**인터페이스 정의 원칙**:
+- 메서드 시그니처와 반환 타입만 정의
+- 빈 구현: `throw new UnsupportedOperationException("TODO: TDD에서 구현")`
+- Javadoc으로 의도만 표현
+
+**예시**:
+```java
+@Entity
+public class User {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Embedded
+    private Email email;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+
+    protected User() {}
+
+    // 정적 팩토리 - 시그니처만
+    public static User register(Email email, Password password) {
+        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+    }
+
+    // 비즈니스 메서드 - 시그니처만
+    public void verifyEmail() {
+        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+    }
+}
+```
 
 **상세 가이드**:
 - DDD 패턴: [ddd-patterns.md](references/ddd-patterns.md)
@@ -303,8 +333,8 @@ Phase C (Implementation)로 진행합니다.
 
 ## MUST 체크리스트 (실행 후)
 - [ ] Phase A: 도메인 질문 답변 완료
-- [ ] Phase B: ERD/도메인 모델 작성 완료
-- [ ] Phase C: DDL, Entity 클래스 생성
+- [ ] Phase B: 아키텍처 스케치 작성 완료
+- [ ] Phase C: 인터페이스/시그니처 정의 완료 (빈 구현)
 - [ ] Phase D: 검증 완료 (Must Have 100%)
 - [ ] erd.md, domain-model.md 생성
 - [ ] traceability-matrix.md 생성
