@@ -27,10 +27,57 @@
 - `.atdd/requirements/interview-log.md`
 
 ### 상태 전이
-완료 → `/validate` 호출 가능
+완료 → `/epic-split` (요구사항이 큰 경우) 또는 `/validate` 호출 가능
 
 ---
-하
+
+## Phase 1.5: Epic Split Agent
+
+### 목표
+큰 요구사항을 1시간 단위 Epic으로 분해하여 점진적 개발이 가능하게 한다.
+
+### 실행 조건
+
+| 조건 | 결과 |
+|------|------|
+| 기능 ≤ 3개 AND 예상 < 4시간 | ⏭️ 스킵 → /validate |
+| 기능 ≥ 4개 OR 예상 ≥ 4시간 | ✅ 실행 |
+
+### 입력
+- `.atdd/requirements/requirements-draft.md`
+
+### 프로세스
+1. **요구사항 분석**: 기능 요구사항 개수 파악
+2. **실행 여부 판단**: 위 조건 테이블 기준
+3. **도메인 기준 Epic 분해**
+   - 도메인 경계 식별
+   - Entity 중심 그룹핑
+   - CRUD 스트림 분리
+4. **의존성 분석**: Entity 간 연관관계, 기능 의존성 파악
+5. **구현 순서 결정**: 의존성 기반 우선순위
+
+### Epic 크기 기준
+
+| 항목 | 권장 범위 |
+|------|----------|
+| Entity | 1~2개 |
+| 기능 | 1개 CRUD 스트림 |
+| 소요 시간 | 약 1시간 |
+
+### 참조 파일
+- [SKILL.md](.claude/skills/epic-split/SKILL.md)
+- [epic-templates.md](.claude/skills/epic-split/references/epic-templates.md)
+
+### 출력
+- `.atdd/requirements/epics.md` (Epic 목록)
+- `.atdd/requirements/epic-roadmap.md` (구현 순서, 의존성)
+
+### 상태 전이
+- 스킵 → `/validate` 호출
+- 분해 완료 → 첫 Epic부터 `/validate` 호출
+
+---
+
 ## Phase 2: Validation Agent
 
 ### 목표
@@ -355,8 +402,85 @@ public class User {
 - `src/main/java/**/domain/entity/*.java`
 
 ### 상태 전이
-- 검증 통과 → `/gherkin` 호출 가능
+- 검증 통과 → `/redteam-design` 호출 가능
 - 검증 실패 → 설계 수정 후 재검증
+
+---
+
+## Phase 2.6: Red Team Design Agent
+
+### 목표
+Red Team 관점에서 도메인 모델(Entity, VO, Aggregate, Domain Service)을 비판적으로 검토하여 DDD 설계 품질을 향상시킨다.
+
+### 기존 `/redteam`과의 차이
+
+| 항목 | /redteam | /redteam-design |
+|------|----------|-----------------|
+| 검토 대상 | ADR (설계 의사결정) | 도메인 모델 (Entity, VO, Aggregate) |
+| 관점 | Security, Performance, Scalability 등 | Responsibility, Aggregate, Invariants 등 |
+| 목적 | 아키텍처/기술 결정 검증 | DDD 원칙 준수 검증 |
+
+### 바람직한 어려움 (Desirable Difficulties) 적용
+- **Self-Explanation**: Self-Reflection 질문을 통해 "왜 이렇게 설계했나요?" 스스로 고민
+- **Contrastive Cases**: 안티패턴 vs 권장 패턴 비교를 통해 좋은 설계 학습
+- **Feedback Loop**: 즉각적 Critique Report로 실수 인지 및 수정 훈련
+- **Retrieval Practice**: 설계 결정 이유를 설명하며 설계 지식 인출
+
+### 입력
+- `.atdd/design/erd.md` (ERD 문서)
+- `.atdd/design/domain-model.md` (도메인 모델)
+- `.atdd/design/traceability-matrix.md` (요구사항-도메인 추적 매트릭스)
+- `.atdd/requirements/refined-requirements.md` (정제된 요구사항)
+- `src/main/java/**/domain/entity/*.java` (Entity 클래스)
+
+### 6가지 검토 관점 (RRAIRU)
+
+| 관점 | 초점 | 예시 질문 |
+|------|------|-----------|
+| **R**esponsibility | 책임 분배 적절성 | "User가 비밀번호를 직접 검증하는 게 맞나?" |
+| **R**equirements Fit | 요구사항 적합성 | "요구사항에 없는 필드가 추가되었나?" |
+| **A**ggregate Boundary | Aggregate 경계 적절성 | "Order와 OrderItem이 별도 Aggregate여야 하나?" |
+| **I**nvariants | 불변식 완전성 | "부분 취소 시 총액 재계산 로직이 있는가?" |
+| **R**elationships | 연관관계 설계 적절성 | "양방향 연관관계가 정말 필요한가?" |
+| **U**biquitous Language | 보편 언어 일치 | "코드의 `status`가 비즈니스 용어와 일치하는가?" |
+
+### 프로세스
+1. **설계 산출물 로드**: ERD, 도메인 모델, Entity 클래스 읽기
+2. **6관점 분석 (RRAIRU)**: 각 관점에서 잠재적 문제 식별
+3. **Critique Report 생성**: 이슈 목록, Self-Reflection 질문 포함
+4. **Reflection Before Decision**: ACCEPT/DEFER/REJECT 전에 반영 방향 작성
+5. **사용자 결정 대기**: 각 이슈에 대해 ACCEPT/DEFER/REJECT 수집
+
+### Reflection Before Decision (증강 학습)
+각 이슈를 ACCEPT/DEFER/REJECT하기 전에 **반영 방향을 스스로 생각**:
+
+| 이슈 ID | 이슈 요약 | 반영 방향 (스스로 작성) | 결정 |
+|---------|-----------|------------------------|------|
+| [REQ-1] | Enum 불일치 | ________________________ | ☐ ACCEPT / DEFER / REJECT |
+| [INV-2] | 상태 전이 규칙 | ________________________ | ☐ ACCEPT / DEFER / REJECT |
+
+**목적**: Conceptual Inquiry 패턴으로 65% 학습 보존
+
+### 사용자 결정 옵션
+
+| 결정 | 동작 |
+|------|------|
+| **ACCEPT** | 비평 수용 → 설계 수정 → `/redteam-design` 재실행 |
+| **DEFER** | 나중에 처리 → Backlog 추가 → 다음 단계 진행 |
+| **REJECT** | 거부 → 거부 사유 문서화 → 다음 단계 진행 |
+
+### 참조 파일
+- [SKILL.md](.claude/skills/redteam-design/SKILL.md)
+- [design-critique-perspectives.md](.claude/skills/redteam-design/references/design-critique-perspectives.md)
+
+### 출력
+- `.atdd/design/redteam/design-critique-[날짜].md`
+- `.atdd/design/redteam/decisions.md`
+- `.atdd/design/redteam/backlog.md`
+
+### 상태 전이
+- 모든 이슈 처리 완료 → `/gherkin` 호출 가능
+- ACCEPT로 인한 설계 수정 → `/redteam-design` 재실행
 
 ---
 
@@ -594,3 +718,170 @@ Clean Code와 DDD 패턴으로 리팩토링한다.
 
 ### 상태 전이
 완료 → ATDD 사이클 종료
+
+---
+
+## Utility Agents
+
+### Commit Agent
+
+#### 목표
+Conventional Commits 규칙을 기반으로 **기능 단위의 작은 커밋**을 계획하고 한국어로 명확한 커밋 메시지를 작성한다.
+
+#### 트리거
+- `/commit`, `/ci`
+- "커밋해줘", "commit", "변경사항 커밋"
+
+#### 핵심 원칙
+- **Atomic Commits**: 한 커밋 = 하나의 논리적 변경
+- 커밋은 독립적으로 되돌릴 수 있어야 함
+
+#### 커밋 크기 가이드라인
+
+| 지표 | 권장 범위 |
+|------|----------|
+| 파일 수 | 1~5개 |
+| 라인 변경 | 50~300줄 |
+| 커밋 요약 | 50자 이내 |
+
+#### 프로세스
+1. **변경사항 수집**: `git status`, `git diff`로 파일 분석
+2. **커밋 계획 수립**: 파일들을 기능 단위로 그룹화
+3. **사용자 승인**: 계획 확인 후 진행
+4. **순차적 커밋 실행**: 각 그룹별로 커밋
+
+#### 참조 파일
+- [SKILL.md](.claude/skills/commit/SKILL.md)
+
+---
+
+### Monitor Agent
+
+#### 목표
+운영 환경의 에러 로그를 S3(Loki 저장소)에서 조회하고 분석하여 우선순위별로 분류한다.
+
+#### 트리거
+- `/monitor`
+- "운영 로그 확인해줘", "에러 로그 분석해줘", "최근 에러 있어?"
+
+#### 전제 조건
+- AWS CLI가 설정되어 있어야 함
+- S3 버킷에 Loki 로그가 저장되어 있어야 함
+
+#### 에러 분류
+- **5xx**: HTTP 서버 에러 (500, 502, 503, 504)
+- **Exception**: Java Exception (NullPointerException, SQLException 등)
+- **Timeout**: 요청 시간 초과
+- **Connection**: DB/외부 서비스 연결 실패
+- **Business**: 비즈니스 로직 에러
+
+#### 우선순위 정렬
+
+| 우선순위 | 기준 |
+|----------|------|
+| P0 (Critical) | 500 에러 다발, 서비스 중단 |
+| P1 (High) | 반복되는 Exception |
+| P2 (Medium) | 간헐적 Timeout |
+| P3 (Low) | 기타 경고 |
+
+#### 출력
+- `.atdd/runtime/errors/error-report-{YYYYMMDD-HHmmss}.md`
+
+#### 참조 파일
+- [SKILL.md](.claude/skills/monitor/SKILL.md)
+
+---
+
+### Analyze Error Agent
+
+#### 목표
+특정 에러를 심층 분석하고 5 Whys 기법으로 근본 원인을 파악하여 수정 방안을 제안한다.
+
+#### 트리거
+- `/analyze-error {error-id}`
+- "이 에러 분석해줘", "ERR-001 원인 찾아줘"
+
+#### 전제 조건
+- `/monitor` 실행으로 에러 리포트가 생성되어 있어야 함
+
+#### 프로세스
+1. **에러 컨텍스트 수집**: 스택트레이스, 요청 컨텍스트, 관련 로그
+2. **코드 분석**: 문제 발생 지점의 코드 확인
+3. **근본 원인 분석 (5 Whys)**: Why를 5번 반복하여 근본 원인 추적
+4. **수정 방안 도출**:
+   - 즉시 수정 (Quick Fix)
+   - 근본 수정 (Root Cause Fix)
+   - 예방 조치 (Prevention)
+
+#### 5 Whys 예시
+```
+에러: NullPointerException at UserService.java:45
+
+Q1: 왜 NPE가 발생했나? → userId 파라미터가 null
+Q2: 왜 userId가 null이었나? → 클라이언트가 전송하지 않음
+Q3: 왜 전송하지 않았나? → 로그인 상태 미확인
+Q4: 왜 미확인했나? → 인증 가드 없음
+Q5: 왜 인증 가드가 없나? → Security 설정 누락
+
+근본 원인: Security 설정 누락
+```
+
+#### 출력
+- `.atdd/runtime/errors/analysis-{error-id}.md`
+
+#### 다음 단계
+- 자동 수정: `/fix {error-id}`
+
+#### 참조 파일
+- [SKILL.md](.claude/skills/analyze-error/SKILL.md)
+
+---
+
+### Fix Agent (Self-Healing)
+
+#### 목표
+에러 분석을 바탕으로 Gherkin 시나리오 생성 → 테스트 작성 → 수정 코드 구현 → PR 생성까지 자동화한다.
+
+#### 트리거
+- `/fix {error-id}`
+- "이 에러 수정해줘", "자가 치유 실행해줘"
+
+#### 전제 조건
+- `/analyze-error {error-id}` 실행으로 분석 리포트가 생성되어 있어야 함
+- Git working directory가 clean해야 함
+
+#### Self-Healing 프로세스
+
+```
+Phase 1: 준비
+  └─▶ 분석 리포트 로드, 브랜치 생성
+
+Phase 2: Gherkin 생성 (Red)
+  └─▶ 실패 시나리오를 Gherkin으로 변환
+
+Phase 3: 테스트 작성 (Red)
+  └─▶ Cucumber Step Definition 작성
+
+Phase 4: 수정 코드 작성 (Green)
+  └─▶ 분석된 수정 방안으로 코드 수정
+
+Phase 5: 검증 (Green)
+  └─▶ ./gradlew test, ./gradlew cucumber 실행
+
+Phase 6: PR 생성
+  └─▶ 커밋, Push, PR 생성
+```
+
+#### 브랜치 네이밍 규칙
+```
+fix/claude-loki-error-{error-type}-{YYYYMMDD}
+```
+
+#### 출력
+- Feature 파일: `src/test/resources/features/fix-{error-id}.feature`
+- 수정된 소스 코드
+- PR URL
+- `.atdd/runtime/fixes/fix-{error-id}.md`
+
+#### 참조 파일
+- [SKILL.md](.claude/skills/fix/SKILL.md)

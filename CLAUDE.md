@@ -9,7 +9,9 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 
 ## ATDD 워크플로우
 ```
-/interview → /epic-split? → /validate → /design → /gherkin → /tdd → /refactor → /verify
+/interview → /epic-split? → /validate → /adr ↔ /redteam → /design → /redteam-design → /gherkin → /tdd → /refactor → /verify
+                                    ↑___________|
+                                      반복 루프
 ```
 
 ## 주요 디렉토리
@@ -23,17 +25,48 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 - 템플릿: [TEMPLATES.md](TEMPLATES.md)
 - 워크플로우: [WORKFLOWS.md](WORKFLOWS.md)
 
-## 주요 명령어
+## ATDD Core 명령어
+| 명령어 | Phase | 설명 |
+|--------|-------|------|
+| `/interview` | 1 | 요구사항 인터뷰 |
+| `/epic-split` | 1.5 | 큰 요구사항 Epic 분해 (선택) |
+| `/validate` | 2 | 요구사항 검증 |
+| `/adr` | 2.5a | Architecture Decision Record 작성 |
+| `/redteam` | 2.5b | ADR 비판적 검토 (6관점) |
+| `/design` | 2.5 | Entity/Domain 설계 |
+| `/redteam-design` | 2.6 | 도메인 모델 비판적 검토 (RRAIRU) |
+| `/gherkin` | 3 | Gherkin 시나리오 추출 |
+| `/tdd` | 4 | TDD 코드 구현 (Inside-Out) |
+| `/refactor` | 5 | Clean Code 리팩토링 |
+| `/verify` | 6 | 최종 검증 |
+
+## Runtime Self-Healing 명령어
 | 명령어 | 설명 |
 |--------|------|
-| `/interview` | 요구사항 인터뷰 |
-| `/epic-split` | 큰 요구사항 Epic 분해 (선택) |
-| `/validate` | 요구사항 검증 |
-| `/design` | Entity/Domain 설계 |
-| `/gherkin` | Gherkin 시나리오 추출 |
-| `/tdd` | TDD 코드 구현 |
-| `/refactor` | Clean Code 리팩토링 |
-| `/verify` | 최종 검증 |
+| `/monitor` | S3 Loki 에러 로그 모니터링 |
+| `/analyze-error` | 5 Whys 근본 원인 분석 |
+| `/fix` | Self-Healing (Gherkin → Test → Fix → PR) |
+
+## Utility 명령어
+| 명령어 | 설명 |
+|--------|------|
+| `/commit` | 한국어 Atomic Commits |
+
+## 스킬 간 관계 및 증강학습
+
+### Red Team 계열 스킬 분담
+- **`/redteam`** (Phase 2.5b): ADR(설계 의사결정) 비평
+  - 관점: Security, Performance, Scalability, Maintainability, Business, Reliability
+- **`/redteam-design`** (Phase 2.6): 도메인 모델(Entity, VO, Aggregate) 비평
+  - 관점: Responsibility, Requirements Fit, Aggregate Boundary, Invariants, Relationships, Ubiquitous Language (RRAIRU)
+
+### 바람직한 어려움 (Desirable Difficulties) 적용
+Robert Bjork의 학습 원칙을 적용하여 설계 역량 강화:
+- **Pre-Mortem**: 템플릿 보기 전 실패 상상 (ADR)
+- **Trade-off Matrix**: 최소 3개 대안 강제 분석 (ADR)
+- **Self-Explanation**: "왜 이렇게 설계했나요?" 질문 (redteam-design)
+- **Contrastive Cases**: 안티패턴 vs 권장 패턴 비교 (redteam-design)
+- **Feedback Loop**: 즉각적 Critique Report (redteam, redteam-design)
 
 ## 테스트 실행
 ```bash
