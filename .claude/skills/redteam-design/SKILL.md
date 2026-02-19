@@ -25,6 +25,7 @@ Red Team 관점에서 도메인 모델(Entity, VO, Aggregate, Domain Service)을
 ## 입력
 - `.atdd/design/erd.md` (ERD 문서)
 - `.atdd/design/domain-model.md` (도메인 모델)
+- `.atdd/design/traceability-matrix.md` (요구사항-도메인 추적 매트릭스)
 - `.atdd/requirements/refined-requirements.md` (정제된 요구사항)
 - `src/main/java/**/domain/entity/*.java` (Entity 클래스)
 
@@ -45,14 +46,14 @@ Red Team은 설계에 대한 "비판적" 관점을 취하여 잠재적인 문제
 
 ## 6가지 검토 관점 (RRAIRU)
 
-| 관점 | 초점 | 예시 질문 |
-|------|------|-----------|
-| **R**esponsibility | 책임 분배 | "User가 비밀번호를 직접 검증하는 게 맞나?" |
-| **R**equirements Fit | 요구사항 적합성 | "요구사항에 없는 필드가 추가되었나?" |
-| **A**ggregate Boundary | Aggregate 경계 | "Order와 OrderItem이 별도 Aggregate여야 하나?" |
-| **I**nvariants | 불변식 완전성 | "부분 취소 시 총액 재계산 로직이 있는가?" |
-| **R**elationships | 연관관계 설계 | "양방향 연관관계가 정말 필요한가?" |
-| **U**biquitous Language | 보편 언어 일치 | "코드의 `status`가 비즈니스 용어와 일치하는가?" |
+| 관점 | 초점 | 예시 질문 | 활용할 design 출력물 |
+|------|------|-----------|---------------------|
+| **R**esponsibility | 책임 분배 | "User가 비밀번호를 직접 검증하는 게 맞나?" | domain-model.md, Entity.java |
+| **R**equirements Fit | 요구사항 적합성 | "요구사항에 없는 필드가 추가되었나?" | refined-requirements.md, **traceability-matrix.md** |
+| **A**ggregate Boundary | Aggregate 경계 | "Order와 OrderItem이 별도 Aggregate여야 하나?" | erd.md, domain-model.md |
+| **I**nvariants | 불변식 완전성 | "부분 취소 시 총액 재계산 로직이 있는가?" | Entity.java, domain-model.md |
+| **R**elationships | 연관관계 설계 | "양방향 연관관계가 정말 필요한가?" | erd.md, Entity.java |
+| **U**biquitous Language | 보편 언어 일치 | "코드의 `status`가 비즈니스 용어와 일치하는가?" | domain-model.md, Entity.java |
 
 ## 상세 가이드
 - 6가지 관점 체크리스트: [design-critique-perspectives.md](references/design-critique-perspectives.md)
@@ -65,6 +66,7 @@ Red Team은 설계에 대한 "비판적" 관점을 취하여 잠재적인 문제
 ```
 Read .atdd/design/erd.md
 Read .atdd/design/domain-model.md
+Read .atdd/design/traceability-matrix.md
 Read .atdd/requirements/refined-requirements.md
 Glob src/main/java/**/domain/entity/*.java → Read each file
 ```

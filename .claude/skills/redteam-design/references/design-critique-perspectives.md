@@ -98,8 +98,9 @@ public class LoginStatus {
 
 ### 체크리스트
 
-#### Must Have 매핑
-- [ ] 모든 Must Have 요구사항이 Entity/메서드로 구현되었는가?
+#### Must Have 매핑 (traceability-matrix.md 활용)
+- [ ] traceability-matrix.md에서 모든 Must Have 요구사항이 Entity/메서드로 매핑되었는가?
+- [ ] traceability-matrix.md의 상태가 모두 ✅인가?
 - [ ] 요구사항 ID와 코드 요소의 추적 가능성이 있는가?
 
 #### Over-Engineering
@@ -494,8 +495,9 @@ public enum OrderStatus {
 
 ## 검토 체크리스트 사용법
 
-1. **설계 산출물 읽기**: domain-model.md, erd.md, Entity 코드
+1. **설계 산출물 읽기**: domain-model.md, erd.md, traceability-matrix.md, Entity 코드
 2. **각 관점 스캔**: 6가지 관점에서 체크리스트 항목 확인
+   - Requirements Fit → traceability-matrix.md에서 Must Have 매핑 확인
 3. **이슈 식별**: 해당되는 항목에 대해 이슈 작성
 4. **심각도 평가**: HIGH/MEDIUM/LOW 분류
 5. **Self-Reflection 질문 준비**: 사용자가 스스로 고민할 질문
