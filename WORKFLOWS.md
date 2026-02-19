@@ -3,15 +3,15 @@
 ## 전체 워크플로우
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────────────────────────┐     ┌─────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  /interview │ ──▶ │  /validate  │ ──▶ │                       /design                           │ ──▶ │ /redteam-design │ ──▶ │   /gherkin  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
-│   Phase 1   │     │   Phase 2   │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 2.6     │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │     │   Phase 6   │
-└─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │  (반복 루프)            │     └─────────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────────────────────────┐     ┌─────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  /interview │ ──▶ │  /validate  │ ──▶ │                       /design                           │ ──▶ │ /redteam-design │ ──▶ │  /compound  │ ──▶ │   /gherkin  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
+│   Phase 1   │     │   Phase 2   │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 2.6     │     │  Phase 2.7  │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │     │   Phase 6   │
+└─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │  (반복 루프)            │     └─────────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
        │                   │             │  │ Phase2.5a│    │ Phase2.5b │                         │            │                    │                   │                   │                   │
        ▼                   ▼             │  └──────────┘    └───────────┘                         │            ▼                    ▼                   ▼                   ▼                   ▼
- requirements/       validation/         └─────────────────────────────────────────────────────────┘    design/redteam/        scenarios/        Inside-Out TDD      refactoring/        reports/
-   ├─ draft.md         ├─ report.md                      │                                               ├─ design-          ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
-   └─ log.md           └─ refined.md                     ▼                                               │  critique-*.md    └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
+ requirements/       validation/         └─────────────────────────────────────────────────────────┘    design/redteam/        episodes/         scenarios/        Inside-Out TDD      refactoring/        reports/
+   ├─ draft.md         ├─ report.md                      │                                               ├─ design-          ├─ episode.md     ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
+   └─ log.md           └─ refined.md                     ▼                                               │  critique-*.md    └─ tags          └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
                                                         design/                                         ├─ decisions.md
                                                           ├─ erd.md                                      └─ backlog.md
                                                           ├─ domain.md
@@ -31,6 +31,158 @@
 **Red Team 계열 스킬 분담**:
 - `/redteam` (Phase 2.5b): ADR(설계 의사결정) 비평 - Security, Performance, Scalability 등
 - `/redteam-design` (Phase 2.6): 도메인 모델 비평 - Responsibility, Aggregate, Invariants 등 (RRAIRU)
+
+---
+
+## Phase 2.7: Compound Workflow
+
+### 진입 조건
+- `/redteam-design` 완료
+- `.atdd/context.json` 존재
+
+### 실행 흐름
+
+```
+1. Context 로드
+   └─▶ Read .atdd/context.json → date, topic 확인
+
+2. 작업 경로 결정
+   ├─▶ base_path = .atdd/design/{date}/{topic}
+   └─▶ output_path = docs/learnings/episodes/{date}/{topic}/episode.md
+
+3. Design 산출물 로드
+   ├─▶ Glob .atdd/design/{date}/{topic}/adr/*.md → Read
+   ├─▶ Glob .atdd/design/{date}/{topic}/redteam/*.md → Read
+   ├─▶ Read .atdd/design/{date}/{topic}/erd.md
+   ├─▶ Read .atdd/design/{date}/{topic}/domain-model.md
+   └─▶ Read .atdd/design/{date}/{topic}/traceability-matrix.md
+
+4. Episode 파일 생성
+   ├─▶ Context 섹션 (ADR Context에서 추출)
+   ├─▶ Decisions 섹션 (ADR Decision + Trade-off)
+   ├─▶ Critique Feedback 섹션 (redteam + redteam-design)
+   └─▶ Domain Model Result 섹션 (erd, domain-model)
+
+5. Lessons Learned 수집
+   └─▶ AskUserQuestion으로 배운 점 요청
+
+6. Tags 추가
+   └─▶ AskUserQuestion으로 태그 요청
+
+7. Episode 파일 저장
+   └─▶ Write docs/learnings/episodes/{date}/{topic}/episode.md
+
+8. 완료 알림
+   └─▶ "Episode 생성 완료. 다음 단계: /gherkin"
+```
+
+### Episode 구조
+
+```markdown
+# Episode: [작업명]
+
+## Meta
+- **날짜**: {date}
+- **관련 ADR**: [ADR 목록 링크]
+- **요구사항**: [요구사항 링크]
+
+---
+
+## Context (맥락)
+[ADR Context에서 추출]
+- 어떤 문제/요구사항이 있었나?
+- 도메인 상황
+
+## Decisions (결정)
+[ADR Decision + Trade-off에서 추출]
+
+### ADR-001: [제목]
+- **선택**: 무엇을 결정했나?
+- **대안들**: 고려했던 선택지
+- **이유**: 왜 이 결정을?
+
+## Critique Feedback (비평 피드백)
+[redteam + redteam-design에서 추출]
+
+### Architecture (redteam)
+| 이슈 | 관점 | 결정 | 비고 |
+|------|------|------|------|
+
+### Domain Model (redteam-design)
+| 이슈 | 관점 | 결정 | 비고 |
+|------|------|------|------|
+
+## Domain Model Result (설계 결과)
+[erd.md, domain-model.md 요약]
+
+### 핵심 Entity
+- Entity 목록
+
+### 핵심 VO
+- VO 목록
+
+## Lessons Learned (배운 점)
+1.
+2.
+
+## Tags
+`#태그1` `#태그2`
+```
+
+### 출력 예시
+
+**episode.md**
+```markdown
+# Episode: payment-system
+
+## Meta
+- **날짜**: 2026-02-19
+- **관련 ADR**: [ADR-001](../../.atdd/design/2026-02-19/payment-system/adr/001-database.md)
+- **요구사항**: [requirements-draft.md](../../.atdd/requirements/requirements-draft.md)
+
+---
+
+## Context (맥락)
+결제 시스템에서 다중 통화 지원과 동시성 제어가 필요한 상황.
+트래픽 1000 TPS 예상, 결제 실패 시 보상 트랜잭션 필요.
+
+## Decisions (결정)
+
+### ADR-001: 데이터베이스 선택
+- **선택**: MySQL 8.0
+- **대안들**: PostgreSQL, MongoDB
+- **이유**: 팀 친숙도 높음, 트랜잭션 ACID 보장
+
+## Critique Feedback (비평 피드백)
+
+### Architecture (redteam)
+| 이슈 | 관점 | 결정 | 비고 |
+|------|------|------|------|
+| SQL Injection 취약점 | Security | ACCEPT | Prepared Statement 적용 |
+
+### Domain Model (redteam-design)
+| 이슈 | 관점 | 결정 | 비고 |
+|------|------|------|------|
+| Payment의 상태 전이 | Invariants | ACCEPT | 상태 머신 패턴 적용 |
+
+## Domain Model Result (설계 결과)
+
+### 핵심 Entity
+- Payment (Aggregate Root)
+- PaymentMethod
+- Refund
+
+### 핵심 VO
+- Money, Currency, PaymentStatus
+
+## Lessons Learned (배운 점)
+
+1. 낙관적 락은 충돌이 적을 때 유리하지만, 재시도 로직이 필수다.
+2. Aggregate 경계를 어떻게 나누느냐가 트랜잭션 복잡도를 결정한다.
+
+## Tags
+`#결제` `#동시성` `#DDD` `#낙관적락`
+```
 
 ---
 

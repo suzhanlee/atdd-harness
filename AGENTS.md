@@ -7,22 +7,42 @@
 
 ### 입력
 - 사용자의 초기 아이디어/요청
+- `--topic {작업명}` 파라미터 (선택)
 
 ### 프로세스
-1. **경청**: 사용자의 초기 아이디어를 충분히 경청
-2. **탐색 질문**:
+1. **작업명 확인**:
+   - `--topic` 파라미터 확인
+   - 없으면 AskUserQuestion으로 작업명 요청
+2. **Context 파일 생성**:
+   - `.atdd/context.json` 생성
+   - topic, date, status, phase 저장
+3. **경청**: 사용자의 초기 아이디어를 충분히 경청
+4. **탐색 질문**:
    - 비즈니스 목표가 무엇인가?
    - 주요 사용자는 누구인가?
    - 핵심 기능은 무엇인가?
    - 기술적 제약사항이 있는가?
-3. **우선순위 분류**: MoSCoW 기법 적용
+5. **우선순위 분류**: MoSCoW 기법 적용
    - Must have: 필수 기능
    - Should have: 중요 기능
    - Could have: 있으면 좋은 기능
    - Won't have: 이번 제외 기능
-4. **요구사항 초안 작성**
+6. **요구사항 초안 작성**
+
+### Context 파일 구조
+```json
+{
+  "topic": "payment-system",
+  "date": "2026-02-19",
+  "status": "in_progress",
+  "phase": "interview",
+  "created_at": "2026-02-19T10:00:00Z",
+  "updated_at": "2026-02-19T10:00:00Z"
+}
+```
 
 ### 출력
+- `.atdd/context.json` (작업 컨텍스트)
 - `.atdd/requirements/requirements-draft.md`
 - `.atdd/requirements/interview-log.md`
 
@@ -209,10 +229,11 @@ Phase A, B 결과를 통합하여 아래 구조로 작성:
 - [adr-premortem-questions.md](.claude/skills/adr/references/adr-premortem-questions.md)
 - [adr-tradeoff-matrix.md](.claude/skills/adr/references/adr-tradeoff-matrix.md)
 - [adr-self-critique.md](.claude/skills/adr/references/adr-self-critique.md)
+- [context-helper.md](.claude/skills/shared/context-helper.md)
 
 ### 출력
-- `.atdd/design/adr/[번호]-[제목].md`
-- `.atdd/design/adr/index.md`
+- `.atdd/design/{date}/{topic}/adr/[번호]-[제목].md`
+- `.atdd/design/{date}/{topic}/adr/index.md`
 
 ### 상태 전이
 완료 (Self-Critique 평균 4점 이상) → `/redteam` 호출 가능
@@ -225,7 +246,8 @@ Phase A, B 결과를 통합하여 아래 구조로 작성:
 Red Team 관점에서 ADR을 비판적으로 검토하여 설계 품질을 향상시킨다.
 
 ### 입력
-- `.atdd/design/adr/*.md` (ADR 문서들)
+- `.atdd/context.json` (작업 컨텍스트)
+- `.atdd/design/{date}/{topic}/adr/*.md` (ADR 문서들)
 
 ### Red Team 6가지 관점
 
@@ -276,11 +298,12 @@ Red Team 관점에서 ADR을 비판적으로 검토하여 설계 품질을 향�
 ### 참조 파일
 - [SKILL.md](.claude/skills/redteam/SKILL.md)
 - [critique-perspectives.md](.claude/skills/redteam/critique-perspectives.md)
+- [context-helper.md](.claude/skills/shared/context-helper.md)
 
 ### 출력
-- `.atdd/design/redteam/critique-[번호].md`
-- `.atdd/design/redteam/decisions.md`
-- `.atdd/design/redteam/backlog.md`
+- `.atdd/design/{date}/{topic}/redteam/critique-[번호].md`
+- `.atdd/design/{date}/{topic}/redteam/decisions.md`
+- `.atdd/design/{date}/{topic}/redteam/backlog.md`
 
 ### 상태 전이
 - 모든 이슈 처리 완료 → `/design` 계속 진행
@@ -391,12 +414,13 @@ public class User {
 - [ddd-patterns.md](.claude/skills/design/ddd-patterns.md)
 - [entity-template.md](.claude/skills/design/entity-template.md)
 - [validation-guide.md](.claude/skills/design/validation-guide.md)
+- [context-helper.md](.claude/skills/shared/context-helper.md)
 
 ### 출력
-- `.atdd/design/erd.md`
-- `.atdd/design/domain-model.md`
-- `.atdd/design/traceability-matrix.md`
-- `.atdd/design/design-validation-report.md`
+- `.atdd/design/{date}/{topic}/erd.md`
+- `.atdd/design/{date}/{topic}/domain-model.md`
+- `.atdd/design/{date}/{topic}/traceability-matrix.md`
+- `.atdd/design/{date}/{topic}/design-validation-report.md`
 - `sql/schema/*.sql`
 - `sql/data/*.sql`
 - `src/main/java/**/domain/entity/*.java`
@@ -427,9 +451,10 @@ Red Team 관점에서 도메인 모델(Entity, VO, Aggregate, Domain Service)을
 - **Retrieval Practice**: 설계 결정 이유를 설명하며 설계 지식 인출
 
 ### 입력
-- `.atdd/design/erd.md` (ERD 문서)
-- `.atdd/design/domain-model.md` (도메인 모델)
-- `.atdd/design/traceability-matrix.md` (요구사항-도메인 추적 매트릭스)
+- `.atdd/context.json` (작업 컨텍스트)
+- `.atdd/design/{date}/{topic}/erd.md` (ERD 문서)
+- `.atdd/design/{date}/{topic}/domain-model.md` (도메인 모델)
+- `.atdd/design/{date}/{topic}/traceability-matrix.md` (요구사항-도메인 추적 매트릭스)
 - `.atdd/requirements/refined-requirements.md` (정제된 요구사항)
 - `src/main/java/**/domain/entity/*.java` (Entity 클래스)
 
@@ -472,15 +497,79 @@ Red Team 관점에서 도메인 모델(Entity, VO, Aggregate, Domain Service)을
 ### 참조 파일
 - [SKILL.md](.claude/skills/redteam-design/SKILL.md)
 - [design-critique-perspectives.md](.claude/skills/redteam-design/references/design-critique-perspectives.md)
+- [context-helper.md](.claude/skills/shared/context-helper.md)
 
 ### 출력
-- `.atdd/design/redteam/design-critique-[날짜].md`
-- `.atdd/design/redteam/decisions.md`
-- `.atdd/design/redteam/backlog.md`
+- `.atdd/design/{date}/{topic}/redteam/design-critique-[날짜].md`
+- `.atdd/design/{date}/{topic}/redteam/decisions.md`
+- `.atdd/design/{date}/{topic}/redteam/backlog.md`
 
 ### 상태 전이
-- 모든 이슈 처리 완료 → `/gherkin` 호출 가능
+- 모든 이슈 처리 완료 → `/compound` 호출 가능
 - ACCEPT로 인한 설계 수정 → `/redteam-design` 재실행
+
+---
+
+## Phase 2.7: Compound Agent
+
+### 목표
+ADR, redteam, design, redteam-design 결과물을 합쳐서 **학습 Episode**를 생성한다.
+이를 통해 사용자가 설계 과정에서 배운 것을 체계적으로 정리하고 컴파운드 효과를 얻는다.
+
+### 트리거
+- `/compound` 명령어 실행
+- `/redteam-design` 완료 후 자동 제안
+
+### 입력
+- `.atdd/context.json` (현재 작업 컨텍스트)
+- `.atdd/design/{date}/{topic}/adr/*.md` (ADR 문서들)
+- `.atdd/design/{date}/{topic}/redteam/*.md` (Critique 문서들)
+- `.atdd/design/{date}/{topic}/erd.md` (ERD)
+- `.atdd/design/{date}/{topic}/domain-model.md` (도메인 모델)
+- `.atdd/design/{date}/{topic}/traceability-matrix.md` (추적 매트릭스)
+
+### 프로세스
+1. **Context 로드**: `.atdd/context.json` 읽기
+2. **작업 경로 결정**: date, topic으로 경로 계산
+3. **Design 산출물 로드**: ADR, redteam, design 파일들 읽기
+4. **Episode 파일 생성**: 템플릿에 맞춰 초안 작성
+5. **Lessons Learned 수집**: AskUserQuestion으로 배운 점 요청
+6. **Tags 추가**: AskUserQuestion으로 태그 요청
+7. **Episode 파일 저장**: 최종 파일 저장
+
+### 추출 규칙
+
+#### ADR에서 추출
+- **Context**: `## Context` 섹션에서 배경/문제 상황
+- **Decision**: `## Decision` 섹션에서 최종 결정
+- **Trade-off**: `## Trade-off Matrix` 섹션에서 대안들과 선택 이유
+- **Consequences**: `## Consequences` 섹션에서 결과/위험
+
+#### Redteam에서 추출
+- **Critique 이슈**: 각 critique 파일에서 이슈 목록
+- **결정**: `decisions.md`에서 ACCEPT/DEFER/REJECT 결정
+- **비고**: 각 결정의 이유/사유
+
+#### Redteam-design에서 추출
+- **Design Critique 이슈**: RRAIRU 관점별 이슈
+- **결정**: `decisions.md`에서 ACCEPT/DEFER/REJECT 결정
+- **반영 방향**: 사용자가 작성한 반영 방향
+
+#### Design에서 추출
+- **Entity**: `domain-model.md`에서 Aggregate Root, Entity 목록
+- **VO**: `domain-model.md`에서 Value Object 목록
+- **관계**: `erd.md`에서 주요 관계
+
+### 참조 파일
+- [SKILL.md](.claude/skills/compound/SKILL.md)
+- [context-helper.md](.claude/skills/shared/context-helper.md)
+- [episode-template.md](docs/learnings/episode-template.md)
+
+### 출력
+- `docs/learnings/episodes/{date}/{topic}/episode.md`
+
+### 상태 전이
+완료 → `/gherkin` 호출 가능
 
 ---
 

@@ -6,6 +6,7 @@ user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, EnterPlanMode
 references:
   - references/design-critique-perspectives.md
+  - ../shared/context-helper.md
 ---
 
 # Red Team Design Critique
@@ -22,12 +23,45 @@ Red Team 관점에서 도메인 모델(Entity, VO, Aggregate, Domain Service)을
 
 ---
 
+## Context Helper
+- [context-helper.md](../shared/context-helper.md)
+
+---
+
+## Context 로드
+
+Red Team Design 시작 전, context.json을 읽어서 작업 경로를 결정합니다.
+
+```markdown
+Read .atdd/context.json
+```
+
+경로 결정:
+- `date = context.date`
+- `topic = context.topic`
+- `base_path = .atdd/design/{date}/{topic}`
+- `redteam_path = .atdd/design/{date}/{topic}/redteam`
+
+context.json이 없으면 에러:
+```
+⚠️ 현재 작업 컨텍스트가 없습니다.
+먼저 `/interview`를 실행하여 새 작업을 시작해주세요.
+```
+
+---
+
 ## 입력
-- `.atdd/design/erd.md` (ERD 문서)
-- `.atdd/design/domain-model.md` (도메인 모델)
-- `.atdd/design/traceability-matrix.md` (요구사항-도메인 추적 매트릭스)
+- `.atdd/context.json` (작업 컨텍스트)
+- `.atdd/design/{date}/{topic}/erd.md` (ERD 문서)
+- `.atdd/design/{date}/{topic}/domain-model.md` (도메인 모델)
+- `.atdd/design/{date}/{topic}/traceability-matrix.md` (요구사항-도메인 추적 매트릭스)
 - `.atdd/requirements/refined-requirements.md` (정제된 요구사항)
 - `src/main/java/**/domain/entity/*.java` (Entity 클래스)
+
+## 출력
+- `.atdd/design/{date}/{topic}/redteam/design-critique-[날짜].md`
+- `.atdd/design/{date}/{topic}/redteam/decisions.md`
+- `.atdd/design/{date}/{topic}/redteam/backlog.md`
 
 ## 트리거
 - `/redteam-design` 명령어 실행
@@ -64,9 +98,9 @@ Red Team은 설계에 대한 "비판적" 관점을 취하여 잠재적인 문제
 
 ### 1. 설계 산출물 로드
 ```
-Read .atdd/design/erd.md
-Read .atdd/design/domain-model.md
-Read .atdd/design/traceability-matrix.md
+Read .atdd/design/{date}/{topic}/erd.md
+Read .atdd/design/{date}/{topic}/domain-model.md
+Read .atdd/design/{date}/{topic}/traceability-matrix.md
 Read .atdd/requirements/refined-requirements.md
 Glob src/main/java/**/domain/entity/*.java → Read each file
 ```
@@ -90,7 +124,7 @@ Glob src/main/java/**/domain/entity/*.java → Read each file
 4. 사용자 승인 후 일괄 파일 생성
 
 ```
-.atdd/design/redteam/design-critique-[날짜].md
+.atdd/design/{date}/{topic}/redteam/design-critique-[날짜].md
 ```
 
 ### 4. Reflection Before Decision (증강 학습)
@@ -281,7 +315,7 @@ AskUserQuestion:
 ### ACCEPT (수용)
 ```
 비평을 수용하고 설계 수정
-→ .atdd/design/redteam/decisions.md에 ACCEPT + 반영 방향 기록
+→ .atdd/design/{date}/{topic}/redteam/decisions.md에 ACCEPT + 반영 방향 기록
 → domain-model.md 또는 Entity 코드 수정
 → /redteam-design 재실행으로 검증
 ```
@@ -289,15 +323,15 @@ AskUserQuestion:
 ### DEFER (보류)
 ```
 나중에 처리
-→ .atdd/design/redteam/decisions.md에 DEFER + 보류 사유 기록
-→ .atdd/design/redteam/backlog.md에 추가
+→ .atdd/design/{date}/{topic}/redteam/decisions.md에 DEFER + 보류 사유 기록
+→ .atdd/design/{date}/{topic}/redteam/backlog.md에 추가
 → 다음 단계 진행
 ```
 
 ### REJECT (거부)
 ```
 비평을 거부
-→ .atdd/design/redteam/decisions.md에 REJECT + 거부 사유 + 대안 기록
+→ .atdd/design/{date}/{topic}/redteam/decisions.md에 REJECT + 거부 사유 + 대안 기록
 → 다음 단계 진행
 ```
 
@@ -356,13 +390,13 @@ AskUserQuestion:
 
 ## 출력 파일
 
-### .atdd/design/redteam/design-critique-[날짜].md
+### .atdd/design/{date}/{topic}/redteam/design-critique-[날짜].md
 Critique Report
 
-### .atdd/design/redteam/decisions.md
+### .atdd/design/{date}/{topic}/redteam/decisions.md
 사용자 결정 로그
 
-### .atdd/design/redteam/backlog.md
+### .atdd/design/{date}/{topic}/redteam/backlog.md
 보류된 이슈 목록
 
 ---
@@ -375,5 +409,6 @@ Critique Report
 ## 참조
 - 6관점 체크리스트: [design-critique-perspectives.md](references/design-critique-perspectives.md)
 - DDD 패턴: [../design/references/ddd-patterns.md](../design/references/ddd-patterns.md)
+- Context Helper: [context-helper.md](../shared/context-helper.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

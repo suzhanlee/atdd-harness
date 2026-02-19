@@ -6,6 +6,7 @@ user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, EnterPlanMode
 references:
   - references/critique-perspectives.md
+  - ../shared/context-helper.md
 ---
 
 # Red Team Critique
@@ -20,8 +21,46 @@ Red Team 관점에서 ADR(설계 결정)을 비판적으로 검토하여 설계 
 - ✅ 개선 제안
 - ❌ 구현 가이드 제공 (별도 `/design`, `/tdd` 스킬 사용)
 
+---
+
+## Context Helper
+- [context-helper.md](../shared/context-helper.md)
+
+---
+
+## Context 로드
+
+Red Team 시작 전, context.json을 읽어서 작업 경로를 결정합니다.
+
+```markdown
+Read .atdd/context.json
+```
+
+경로 결정:
+- `date = context.date`
+- `topic = context.topic`
+- `base_path = .atdd/design/{date}/{topic}`
+- `adr_path = .atdd/design/{date}/{topic}/adr`
+- `redteam_path = .atdd/design/{date}/{topic}/redteam`
+
+context.json이 없으면 에러:
+```
+⚠️ 현재 작업 컨텍스트가 없습니다.
+먼저 `/interview`를 실행하여 새 작업을 시작해주세요.
+```
+
+---
+
 ## 입력
-- `.atdd/design/adr/*.md` (ADR 문서들)
+- `.atdd/context.json` (작업 컨텍스트)
+- `.atdd/design/{date}/{topic}/adr/*.md` (ADR 문서들)
+
+## 출력
+- `.atdd/design/{date}/{topic}/redteam/critique-[ADR번호].md`
+- `.atdd/design/{date}/{topic}/redteam/decisions.md`
+- `.atdd/design/{date}/{topic}/redteam/backlog.md`
+
+---
 
 ## 트리거
 - `/redteam` 명령어 실행
@@ -50,7 +89,7 @@ Red Team은 설계에 대한 "악의적" 또는 "비판적" 관점을 취하여 
 
 ### 1. ADR 로드
 ```
-Read .atdd/design/adr/*.md
+Read .atdd/design/{date}/{topic}/adr/*.md
 ```
 
 ### 2. 6관점 분석
@@ -61,7 +100,7 @@ Read .atdd/design/adr/*.md
 
 ### 3. Critique Report 생성
 ```
-.atdd/design/redteam/critique-[ADR번호].md
+.atdd/design/{date}/{topic}/redteam/critique-[ADR번호].md
 ```
 
 ### 4. 사용자 결정 대기
@@ -132,14 +171,14 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 ### DEFER (보류)
 ```
 나중에 처리
-→ .atdd/design/redteam/backlog.md에 추가
+→ .atdd/design/{date}/{topic}/redteam/backlog.md에 추가
 → 다음 단계 진행
 ```
 
 ### REJECT (거부)
 ```
 비평을 거부
-→ .atdd/design/redteam/decisions.md에 거부 사유 기록
+→ .atdd/design/{date}/{topic}/redteam/decisions.md에 거부 사유 기록
 → 다음 단계 진행
 ```
 
@@ -172,5 +211,6 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 
 ## 참조
 - 6관점 체크리스트: [critique-perspectives.md](references/critique-perspectives.md)
+- Context Helper: [context-helper.md](../shared/context-helper.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

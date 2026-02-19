@@ -3,11 +3,12 @@ name: interview
 description: This skill should be used when the user asks to "/interview", "요구사항 인터뷰", "새 기능", "프로젝트 시작", "요구사항 정리", or needs to gather and clarify requirements.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Edit
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
 references:
   - references/blank-template.md
   - references/clarification-questions.md
   - references/self-review-rubric.md
+  - ../shared/context-helper.md
 ---
 
 # 요구사항 인터뷰
@@ -15,6 +16,25 @@ references:
 ## 목표
 사용자가 직접 요구사항을 작성하여 **지시 역량**을 향상시킨다.
 AI가 질문하고 사용자가 답하는 수동적 방식이 아닌, 사용자가 주도적으로 작성하는 훈련을 제공한다.
+
+---
+
+## Context Helper
+- [context-helper.md](../shared/context-helper.md)
+
+---
+
+## 실행 방식
+
+### Topic 파라미터
+```bash
+/interview --topic payment-system
+/interview payment-system  # 축약형
+```
+
+- `--topic` 또는 첫 번째 인자로 작업명 지정
+- 작업명은 kebab-case 권장 (예: `payment-system`, `user-auth`)
+- 지정하지 않으면 AskUserQuestion으로 요청
 
 ---
 
@@ -42,6 +62,45 @@ Phase D (Self-Review)     → 인터뷰 완료
 ---
 👆 질문에 답변해주세요.
 답변 완료 후 "완료" 또는 "다음"이라고 입력해주세요.
+```
+
+---
+
+## Context 초기화
+
+인터뷰 시작 전, 작업 컨텍스트를 설정합니다.
+
+### 1. Topic 확인
+```markdown
+# args에서 topic 확인
+topic = args.topic 또는 args[0]
+
+# 없으면 AskUserQuestion으로 요청
+if (!topic) {
+  AskUserQuestion:
+    question: "이번 작업의 이름을 지어주세요 (kebab-case 권장)"
+    header: "Topic"
+    multiSelect: false
+    options: []
+}
+```
+
+### 2. Context 파일 생성
+```json
+// .atdd/context.json
+{
+  "topic": "{topic}",
+  "date": "{오늘날짜}",
+  "status": "in_progress",
+  "phase": "interview",
+  "created_at": "{ISO8601}",
+  "updated_at": "{ISO8601}"
+}
+```
+
+### 3. 작업 디렉토리 생성
+```
+mkdir -p .atdd/design/{date}/{topic}
 ```
 
 ---
@@ -183,7 +242,9 @@ Phase D (Self-Review)     → 인터뷰 완료
 - `/interview` 명령어 실행
 
 ## MUST 체크리스트 (실행 전)
-- [ ] 인터뷰 시작 확인
+- [ ] topic 파라미터 확인 또는 요청
+- [ ] context.json 생성
+- [ ] 작업 디렉토리 생성
 
 ## MUST 체크리스트 (실행 후)
 - [ ] Phase A: 빈 템플릿 작성 완료
@@ -191,6 +252,7 @@ Phase D (Self-Review)     → 인터뷰 완료
 - [ ] Phase C: requirements-draft.md 생성
 - [ ] Phase D: Self-Review 수행 (등급 B 이상)
 - [ ] interview-log.md 생성
+- [ ] context.json phase 업데이트
 
 ## 출력 파일
 
@@ -258,5 +320,6 @@ Self-Review 등급 B 이상 달성 시 `/validate` 실행
 - 빈 템플릿 가이드: [blank-template.md](references/blank-template.md)
 - 구체화 질문: [clarification-questions.md](references/clarification-questions.md)
 - Self-Review 기준: [self-review-rubric.md](references/self-review-rubric.md)
+- Context Helper: [context-helper.md](../shared/context-helper.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

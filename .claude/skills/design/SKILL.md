@@ -11,6 +11,7 @@ references:
   - references/ddd-patterns.md
   - references/entity-template.md
   - references/validation-guide.md
+  - ../shared/context-helper.md
 ---
 
 # Entity & Domain 설계
@@ -18,6 +19,32 @@ references:
 ## 목표
 사용자가 직접 도메인 모델과 ERD를 설계하여 **설계 역량**을 향상시킨다.
 AI가 설계안을 제시하는 방식이 아닌, 사용자가 주도적으로 설계하는 훈련을 제공한다.
+
+---
+
+## Context Helper
+- [context-helper.md](../shared/context-helper.md)
+
+---
+
+## Context 로드
+
+Design 시작 전, context.json을 읽어서 작업 경로를 결정합니다.
+
+```markdown
+Read .atdd/context.json
+```
+
+경로 결정:
+- `date = context.date`
+- `topic = context.topic`
+- `base_path = .atdd/design/{date}/{topic}`
+
+context.json이 없으면 에러:
+```
+⚠️ 현재 작업 컨텍스트가 없습니다.
+먼저 `/interview`를 실행하여 새 작업을 시작해주세요.
+```
 
 ---
 
@@ -46,8 +73,15 @@ Phase C (Interface Definition)로 진행합니다.
 ---
 
 ## 입력
+- `.atdd/context.json` (작업 컨텍스트)
 - `.atdd/requirements/refined-requirements.md`
 - `.atdd/validation/validation-report.md`
+
+## 출력
+- `.atdd/design/{date}/{topic}/erd.md`
+- `.atdd/design/{date}/{topic}/domain-model.md`
+- `.atdd/design/{date}/{topic}/traceability-matrix.md`
+- `src/main/java/**/domain/entity/*.java` (Entity 클래스)
 
 ---
 
@@ -432,5 +466,6 @@ JPA Entity 클래스
 - DDD 패턴: [ddd-patterns.md](references/ddd-patterns.md)
 - Entity 템플릿: [entity-template.md](references/entity-template.md)
 - 검증 가이드: [validation-guide.md](references/validation-guide.md)
+- Context Helper: [context-helper.md](../shared/context-helper.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

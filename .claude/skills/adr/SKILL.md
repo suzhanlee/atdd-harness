@@ -9,6 +9,7 @@ references:
   - references/adr-premortem-questions.md
   - references/adr-self-critique.md
   - references/adr-tradeoff-matrix.md
+  - ../shared/context-helper.md
 ---
 
 # ADR (Architecture Decision Record) 작성
@@ -24,6 +25,33 @@ references:
 - ✅ ADR 본문 작성
 - ✅ Self-Critique 수행
 - ❌ 구현 가이드 제공 (별도 `/design`, `/tdd` 스킬 사용)
+
+---
+
+## Context Helper
+- [context-helper.md](../shared/context-helper.md)
+
+---
+
+## Context 로드
+
+ADR 작성 시작 전, context.json을 읽어서 작업 경로를 결정합니다.
+
+```markdown
+Read .atdd/context.json
+```
+
+경로 결정:
+- `date = context.date`
+- `topic = context.topic`
+- `base_path = .atdd/design/{date}/{topic}`
+- `adr_path = .atdd/design/{date}/{topic}/adr`
+
+context.json이 없으면 에러:
+```
+⚠️ 현재 작업 컨텍스트가 없습니다.
+먼저 `/interview`를 실행하여 새 작업을 시작해주세요.
+```
 
 ---
 
@@ -190,12 +218,13 @@ Q3: 미리 알았다면 어떤 다른 선택을 했을까?
 ---
 
 ## 입력
+- `.atdd/context.json` (작업 컨텍스트)
 - `.atdd/requirements/refined-requirements.md`
 - `.atdd/validation/validation-report.md`
 
 ## 출력
-- `.atdd/design/adr/[번호]-[제목].md`
-- `.atdd/design/adr/index.md`
+- `.atdd/design/{date}/{topic}/adr/[번호]-[제목].md`
+- `.atdd/design/{date}/{topic}/adr/index.md`
 
 ---
 
@@ -237,7 +266,7 @@ Architecture Decision Record는 아키텍처 의사결정을 기록하는 가벼
 
 ### 4. 저장 위치
 ```
-.atdd/design/adr/
+.atdd/design/{date}/{topic}/adr/
 ├── 001-*.md
 ├── 002-*.md
 └── index.md
@@ -347,5 +376,6 @@ ADR 작성 완료 후 `/redteam` 실행하여 설계 비평 수행
 - Pre-Mortem 가이드: [adr-premortem-questions.md](references/adr-premortem-questions.md)
 - Trade-off Matrix 가이드: [adr-tradeoff-matrix.md](references/adr-tradeoff-matrix.md)
 - Self-Critique 가이드: [adr-self-critique.md](references/adr-self-critique.md)
+- Context Helper: [context-helper.md](../shared/context-helper.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)

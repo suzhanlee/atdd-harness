@@ -9,7 +9,7 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 
 ## ATDD 워크플로우
 ```
-/interview → /epic-split? → /validate → /adr ↔ /redteam → /design → /redteam-design → /gherkin → /tdd → /refactor → /verify
+/interview → /epic-split? → /validate → /adr ↔ /redteam → /design → /redteam-design → /compound → /gherkin → /tdd → /refactor → /verify
                                     ↑___________|
                                       반복 루프
 ```
@@ -17,6 +17,7 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 ## 주요 디렉토리
 - `.atdd/`: ATDD 메타데이터 (요구사항, 설계, 리포트)
 - `.claude/skills/`: 각 Phase별 Skill 정의
+- `docs/learnings/episodes/`: 학습 Episode 파일
 - `src/main/java/**/domain/`: DDD Domain Layer
 - `src/test/resources/features/`: Gherkin Feature Files
 
@@ -35,6 +36,7 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 | `/redteam` | 2.5b | ADR 비판적 검토 (6관점) |
 | `/design` | 2.5 | Entity/Domain 설계 |
 | `/redteam-design` | 2.6 | 도메인 모델 비판적 검토 (RRAIRU) |
+| `/compound` | 2.7 | 학습 Episode 생성 |
 | `/gherkin` | 3 | Gherkin 시나리오 추출 |
 | `/tdd` | 4 | TDD 코드 구현 (Inside-Out) |
 | `/refactor` | 5 | Clean Code 리팩토링 |
@@ -67,6 +69,28 @@ Robert Bjork의 학습 원칙을 적용하여 설계 역량 강화:
 - **Self-Explanation**: "왜 이렇게 설계했나요?" 질문 (redteam-design)
 - **Contrastive Cases**: 안티패턴 vs 권장 패턴 비교 (redteam-design)
 - **Feedback Loop**: 즉각적 Critique Report (redteam, redteam-design)
+
+## Compound Learning System
+ATDD 워크플로우에서 배운 것을 Episode로 저장하여 컴파운드 효과를 제공한다.
+
+### 파일 구조
+```
+.atdd/design/{date}/{topic}/     # 설계 산출물
+docs/learnings/episodes/{date}/{topic}/episode.md  # 학습 Episode
+```
+
+### 실행 흐름
+```
+/interview --topic {작업명} → /adr → /redteam → /design → /redteam-design → /compound
+```
+
+### Episode 구성
+- Context: 문제 상황, 도메인 맥락
+- Decisions: ADR에서 추출한 설계 결정
+- Critique Feedback: Red Team 비평 결과
+- Domain Model Result: 최종 설계 산출물
+- Lessons Learned: 배운 점
+- Tags: 검색용 태그
 
 ## 테스트 실행
 ```bash
