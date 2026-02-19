@@ -3,7 +3,7 @@ name: gherkin
 description: This skill should be used when the user asks to "/gherkin", "시나리오 추출", "Gherkin 시나리오 작성", "테스트 시나리오 변환", or needs to convert requirements to test scenarios.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Read, Grep, Glob, Write, Edit
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash
 references:
   - references/blank-scenario-template.md
   - references/edge-case-checklist.md
@@ -34,7 +34,8 @@ Phase D (Coverage Check)  → 시나리오 완료
 ### Phase A 종료 필수 문구
 ```
 ---
-👆 핵심 시나리오(Happy Path)를 작성해주세요.
+📁 파일 생성 완료: .atdd/scenarios/draft-happy-path.md
+👆 파일을 열어 핵심 시나리오(Happy Path)를 작성해주세요.
 작성 완료 후 "완료" 또는 "다음"이라고 입력해주세요.
 Phase B (Edge Case Hunt)로 진행합니다.
 ```
@@ -42,7 +43,8 @@ Phase B (Edge Case Hunt)로 진행합니다.
 ### Phase B 종료 필수 문구
 ```
 ---
-👆 최소 5개의 예외 케이스를 식별해주세요.
+📁 파일 생성 완료: .atdd/scenarios/draft-edge-cases.md
+👆 파일을 열어 최소 5개의 예외 케이스를 식별해주세요.
 식별 완료 후 "완료" 또는 "다음"이라고 입력해주세요.
 Phase C (Generation)로 진행합니다.
 ```
@@ -64,22 +66,62 @@ Phase C (Generation)로 진행합니다.
 **목적**: 사용자가 정상적인 사용자 흐름을 직접 작성
 
 **진행 방식**:
-1. 요구사항에서 Happy Path 식별
-2. 빈 시나리오 템플릿 제시
-3. 사용자가 Given-When-Then 작성
+1. 요구사항 분석 → Feature명 추출
+2. `.atdd/scenarios/` 디렉토리 생성 (존재하지 않는 경우)
+3. `.atdd/scenarios/draft-happy-path.md` 파일 생성
+4. 사용자가 파일을 열어 Given-When-Then 작성
+5. "완료" 또는 "다음" 입력 시 Phase B 진행
 
-**빈 시나리오 템플릿**:
+**파일 생성 액션**:
+```
+Write: .atdd/scenarios/draft-happy-path.md
+```
 
-```gherkin
-Feature: [기능명]
+**생성할 템플릿 파일 내용**:
 
-  Background:
-    Given [공통 전제조건]
+```markdown
+# Happy Path 템플릿
 
-  Scenario: [시나리오명 - Happy Path]
-    Given [전제조건]
-    When [행동]
-    Then [예상 결과]
+> 작성 가이드: [ ] 항목을 채워주세요. 완료 후 "완료" 또는 "다음"을 입력하세요.
+
+## Feature 정보
+- **Feature명**: [요구사항에서 추출한 기능명]
+- **관련 요구사항**: [M1, M2, ...]
+
+---
+
+## 시나리오 작성
+
+### Scenario 1: [시나리오명을 작성하세요]
+
+**Given (전제조건)**:
+- [ ] _______________
+
+**When (행동)**:
+- [ ] _______________
+
+**Then (결과)**:
+- [ ] _______________
+
+---
+
+### Scenario 2: [시나리오명을 작성하세요]
+
+**Given (전제조건)**:
+- [ ] _______________
+
+**When (행동)**:
+- [ ] _______________
+
+**Then (결과)**:
+- [ ] _______________
+
+---
+
+## 작성 팁
+- Given: 구체적인 데이터 상태, 테이블 형식 활용
+- When: 단일 행동, 구체적인 요청 파라미터
+- Then: 검증 가능한 결과, 상태 코드/응답 필드
 ```
 
 **작성 가이드**:
@@ -93,7 +135,7 @@ Feature: [기능명]
 **상세 가이드**: [blank-scenario-template.md](references/blank-scenario-template.md)
 
 **Phase A 종료 후**:
-- STOP Protocol 적용 → 사용자 입력 대기
+- STOP Protocol 적용 → 사용자 파일 편집 대기
 - "완료" 또는 "다음" 입력 시 Phase B 진행
 
 ---
@@ -103,8 +145,60 @@ Feature: [기능명]
 **목적**: 사용자가 예외 케이스를 최소 5개 이상 식별
 
 **진행 방식**:
-1. 예외 케이스 카테고리 제시
-2. 사용자가 Edge Case 식별
+1. `.atdd/scenarios/draft-edge-cases.md` 파일 생성
+2. 사용자가 파일을 열어 Edge Case 식별
+3. "완료" 또는 "다음" 입력 시 Phase C 진행
+
+**파일 생성 액션**:
+```
+Write: .atdd/scenarios/draft-edge-cases.md
+```
+
+**생성할 워크시트 파일 내용**:
+
+```markdown
+# Edge Case Hunt 워크시트
+
+> 작성 가이드: 최소 5개의 예외 케이스를 식별하세요. 완료 후 "완료" 또는 "다음"을 입력하세요.
+
+## 기능: [Feature명]
+
+---
+
+## 식별된 예외 케이스
+
+### 1. 입력 검증 실패
+- [ ] 케이스 1: _______________
+- [ ] 케이스 2: _______________
+
+### 2. 비즈니스 규칙 위반
+- [ ] 케이스 1: _______________
+- [ ] 케이스 2: _______________
+
+### 3. 외부 의존성 실패
+- [ ] 케이스 1: _______________
+
+### 4. 동시성 문제
+- [ ] 케이스 1: _______________
+
+### 5. 경계값
+- [ ] 케이스 1: _______________
+
+---
+
+## 총 식별 개수: ___개 (최소 5개 필요)
+
+---
+
+## 참고: 예외 케이스 카테고리
+| 카테고리 | 예시 |
+|----------|------|
+| 입력 검증 실패 | 필수값 누락, 잘못된 형식, 길이 제한 초과 |
+| 비즈니스 규칙 위반 | 중복 데이터, 상태 위반, 권한 부족 |
+| 외부 의존성 실패 | API 타임아웃, DB 연결 실패 |
+| 동시성 문제 | 동시 수정, 레이스 컨디션 |
+| 경계값 | 최소/최대값, 빈 컬렉션, null |
+```
 
 **예외 케이스 카테고리**:
 
@@ -116,36 +210,10 @@ Feature: [기능명]
 | 동시성 문제 | 동시 수정, 레이스 컨디션 |
 | 경계값 | 최소/최대값, 빈 컬렉션, null |
 
-**Edge Case Hunt 워크시트**:
-
-```markdown
-# Edge Case Hunt
-
-## 식별된 예외 케이스
-
-### 1. [입력 검증]
-- [ ] 케이스명: _______________
-- [ ] 케이스명: _______________
-
-### 2. [비즈니스 규칙]
-- [ ] 케이스명: _______________
-
-### 3. [외부 의존성]
-- [ ] 케이스명: _______________
-
-### 4. [동시성]
-- [ ] 케이스명: _______________
-
-### 5. [경계값]
-- [ ] 케이스명: _______________
-
-## 총 식별 개수: ___개 (최소 5개)
-```
-
 **상세 가이드**: [edge-case-checklist.md](references/edge-case-checklist.md)
 
 **Phase B 종료 후**:
-- STOP Protocol 적용 → 사용자 입력 대기
+- STOP Protocol 적용 → 사용자 파일 편집 대기
 - "완료" 또는 "다음" 입력 시 Phase C 진행
 
 ---
@@ -155,9 +223,16 @@ Feature: [기능명]
 **목적**: Happy Path와 Exception Path를 모두 포함한 시나리오 파일 생성
 
 **진행 방식**:
-1. Phase A, B 결과를 통합
-2. Scenario Outline로 데이터 기반 테스트 작성
-3. .feature 파일 생성
+1. `.atdd/scenarios/draft-happy-path.md` 읽기
+2. `.atdd/scenarios/draft-edge-cases.md` 읽기
+3. 사용자 작성 내용을 통합하여 .feature 파일 생성
+4. Scenario Outline로 데이터 기반 테스트 작성
+
+**파일 읽기 액션**:
+```
+Read: .atdd/scenarios/draft-happy-path.md
+Read: .atdd/scenarios/draft-edge-cases.md
+```
 
 **시나리오 작성 원칙**:
 
