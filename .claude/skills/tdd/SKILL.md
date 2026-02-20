@@ -9,7 +9,7 @@ allowed-tools: Read, Grep, Glob, Write, Edit, Bash
 references:
   - references/e2e-test-template.md
   - references/unit-test-template.md
-  - references/integration-test-template.md
+  - references/repository-test-template.md
   - references/sql-data-guide.md
   - ../gherkin/references/step-naming-convention.md
 ---
@@ -27,7 +27,7 @@ TDD 사이클을 통해 코드를 구현한다.
 ## 템플릿
 - E2E 테스트: [e2e-test-template.md](references/e2e-test-template.md)
 - 단위 테스트: [unit-test-template.md](references/unit-test-template.md)
-- 통합 테스트: [integration-test-template.md](references/integration-test-template.md)
+- Repository 테스트: [repository-test-template.md](references/repository-test-template.md)
 - SQL 데이터: [sql-data-guide.md](references/sql-data-guide.md)
 
 ## 트리거
@@ -217,8 +217,8 @@ src/test/java/
 ├── unit/                    # 단위 테스트
 │   ├── domain/             # Entity, VO 테스트
 │   └── application/        # Service 테스트
-├── integration/             # 통합 테스트
-│   └── repository/         # Repository 테스트
+├── integration/             # Repository 테스트 (@DataJpaTest)
+│   └── repository/         # JPA 연동 검증
 └── e2e/                     # E2E 테스트
     └── step/               # Cucumber Step Definitions
 ```
@@ -228,7 +228,7 @@ src/test/java/
 | 명령어 | 설명 |
 |--------|------|
 | `./gradlew test` | 단위 테스트 |
-| `./gradlew integrationTest` | 통합 테스트 |
+| `./gradlew integrationTest` | Repository 테스트 |
 | `./gradlew cucumber` | E2E 테스트 |
 | `./gradlew check` | 모든 테스트 |
 | `./gradlew jacocoTestReport` | 커버리지 리포트 |
@@ -242,7 +242,7 @@ Step Definition 클래스들
 단위 테스트 클래스들
 
 ### src/test/java/**/integration/**/*.java
-통합 테스트 클래스들
+Repository 테스트 클래스들
 
 ### src/main/java/**/*.java
 프로덕션 코드
@@ -261,7 +261,7 @@ Step Definition 클래스들
 ## 참조
 - E2E 템플릿: [e2e-test-template.md](references/e2e-test-template.md)
 - 단위 템플릿: [unit-test-template.md](references/unit-test-template.md)
-- 통합 템플릿: [integration-test-template.md](references/integration-test-template.md)
+- Repository 템플릿: [repository-test-template.md](references/repository-test-template.md)
 - SQL 가이드: [sql-data-guide.md](references/sql-data-guide.md)
 - Step 네이밍 컨벤션: [step-naming-convention.md](../gherkin/references/step-naming-convention.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)

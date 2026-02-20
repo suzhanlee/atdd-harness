@@ -1,6 +1,6 @@
-# Integration Test Template (DataJpaTest)
+# Repository Test Template (@DataJpaTest)
 
-## Repository Integration Test Template
+## Repository Test Template
 
 ```java
 package com.example.integration;
@@ -21,8 +21,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
-@DisplayName("EntityNameRepository 통합 테스트")
-class EntityNameRepositoryIntegrationTest {
+@DisplayName("EntityNameRepository 테스트")
+class EntityNameRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
@@ -195,7 +195,7 @@ void findAllWithSorting() {
 @DataJpaTest
 @Import(JpaAuditingConfiguration.class)  // Auditing 활성화
 @DisplayName("Auditing 테스트")
-class AuditingIntegrationTest {
+class AuditingTest {
 
     @Autowired
     private TestEntityManager entityManager;
