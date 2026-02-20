@@ -224,16 +224,51 @@ Write: .atdd/scenarios/draft-edge-cases.md
 **목적**: Happy Path와 Exception Path를 모두 포함한 시나리오 파일 생성
 
 **진행 방식**:
-1. `.atdd/scenarios/draft-happy-path.md` 읽기
-2. `.atdd/scenarios/draft-edge-cases.md` 읽기
-3. **Step 정규화** (Step Naming Convention 적용)
-4. **Data Table 구조화**
-5. .feature 파일 생성
+1. `.atdd/context.json` 읽기 (topic, module 확인)
+2. `.atdd/scenarios/draft-happy-path.md` 읽기
+3. `.atdd/scenarios/draft-edge-cases.md` 읽기
+4. **Step 정규화** (Step Naming Convention 적용)
+5. **Data Table 구조화**
+6. .feature 파일 생성 → `src/test/resources/features/{topic}.feature`
+7. context.json 업데이트 (featurePath, phase 기록)
+
+**Context 로드**:
+```
+Read: .atdd/context.json
+```
+
+**모듈 탐지 로직**:
+1. `context.module` 있으면 해당 모듈 사용
+2. 없으면 `settings.gradle` 파싱하여 모듈 목록 확인
+3. 2개 이상 모듈이면 AskUserQuestion으로 선택
+4. 선택된 모듈을 context.json에 저장
+
+**Feature 파일 경로 결정**:
+```
+# 단일 모듈 프로젝트
+src/test/resources/features/{topic}.feature
+
+# 멀티 모듈 프로젝트 (module이 있는 경우)
+{module}/src/test/resources/features/{topic}.feature
+```
 
 **파일 읽기 액션**:
 ```
 Read: .atdd/scenarios/draft-happy-path.md
 Read: .atdd/scenarios/draft-edge-cases.md
+```
+
+**Context 업데이트**:
+```json
+{
+  ...기존필드,
+  "phase": "gherkin",
+  "featurePath": "src/test/resources/features/{topic}.feature",
+  "module": "{선택된_모듈_또는_null}",
+  "updated_at": "{현재시각}"
+}
+```
+Edit: .atdd/context.json
 ```
 
 **Step 정규화 규칙**:
@@ -384,7 +419,16 @@ Gherkin 품질 검증 ✅
 
 ## 출력 파일
 
-### features/*.feature
+### Draft 시나리오 (사용자 작성용)
+- `.atdd/scenarios/draft-happy-path.md` - Happy Path 템플릿
+- `.atdd/scenarios/draft-edge-cases.md` - Edge Case 워크시트
+
+### 최종 Feature 파일
+**경로**: `src/test/resources/features/{topic}.feature`
+
+> context.json의 `featurePath` 필드에 이 경로가 기록됩니다.
+
+### features/{topic}.feature
 ```gherkin
 Feature: 회원가입
 

@@ -12,7 +12,13 @@ ATDD 워크플로우에서 작업명(topic)과 날짜를 관리하는 공통 유
   "topic": "payment-system",
   "date": "2026-02-19",
   "status": "in_progress",
-  "phase": "design",
+  "phase": "gherkin",
+  "featurePath": "src/test/resources/features/payment-system.feature",
+  "module": null,
+  "paths": {
+    "design": ".atdd/design/2026-02-19/payment-system",
+    "scenarios": ".atdd/scenarios"
+  },
   "created_at": "2026-02-19T10:00:00Z",
   "updated_at": "2026-02-19T14:30:00Z"
 }
@@ -25,7 +31,10 @@ ATDD 워크플로우에서 작업명(topic)과 날짜를 관리하는 공통 유
 | `topic` | 현재 작업명 (kebab-case) | `"payment-system"`, `"user-auth"` |
 | `date` | 작업 시작 날짜 | `"2026-02-19"` |
 | `status` | 작업 상태 | `"in_progress"`, `"completed"` |
-| `phase` | 현재 ATDD Phase | `"interview"`, `"design"`, `"tdd"` |
+| `phase` | 현재 ATDD Phase | `"interview"`, `"gherkin"`, `"tdd"` |
+| `featurePath` | Feature 파일 절대 경로 | `"src/test/resources/features/payment-system.feature"` |
+| `module` | 멀티 모듈 시 모듈명 | `"api"`, `"core"`, `null` |
+| `paths` | 주요 경로 캐시 | `{ design, scenarios }` |
 | `created_at` | 생성 시각 | ISO 8601 형식 |
 | `updated_at` | 마지막 수정 시각 | ISO 8601 형식 |
 
@@ -54,6 +63,30 @@ ATDD 워크플로우에서 작업명(topic)과 날짜를 관리하는 공통 유
 ```
 docs/learnings/episodes/{date}/{topic}/episode.md
 ```
+
+### Feature 파일
+```
+# 단일 모듈
+src/test/resources/features/{topic}.feature
+
+# 멀티 모듈 (module 지정 시)
+{module}/src/test/resources/features/{topic}.feature
+```
+
+---
+
+## Feature Path 관리
+
+### Gherkin 스킬에서의 경로 설정
+1. Context 로드 후 topic 확인
+2. 모듈 탐지 (settings.gradle 파싱)
+3. Feature 파일 생성: `src/test/resources/features/{topic}.feature`
+4. Context 업데이트: `featurePath` 필드 기록
+
+### TDD 스킬에서의 경로 참조
+1. Context 로드 후 `featurePath` 확인
+2. `featurePath` 있으면 해당 경로 사용
+3. 없으면 기본 경로 `src/test/resources/features/**/*.feature` 사용
 
 ---
 

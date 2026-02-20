@@ -20,9 +20,21 @@ references:
 TDD 사이클을 통해 코드를 구현한다.
 
 ## 입력
-- `src/test/resources/features/**/*.feature`
+- `.atdd/context.json` - featurePath, module 참조
+- `src/test/resources/features/**/*.feature` - featurePath 없을 때 기본 경로
 - `.atdd/design/domain-model.md`
 - `src/main/java/**/domain/entity/*.java`
+
+## Context 기반 경로
+
+### Feature 파일 경로 결정
+1. `.atdd/context.json` 읽기
+2. `featurePath` 필드 있으면 해당 경로 사용
+3. 없으면 기본 경로 `src/test/resources/features/**/*.feature` 사용
+
+### 멀티 모듈 지원
+- `context.module` 있으면 `{module}/src/test/resources/features/` 경로 사용
+- 단일 모듈이면 루트 기준 `src/test/resources/features/` 사용
 
 ## 템플릿
 - E2E 테스트: [e2e-test-template.md](references/e2e-test-template.md)
@@ -80,9 +92,27 @@ Phase 5에서 진행
 
 ## 프로세스
 
+### 0. Context 로드
+```
+Read .atdd/context.json
+```
+- `featurePath` 확인: Feature 파일 경로
+- `module` 확인: 멀티 모듈 시 사용할 모듈
+- `topic` 확인: 작업명
+
+**경로 결정 로직**:
+```
+IF context.featurePath 존재:
+    feature_path = context.featurePath
+ELSE IF context.module 존재:
+    feature_path = "{module}/src/test/resources/features/**/*.feature"
+ELSE:
+    feature_path = "src/test/resources/features/**/*.feature"
+```
+
 ### 1. Feature 파일 분석
 ```bash
-Read src/test/resources/features/*.feature
+Read {feature_path}
 ```
 
 ### 2. Step Definition 생성 (RED)
