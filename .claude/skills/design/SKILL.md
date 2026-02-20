@@ -1,7 +1,7 @@
 ---
 name: design
 description: This skill should be used when the user asks to "/design", "도메인 설계", "Entity 설계", "DDD 설계", or needs to design domain models using DDD patterns.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, EnterPlanMode
 references:

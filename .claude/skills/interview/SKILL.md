@@ -1,7 +1,7 @@
 ---
 name: interview
 description: This skill should be used when the user asks to "/interview", "요구사항 인터뷰", "새 기능", "프로젝트 시작", "요구사항 정리", or needs to gather and clarify requirements.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
 references:

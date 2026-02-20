@@ -1,7 +1,7 @@
 ---
 name: commit
 description: 한국어로 커밋 메시지를 작성하고 커밋을 생성한다. 기능 단위로 커밋 계획을 세운 후 작은 커밋으로 나누어 진행한다.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Bash
 aliases:

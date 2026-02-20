@@ -1,7 +1,7 @@
 ---
 name: refactor
 description: This skill should be used when the user asks to "/refactor", "리팩토링", "Clean Code 적용", "코드 개선", or needs to improve code quality using Clean Code, DDD patterns, and Martin Fowler's refactoring techniques.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 context: fork
 agent: general-purpose

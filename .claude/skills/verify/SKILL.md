@@ -1,7 +1,7 @@
 ---
 name: verify
 description: This skill should be used when the user asks to "/verify", "검증", "최종 검증", "배포 전 검증", or needs to run all tests and verify code quality before deployment.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash
 ---

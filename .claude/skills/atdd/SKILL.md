@@ -1,7 +1,7 @@
 ---
 name: atdd
 description: ATDD 파이프라인을 시작합니다. /interview를 실행하고, 완료 후 Stop Hook이 자동으로 /validate를 트리거합니다.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Glob, Skill, AskUserQuestion
 ---

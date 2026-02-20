@@ -1,7 +1,7 @@
 ---
 name: epic-split
 description: This skill should be used when the user asks to "/epic-split", "에픽 분해", "요구사항 쪼개", "Epic 나눠", or needs to split large requirements into manageable epics.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Write, Glob
 ---

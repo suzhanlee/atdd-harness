@@ -1,7 +1,7 @@
 ---
 name: monitor
 description: 운영 환경의 에러 로그를 S3(Loki 저장소)에서 조회하고 분석하여 우선순위별로 분류한다.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash
 ---

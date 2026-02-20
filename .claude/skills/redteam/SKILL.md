@@ -1,7 +1,7 @@
 ---
 name: redteam
 description: This skill should be used when the user asks to "/redteam", "Red Team", "비판적 검토", "설계 비평", or needs to critically review design quality from 6 perspectives.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, EnterPlanMode
 references:

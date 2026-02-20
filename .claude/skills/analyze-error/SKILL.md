@@ -1,7 +1,7 @@
 ---
 name: analyze-error
 description: 특정 에러를 심층 분석하고 5 Whys 기법으로 근본 원인을 파악하여 수정 방안을 제안한다.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash
 ---

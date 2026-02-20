@@ -1,7 +1,7 @@
 ---
 name: compound
 description: This skill should be used when the user asks to "/compound", "Episode 생성", "배운 것 저장", "학습 정리", or needs to consolidate design artifacts into a learning episode.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion
 references:

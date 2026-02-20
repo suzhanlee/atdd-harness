@@ -1,7 +1,7 @@
 ---
 name: adr
 description: This skill should be used when the user asks to "/adr", "ADR 작성", "설계 의사결정", "아키텍처 결정 문서화", or needs to document architecture decisions.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, EnterPlanMode
 references:

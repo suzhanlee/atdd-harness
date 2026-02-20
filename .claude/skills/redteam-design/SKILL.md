@@ -1,7 +1,7 @@
 ---
 name: redteam-design
 description: This skill should be used when the user asks to "/redteam-design", "도메인 모델 비평", "RRAIRU", "설계 비판적 검토", or needs to critically review domain models using DDD perspectives.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, EnterPlanMode
 references:

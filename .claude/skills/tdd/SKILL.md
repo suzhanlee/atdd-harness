@@ -1,7 +1,7 @@
 ---
 name: tdd
 description: This skill should be used when the user asks to "/tdd", "TDD 구현", "테스트 기반 개발", "Red-Green-Refactor", or needs to implement code using TDD cycle.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 context: fork
 agent: general-purpose
