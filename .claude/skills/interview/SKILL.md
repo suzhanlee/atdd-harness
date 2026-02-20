@@ -66,6 +66,37 @@ Phase D (Self-Review)     → 인터뷰 완료
 
 ---
 
+## CRITICAL: Phase별 강제 멈춤 규칙
+
+**이 규칙을 위반하면 스킬 실행이 실패한 것으로 간주한다.**
+
+### Phase A 종료 시
+1. 빈 템플릿을 출력한다
+2. **반드시 AskUserQuestion으로 다음을 확인한다**:
+   ```
+   question: "빈 템플릿을 작성해주세요. 완료되면 '완료'를 선택하세요."
+   header: "Phase A"
+   options: ["완료", "도움말 보기"]
+   ```
+3. 사용자가 "완료"를 선택할 때까지 **절대 Phase B로 진행하지 않는다**
+
+### Phase B 종료 시
+1. 구체화 질문을 출력한다
+2. **반드시 AskUserQuestion으로 다음을 확인한다**:
+   ```
+   question: "질문에 답변해주세요. 완료되면 '완료'를 선택하세요."
+   header: "Phase B"
+   options: ["완료", "추가 질문"]
+   ```
+3. 사용자가 "완료"를 선택할 때까지 **절대 Phase C로 진행하지 않는다**
+
+### 절대 금지 사항
+- Phase A/B 후 사용자 확인 없이 다음 Phase로 진행하는 것
+- AskUserQuestion 없이 텍스트만 출력하고 대기하는 척하는 것
+- "완료" 입력을 기다리지 않고 자동으로 진행하는 것
+
+---
+
 ## Context 초기화
 
 인터뷰 시작 전, 작업 컨텍스트를 설정합니다.
@@ -255,12 +286,16 @@ mkdir -p {basePath}/interview
 - [ ] 작업 디렉토리 생성 (`{basePath}/interview/`)
 
 ## MUST 체크리스트 (실행 후)
-- [ ] Phase A: 빈 템플릿 작성 완료
-- [ ] Phase B: 구체화 질문 답변 완료
+- [ ] Phase A: 빈 템플릿 출력 후 AskUserQuestion으로 "완료" 확인
+- [ ] Phase B: 구체화 질문 출력 후 AskUserQuestion으로 "완료" 확인
 - [ ] Phase C: `{basePath}/interview/requirements-draft.md` 생성
 - [ ] Phase D: Self-Review 수행 (등급 B 이상)
 - [ ] `{basePath}/interview/interview-log.md` 생성
 - [ ] context.json phase 업데이트
+
+## CRITICAL 체크리스트 (위반 시 실패)
+- [ ] **Phase A 후 AskUserQuestion 사용자 확인 받음** (텍스트만 출력하고 진행 ❌)
+- [ ] **Phase B 후 AskUserQuestion 사용자 확인 받음** (텍스트만 출력하고 진행 ❌)
 
 ## 출력 파일
 

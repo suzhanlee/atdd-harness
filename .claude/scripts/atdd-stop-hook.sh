@@ -1,30 +1,31 @@
 #!/bin/bash
-# atdd-stop-hook.sh - Stop hook
+# atdd-stop-hook.sh - Stop hook for ATDD orchestration
 #
-# Purpose: Track ATDD pipeline state and cleanup when complete
+# Purpose: Track ATDD pipeline state and trigger next skills
 # Activation: Stop event + session has atdd state
 #
-# Note: Skill orchestration is handled by the atdd skill, not this hook.
-# This hook only tracks state and cleans up.
+# ultrawork 방식: jq + bash로 JSON 출력하여 다음 스킬 트리거
 #
 # Hook Input Fields (Stop):
 #   - session_id: current session
 #   - transcript_path: conversation log path
 #   - cwd: current working directory
+#
+# Output JSON (ultrawork 방식):
+#   {"decision": "block", "reason": "Execute: Skill(\"validate\")"} -> 세션 종료 차단, 스킬 실행
+#   {"decision": "allow"} 또는 출력 없음 -> 세션 종료 허용
 
 set -euo pipefail
 
 # Read hook input from stdin
 HOOK_INPUT=$(cat)
 
-# Use Python for JSON parsing
-parse_json() {
-  python -c "import json,sys; d=json.load(sys.stdin); print(d.get('$1', ''))"
-}
+# Use jq for JSON parsing (ultrawork style)
+CWD=$(echo "$HOOK_INPUT" | jq -r '.cwd // empty')
+SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // empty')
 
-# Extract fields using Python
-CWD=$(echo "$HOOK_INPUT" | parse_json 'cwd')
-SESSION_ID=$(echo "$HOOK_INPUT" | parse_json 'session_id')
+# Normalize Windows paths
+CWD=$(echo "$CWD" | sed 's|\\|/|g')
 
 # State file path
 STATE_FILE="$CWD/.atdd/state.json"
@@ -34,79 +35,104 @@ if [[ ! -f "$STATE_FILE" ]]; then
   exit 0
 fi
 
-# Check and process state using Python
-python - "$CWD" "$SESSION_ID" << 'PYTHON_SCRIPT'
-import json
-import os
-import sys
-
-cwd = sys.argv[1].replace('\\', '/')
-session_id = sys.argv[2]
-state_file = os.path.join(cwd, '.atdd', 'state.json')
-
-if not os.path.exists(state_file):
-    sys.exit(0)
-
-with open(state_file, 'r') as f:
-    state = json.load(f)
-
 # Check if this session has atdd state
-sessions = state.get('sessions', {})
-if session_id not in sessions:
-    sys.exit(0)
+ATDD_STATE=$(jq -e --arg sid "$SESSION_ID" '.sessions[$sid].atdd // empty' "$STATE_FILE" 2>/dev/null || echo "")
 
-atdd = sessions[session_id].get('atdd', {})
-if not atdd:
-    sys.exit(0)
+if [[ -z "$ATDD_STATE" ]]; then
+  exit 0
+fi
 
-phase = atdd.get('phase', 'interview')
-base_path = atdd.get('basePath', '')
-topic = atdd.get('topic', '')
+# Extract atdd state fields
+PHASE=$(echo "$ATDD_STATE" | jq -r '.phase // "interview"')
+BASE_PATH=$(echo "$ATDD_STATE" | jq -r '.basePath // empty')
+TOPIC=$(echo "$ATDD_STATE" | jq -r '.topic // empty')
 
 # Fallback: Try to get basePath from context.json if not in state
-if not base_path:
-    context_file = os.path.join(cwd, '.atdd', 'context.json')
-    if os.path.exists(context_file):
-        with open(context_file, 'r') as f:
-            context = json.load(f)
-            base_path = context.get('basePath', '')
+if [[ -z "$BASE_PATH" ]]; then
+  CONTEXT_FILE="$CWD/.atdd/context.json"
+  if [[ -f "$CONTEXT_FILE" ]]; then
+    BASE_PATH=$(jq -r '.basePath // empty' "$CONTEXT_FILE" 2>/dev/null || echo "")
+  fi
+fi
 
-if not base_path:
-    sys.exit(0)
+if [[ -z "$BASE_PATH" ]]; then
+  exit 0
+fi
 
-def cleanup_session():
-    del state['sessions'][session_id]
-    with open(state_file, 'w') as f:
-        json.dump(state, f, indent=2)
+# Full path for base directory
+FULL_BASE_PATH="$CWD/$BASE_PATH"
 
-def update_phase(new_phase):
-    state['sessions'][session_id]['atdd']['phase'] = new_phase
-    with open(state_file, 'w') as f:
-        json.dump(state, f, indent=2)
+# Function to update phase in state file
+update_phase() {
+  local new_phase="$1"
+  local tmp_file=$(mktemp)
+  jq --arg sid "$SESSION_ID" --arg phase "$new_phase" \
+    '.sessions[$sid].atdd.phase = $phase' "$STATE_FILE" > "$tmp_file" && mv "$tmp_file" "$STATE_FILE"
+}
 
-# Check completion status
-validation_report = os.path.join(cwd, base_path, 'validate', 'validation-report.md')
+# Function to cleanup session
+cleanup_session() {
+  local tmp_file=$(mktemp)
+  jq --arg sid "$SESSION_ID" 'del(.sessions[$sid])' "$STATE_FILE" > "$tmp_file" && mv "$tmp_file" "$STATE_FILE"
+}
 
-if os.path.exists(validation_report):
-    with open(validation_report, 'r', encoding='utf-8') as f:
-        content = f.read().lower()
+# Phase transition logic
+case "$PHASE" in
+  interview)
+    # Check if requirements-draft.md exists (interview complete)
+    REQUIREMENTS_FILE="$FULL_BASE_PATH/interview/requirements-draft.md"
+    if [[ -f "$REQUIREMENTS_FILE" ]]; then
+      # Interview complete - trigger validate
+      update_phase "validate"
+      echo "📋 ATDD: Interview complete, triggering /validate for \"$TOPIC\"" >&2
 
-    # Check if validation passed
-    has_pass = 'pass' in content and ('✅' in content or '종합 결과: ✅' in content)
+      # Output JSON to block and trigger next skill (ultrawork style)
+      jq -n --arg topic "$TOPIC" '{decision: "block", reason: ("Execute: Skill(\"validate\", args=\"" + $topic + "\")")}'
+      exit 0
+    else
+      # Interview incomplete - just log
+      echo "⏸️ ATDD: Interview paused for \"$TOPIC\"" >&2
+    fi
+    ;;
 
-    if has_pass:
-        # Update phase to done
-        update_phase('done')
-        print(f'🎉 ATDD: Pipeline complete for "{topic}"', file=sys.stderr)
-        print(f'📁 Results: {base_path}', file=sys.stderr)
+  validate)
+    # Check if validation-report.md exists with PASS
+    VALIDATION_REPORT="$FULL_BASE_PATH/validate/validation-report.md"
+    if [[ -f "$VALIDATION_REPORT" ]]; then
+      # Check for PASS status
+      if grep -qiE "(종합 결과.*✅|overall.*pass|결과.*pass)" "$VALIDATION_REPORT" 2>/dev/null; then
+        # Validation passed - mark as done
+        update_phase "done"
+        echo "🎉 ATDD: Pipeline complete for \"$TOPIC\"" >&2
+        echo "📁 Results: $BASE_PATH" >&2
+
         # Cleanup session
-        cleanup_session()
-    else:
-        print(f'⚠️ ATDD: Validation incomplete or failed for "{topic}"', file=sys.stderr)
-else:
-    print(f'📋 ATDD: Session stopped at phase "{phase}" for "{topic}"', file=sys.stderr)
-    # Keep session state for potential resume
+        cleanup_session
 
-PYTHON_SCRIPT
+        # Allow session to end (no output or decision: allow)
+        jq -n '{decision: "allow"}'
+        exit 0
+      else
+        # Validation incomplete or failed
+        echo "⚠️ ATDD: Validation incomplete or failed for \"$TOPIC\"" >&2
+      fi
+    else
+      echo "📋 ATDD: Validation in progress for \"$TOPIC\"" >&2
+    fi
+    ;;
 
+  done)
+    # Already done - cleanup and allow
+    cleanup_session
+    jq -n '{decision: "allow"}'
+    exit 0
+    ;;
+
+  *)
+    # Unknown phase - just log
+    echo "📋 ATDD: Session at phase \"$PHASE\" for \"$TOPIC\"" >&2
+    ;;
+esac
+
+# Default: allow session to end
 exit 0
