@@ -125,11 +125,16 @@ class OrderE2ETest {
 ```
 src/test/resources/
 ├── testdata/
-│   ├── users.sql
-│   ├── products.sql
-│   ├── orders.sql
+│   ├── reference/        # 기준 데이터 (클래스 레벨 @Sql)
+│   │   ├── categories.sql
+│   │   └── products.sql
+│   ├── scenario/         # 시나리오별 데이터 (메서드 레벨 @Sql)
+│   │   ├── order-create/
+│   │   └── order-cancel/
 │   └── cleanup.sql
 ```
+
+> **참고:** Reference Data 분리 패턴은 [섹션 12](#12-reference-data-분리-패턴)을 참조하세요.
 
 ---
 
@@ -500,6 +505,308 @@ SELECT * FROM INFORMATION_SCHEMA.CONSTRAINTS;
 
 ---
 
+## 11. ATDD 시나리오 매핑
+
+### Gherkin Given절 ↔ SQL 파일 매핑 원칙
+
+ATDD 워크플로우에서 Gherkin 시나리오의 Given절은 테스트 데이터 준비를 의미합니다. 각 Given절을 SQL 파일로 매핑하여 재사용성과 유지보수성을 높입니다.
+
+| Given절 패턴 | SQL 파일 위치 | 설명 |
+|-------------|--------------|------|
+| `{entity}가 존재한다` | `scenario/{feature}/{entity}.sql` | 단일 엔티티 데이터 |
+| `다음 {entity}들이 존재한다` | `scenario/{feature}/{entity}.sql` | 복수 엔티티 데이터 |
+| `기준 데이터가 설정되어 있다` | `reference/{entity}.sql` | 공통 기준 데이터 |
+
+### Feature 파일 구조 예시
+
+```gherkin
+# src/test/resources/features/order.feature
+Feature: 주문 관리
+
+  Background:
+    Given 기준 상품 데이터가 설정되어 있다
+
+  Scenario: 주문 생성
+    Given 사용자가 존재한다
+    When 주문 생성 요청을 보낸다
+    Then 상태 코드 201를 받는다
+
+  Scenario: 주문 취소
+    Given 사용자가 존재한다
+    And 주문이 존재한다
+    When 주문 취소 요청을 보낸다
+    Then 상태 코드 200를 받는다
+```
+
+### Step Definition에서 @Sql 사용 패턴
+
+#### 클래스 레벨 @Sql (기준 데이터)
+
+```java
+@Sql("/testdata/reference/products.sql")  // 기준 데이터
+public class OrderStepDefinitions {
+
+    // 기준 데이터는 모든 시나리오에서 공유
+}
+```
+
+#### 메서드 레벨 @Sql (시나리오별 데이터)
+
+```java
+@Given("사용자가 존재한다")
+@Sql("/testdata/scenario/order-create/user.sql")
+public void userExists() {
+    // SQL 파일로 데이터 준비 완료
+}
+
+@Given("주문이 존재한다")
+@Sql({
+    "/testdata/scenario/order-cancel/user.sql",
+    "/testdata/scenario/order-cancel/order.sql"
+})
+public void orderExists() {
+    // 여러 SQL 파일을 순차 실행
+}
+```
+
+### 시나리오별 SQL 파일 분리 전략
+
+```
+src/test/resources/testdata/
+├── reference/                    # 기준 데이터 (클래스 레벨)
+│   ├── categories.sql            # 카테고리 마스터
+│   └── products.sql              # 상품 마스터
+├── scenario/                     # 시나리오별 데이터 (메서드 레벨)
+│   ├── order-create/             # 주문 생성 시나리오
+│   │   └── user.sql
+│   ├── order-cancel/             # 주문 취소 시나리오
+│   │   ├── user.sql
+│   │   ├── order.sql
+│   │   └── order-item.sql
+│   └── order-refund/             # 주문 환불 시나리오
+│       ├── user.sql
+│       ├── order.sql
+│       └── payment.sql
+└── cleanup.sql
+```
+
+### Gherkin → SQL 변환 예시
+
+```gherkin
+# Gherkin
+Scenario: 상품 주문 취소
+  Given 사용자가 존재한다          # → user.sql
+  And 주문이 존재한다              # → order.sql
+  And 주문 상품이 존재한다         # → order-item.sql
+```
+
+```java
+// Step Definition
+@Given("사용자가 존재한다")
+@Sql("/testdata/scenario/order-cancel/user.sql")
+public void userExists() {}
+
+@Given("주문이 존재한다")
+@Sql("/testdata/scenario/order-cancel/order.sql")
+public void orderExists() {}
+
+@Given("주문 상품이 존재한다")
+@Sql("/testdata/scenario/order-cancel/order-item.sql")
+public void orderItemExists() {}
+```
+
+---
+
+## 12. Reference Data 분리 패턴
+
+### Reference Data vs Transaction Data 구분
+
+| 구분 | Reference Data | Transaction Data |
+|------|---------------|------------------|
+| **성격** | 마스터 데이터, 코드성 데이터 | 비즈니스 트랜잭션 데이터 |
+| **변경 빈도** | 낮음 (거의 변하지 않음) | 높음 (시나리오마다 다름) |
+| **예시** | 카테고리, 상품, 코드표 | 주문, 결제, 배송 |
+| **@Sql 위치** | 클래스 레벨 | 메서드 레벨 |
+| **파일 위치** | `reference/` | `scenario/` |
+
+### ID 분리 전략 (핵심)
+
+> **중요:** 모든 테스트 데이터 ID는 **10000부터 시작**하여 기존 데이터와 충돌을 방지합니다.
+
+#### ID 할당 규칙
+
+| 엔티티 | ID 범위 | 예시 |
+|--------|---------|------|
+| Users | 10000 ~ 19999 | 10001, 10002 |
+| Products | 11000 ~ 11999 | 11001, 11002 |
+| Categories | 12000 ~ 12999 | 12001, 12002 |
+| Orders | 20000 ~ 29999 | 20001, 20002 |
+| OrderItems | 21000 ~ 21999 | 21001, 21002 |
+| Payments | 30000 ~ 39999 | 30001, 30002 |
+
+#### 명시적 ID 필수 이유
+
+1. **FK 참조 가능**: 자식 테이블에서 부모 ID를 참조할 수 있어야 함
+2. **테스트 예측성**: AUTO_INCREMENT 의존 시 ID가 불확실해짐
+3. **데이터 충돌 방지**: 기존 데이터(1~9999)와 분리하여 충돌 방지
+4. **동시 테스트 격리**: 병렬 테스트 실행 시 ID 충돌 방지
+
+### 실제 예시: 주문 시스템
+
+#### 파일 구조
+
+```
+src/test/resources/testdata/
+├── reference/
+│   ├── categories.sql           # 카테고리 기준 데이터
+│   └── products.sql             # 상품 기준 데이터
+├── scenario/
+│   ├── order-create/
+│   │   └── user.sql             # 주문 생성용 사용자
+│   └── order-cancel/
+│       ├── user.sql             # 주문 취소용 사용자
+│       ├── order.sql            # 취소할 주문
+│       └── order-item.sql       # 주문 상품
+└── cleanup.sql
+```
+
+#### Reference Data: categories.sql
+
+```sql
+-- src/test/resources/testdata/reference/categories.sql
+-- 기준 데이터: 카테고리 (ID: 12000~)
+
+INSERT INTO categories (id, name, created_at, updated_at)
+VALUES
+    (12001, '전자제품', NOW(), NOW()),
+    (12002, '의류', NOW(), NOW()),
+    (12003, '식품', NOW(), NOW());
+```
+
+#### Reference Data: products.sql
+
+```sql
+-- src/test/resources/testdata/reference/products.sql
+-- 기준 데이터: 상품 (ID: 11000~)
+
+INSERT INTO products (id, category_id, name, price, status, created_at, updated_at)
+VALUES
+    (11001, 12001, '노트북', 1500000, 'ACTIVE', NOW(), NOW()),
+    (11002, 12001, '스마트폰', 1000000, 'ACTIVE', NOW(), NOW()),
+    (11003, 12002, '티셔츠', 30000, 'ACTIVE', NOW(), NOW());
+```
+
+#### Scenario Data: order-cancel/user.sql
+
+```sql
+-- src/test/resources/testdata/scenario/order-cancel/user.sql
+-- 시나리오 데이터: 주문 취소용 사용자 (ID: 10000~)
+
+INSERT INTO users (id, email, name, status, created_at, updated_at)
+VALUES
+    (10001, 'cancel-test@test.com', '취소테스터', 'ACTIVE', NOW(), NOW());
+```
+
+#### Scenario Data: order-cancel/order.sql
+
+```sql
+-- src/test/resources/testdata/scenario/order-cancel/order.sql
+-- 시나리오 데이터: 취소할 주문 (ID: 20000~)
+
+INSERT INTO orders (id, user_id, status, total_amount, created_at, updated_at)
+VALUES
+    (20001, 10001, 'CREATED', 1530000, NOW(), NOW());
+```
+
+#### Scenario Data: order-cancel/order-item.sql
+
+```sql
+-- src/test/resources/testdata/scenario/order-cancel/order-item.sql
+-- 시나리오 데이터: 주문 상품 (ID: 21000~)
+
+INSERT INTO order_items (id, order_id, product_id, quantity, price, created_at)
+VALUES
+    (21001, 20001, 11001, 1, 1500000, NOW()),  -- 노트북 1개
+    (21002, 20001, 11003, 1, 30000, NOW());    -- 티셔츠 1개
+```
+
+### Step Definition 예시
+
+```java
+import io.cucumber.java.en.Given;
+import org.springframework.test.context.jdbc.Sql;
+
+// 클래스 레벨: 기준 데이터
+@Sql("/testdata/reference/categories.sql")
+@Sql("/testdata/reference/products.sql")
+public class OrderCancelStepDefinitions {
+
+    @Given("사용자가 존재한다")
+    @Sql("/testdata/scenario/order-cancel/user.sql")
+    public void userExists() {
+        // user.sql 실행으로 데이터 준비 완료
+    }
+
+    @Given("주문이 존재한다")
+    @Sql({
+        "/testdata/scenario/order-cancel/user.sql",
+        "/testdata/scenario/order-cancel/order.sql"
+    })
+    public void orderExists() {
+        // 여러 SQL 파일을 FK 순서대로 실행
+    }
+
+    @Given("주문 상품이 존재한다")
+    @Sql({
+        "/testdata/scenario/order-cancel/user.sql",
+        "/testdata/scenario/order-cancel/order.sql",
+        "/testdata/scenario/order-cancel/order-item.sql"
+    })
+    public void orderItemExists() {
+        // 전체 데이터 체인 실행
+    }
+}
+```
+
+### 테스트 격리 보강
+
+동시 테스트 실행 시 데이터 충돌을 방지하기 위해 다음 방법을 권장합니다:
+
+#### 방법 1: @DirtiesContext 사용
+
+```java
+import org.springframework.test.annotation.DirtiesContext;
+
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+public class OrderCancelStepDefinitions {
+    // 각 테스트마다 ApplicationContext 재생성
+}
+```
+
+#### 방법 2: TestContainers 사용 (권장)
+
+```java
+@TestConfiguration
+static class TestContainersConfig {
+    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
+        .withDatabaseName("testdb")
+        .withUsername("test")
+        .withPassword("test");
+}
+```
+
+> **참고:** TestContainers 설정은 [섹션 9](#9-testcontainers-연동)를 참조하세요.
+
+### ID 사용 컨벤션 요약
+
+| 테스트 유형 | ID 사용 | 이유 |
+|------------|---------|------|
+| **E2E 테스트** | 명시적 ID (10000~) | FK 참조, 예측 가능성 |
+| **단위 테스트** | ID 생략 (자동 생성) | 최소 구현, 빠른 피드백 |
+| **통합 테스트** | 명시적 ID 권장 | FK 참조 용이성 |
+
+---
+
 ## 체크리스트
 
 ### INSERT 전 체크리스트
@@ -516,9 +823,20 @@ SELECT * FROM INFORMATION_SCHEMA.CONSTRAINTS;
 - [ ] FK 역순으로 삭제하는가?
 - [ ] TRUNCATE 시 FK 체크를 비활성화했는가?
 
+### ATDD 시나리오 매핑 체크리스트
+
+- [ ] Given절이 SQL 파일로 매핑되었는가?
+- [ ] Reference Data와 Transaction Data가 분리되었는가?
+- [ ] ID가 10000부터 시작하는가?
+- [ ] 명시적 ID가 FK 참조에 사용되는가?
+- [ ] 시나리오별 SQL 파일이 `scenario/` 하위에 위치하는가?
+- [ ] 기준 데이터가 `reference/` 하위에 위치하는가?
+- [ ] 테스트 격리 전략이 적용되었는가?
+
 ---
 
 ## 관련 문서
 
 - [E2E 테스트 템플릿](e2e-test-template.md) - Cucumber + @Sql 활용
 - [통합 테스트 템플릿](integration-test-template.md) - Repository 테스트
+- [Gherkin 스킬](../gherkin/SKILL.md) - ATDD Gherkin 시나리오 작성 가이드
