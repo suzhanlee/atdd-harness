@@ -1,7 +1,0 @@
-# Error Reports Directory
-
-이 디렉토리는 `/monitor` skill로 생성된 에러 리포트와 분석 결과를 저장합니다.
-
-## 파일 목록
-- `error-report-{timestamp}.md`: 에러 로그 분석 리포트
-- `analysis-{error-id}.md`: 개별 에러 심층 분석
