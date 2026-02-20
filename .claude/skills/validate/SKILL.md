@@ -1,7 +1,7 @@
 ---
 name: validate
 description: This skill should be used when the user asks to "/validate", "요구사항 검증", "검증해줘", or needs to validate requirements before design phase.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit
 references:
@@ -158,7 +158,6 @@ Phase D (Refinement)로 진행합니다.
 ```
 검증 통과 ✅
 모든 검증 항목을 충족했습니다.
-다음 단계: /design
 ```
 
 ### FAIL
@@ -197,7 +196,7 @@ Phase D (Refinement)로 진행합니다.
 - [ ] Phase C: Gap 분석 완료
 - [ ] Phase D: `{basePath}/validate/validation-report.md` 생성
 - [ ] Phase D: `{basePath}/validate/refined-requirements.md` 생성 (필요시)
-- [ ] 결과 판단: PASS → /design | FAIL → 수정 후 재실행
+- [ ] 결과 판단: PASS → 검증 완료 | FAIL → 수정 후 재실행
 
 ## 입력
 - `{basePath}/interview/requirements-draft.md` (또는 `{basePath}/interview/epics.md`)
@@ -261,13 +260,6 @@ Phase D (Refinement)로 진행합니다.
 ```
 
 > 리포트 템플릿: [validation-templates.md](references/validation-templates.md)
-
----
-
-## 다음 단계
-
-- 검증 통과 시 `/design` 실행
-- 검증 실패 시 요구사항 수정 후 재검증
 
 ---
 
