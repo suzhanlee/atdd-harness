@@ -25,11 +25,15 @@ ADR, redteam, design, redteam-design 결과물을 합쳐서 **학습 Episode**�
 
 ## 입력
 - `.atdd/context.json` (현재 작업 컨텍스트)
-- `.atdd/design/{date}/{topic}/adr/*.md` (ADR 문서들)
-- `.atdd/design/{date}/{topic}/redteam/*.md` (Critique 문서들)
-- `.atdd/design/{date}/{topic}/erd.md` (ERD)
-- `.atdd/design/{date}/{topic}/domain-model.md` (도메인 모델)
-- `.atdd/design/{date}/{topic}/traceability-matrix.md` (추적 매트릭스)
+- `{basePath}/adr/*.md` (ADR 문서들)
+- `{basePath}/redteam/*.md` (Critique 문서들)
+- `{basePath}/design/erd.md` (ERD)
+- `{basePath}/design/domain-model.md` (도메인 모델)
+- `{basePath}/design/traceability-matrix.md` (추적 매트릭스)
+- `{basePath}/interview/requirements-draft.md` (요구사항 초안)
+- `{basePath}/validate/refined-requirements.md` (정제된 요구사항)
+- `{basePath}/validate/validation-report.md` (검증 리포트)
+- `{basePath}/scenarios/*.md` (시나리오 파일들)
 
 ## 출력
 - `docs/learnings/episodes/{date}/{topic}/episode.md`
@@ -64,10 +68,8 @@ context.json이 없으면 에러 메시지 출력:
 ### 2. 작업 경로 결정
 
 ```markdown
-date = context.date
-topic = context.topic
-base_path = `.atdd/design/{date}/{topic}`
-output_path = `docs/learnings/episodes/{date}/{topic}/episode.md`
+basePath = context.basePath (또는 `.atdd/{date}/{topic}`으로 계산)
+outputPath = `docs/learnings/episodes/{date}/{topic}/episode.md`
 ```
 
 ### 3. Design 산출물 로드
@@ -76,17 +78,28 @@ output_path = `docs/learnings/episodes/{date}/{topic}/episode.md`
 
 ```markdown
 # ADR 파일들
-Glob .atdd/design/{date}/{topic}/adr/*.md
+Glob {basePath}/adr/*.md
 → 각 파일 Read
 
 # Redteam 파일들
-Glob .atdd/design/{date}/{topic}/redteam/*.md
+Glob {basePath}/redteam/*.md
 → 각 파일 Read
 
 # Design 파일들
-Read .atdd/design/{date}/{topic}/erd.md
-Read .atdd/design/{date}/{topic}/domain-model.md
-Read .atdd/design/{date}/{topic}/traceability-matrix.md
+Read {basePath}/design/erd.md
+Read {basePath}/design/domain-model.md
+Read {basePath}/design/traceability-matrix.md
+
+# Validate 파일들
+Read {basePath}/validate/refined-requirements.md
+Read {basePath}/validate/validation-report.md
+
+# Interview 파일들
+Read {basePath}/interview/requirements-draft.md
+
+# Scenarios 파일들
+Glob {basePath}/scenarios/*.md
+→ 각 파일 Read
 ```
 
 ### 4. Episode 파일 생성
@@ -212,7 +225,7 @@ Write docs/learnings/episodes/{date}/{topic}/episode.md
 
 ## MUST 체크리스트 (실행 전)
 - [ ] context.json 존재
-- [ ] `.atdd/design/{date}/{topic}/` 디렉토리 존재
+- [ ] `{basePath}/` 디렉토리 존재
 - [ ] 최소 1개 이상의 ADR 파일 존재
 
 ## MUST 체크리스트 (실행 후)
@@ -228,9 +241,9 @@ Write docs/learnings/episodes/{date}/{topic}/episode.md
 # Episode: payment-system
 
 ## Meta
-- **날짜**: 2026-02-19
-- **관련 ADR**: [ADR-001](../../.atdd/design/2026-02-19/payment-system/adr/001-database.md)
-- **요구사항**: [requirements-draft.md](../../.atdd/requirements/requirements-draft.md)
+- **날짜**: 2026-02-20
+- **관련 ADR**: [ADR-001](../../.atdd/2026-02-20/payment-system/adr/001-database.md)
+- **요구사항**: [requirements-draft.md](../../.atdd/2026-02-20/payment-system/interview/requirements-draft.md)
 
 ---
 

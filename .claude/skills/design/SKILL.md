@@ -36,9 +36,7 @@ Read .atdd/context.json
 ```
 
 경로 결정:
-- `date = context.date`
-- `topic = context.topic`
-- `base_path = .atdd/design/{date}/{topic}`
+- `basePath = context.basePath` (또는 `.atdd/{date}/{topic}`으로 계산)
 
 context.json이 없으면 에러:
 ```
@@ -74,13 +72,13 @@ Phase C (Interface Definition)로 진행합니다.
 
 ## 입력
 - `.atdd/context.json` (작업 컨텍스트)
-- `.atdd/requirements/refined-requirements.md`
-- `.atdd/validation/validation-report.md`
+- `{basePath}/validate/refined-requirements.md`
+- `{basePath}/validate/validation-report.md`
 
 ## 출력
-- `.atdd/design/{date}/{topic}/erd.md`
-- `.atdd/design/{date}/{topic}/domain-model.md`
-- `.atdd/design/{date}/{topic}/traceability-matrix.md`
+- `{basePath}/design/erd.md`
+- `{basePath}/design/domain-model.md`
+- `{basePath}/design/traceability-matrix.md`
 - `src/main/java/**/domain/entity/*.java` (Entity 클래스)
 
 ---
@@ -370,16 +368,16 @@ public class User {
 - 요구사항 검증 통과 후 자동 제안
 
 ## MUST 체크리스트 (실행 전)
-- [ ] refined-requirements.md 존재
-- [ ] validation-report.md 존재 (PASS 상태)
+- [ ] `{basePath}/validate/refined-requirements.md` 존재
+- [ ] `{basePath}/validate/validation-report.md` 존재 (PASS 상태)
 
 ## MUST 체크리스트 (실행 후)
 - [ ] Phase A: 도메인 질문 답변 완료
 - [ ] Phase B: 아키텍처 스케치 작성 완료
 - [ ] Phase C: 인터페이스/시그니처 정의 완료 (빈 구현)
 - [ ] Phase D: 검증 완료 (Must Have 100%)
-- [ ] erd.md, domain-model.md 생성
-- [ ] traceability-matrix.md 생성
+- [ ] `{basePath}/design/erd.md`, `{basePath}/design/domain-model.md` 생성
+- [ ] `{basePath}/design/traceability-matrix.md` 생성
 
 ---
 

@@ -37,11 +37,9 @@ Read .atdd/context.json
 ```
 
 경로 결정:
-- `date = context.date`
-- `topic = context.topic`
-- `base_path = .atdd/design/{date}/{topic}`
-- `adr_path = .atdd/design/{date}/{topic}/adr`
-- `redteam_path = .atdd/design/{date}/{topic}/redteam`
+- `basePath = context.basePath` (또는 `.atdd/{date}/{topic}`으로 계산)
+- `adrPath = {basePath}/adr`
+- `redteamPath = {basePath}/redteam`
 
 context.json이 없으면 에러:
 ```
@@ -53,12 +51,12 @@ context.json이 없으면 에러:
 
 ## 입력
 - `.atdd/context.json` (작업 컨텍스트)
-- `.atdd/design/{date}/{topic}/adr/*.md` (ADR 문서들)
+- `{basePath}/adr/*.md` (ADR 문서들)
 
 ## 출력
-- `.atdd/design/{date}/{topic}/redteam/critique-[ADR번호].md`
-- `.atdd/design/{date}/{topic}/redteam/decisions.md`
-- `.atdd/design/{date}/{topic}/redteam/backlog.md`
+- `{basePath}/redteam/critique-[ADR번호].md`
+- `{basePath}/redteam/decisions.md`
+- `{basePath}/redteam/backlog.md`
 
 ---
 
@@ -89,7 +87,7 @@ Red Team은 설계에 대한 "악의적" 또는 "비판적" 관점을 취하여 
 
 ### 1. ADR 로드
 ```
-Read .atdd/design/{date}/{topic}/adr/*.md
+Read {basePath}/adr/*.md
 ```
 
 ### 2. 6관점 분석
@@ -100,7 +98,7 @@ Read .atdd/design/{date}/{topic}/adr/*.md
 
 ### 3. Critique Report 생성
 ```
-.atdd/design/{date}/{topic}/redteam/critique-[ADR번호].md
+{basePath}/redteam/critique-[ADR번호].md
 ```
 
 ### 4. 사용자 결정 대기
@@ -171,14 +169,14 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 ### DEFER (보류)
 ```
 나중에 처리
-→ .atdd/design/{date}/{topic}/redteam/backlog.md에 추가
+→ {basePath}/redteam/backlog.md에 추가
 → 다음 단계 진행
 ```
 
 ### REJECT (거부)
 ```
 비평을 거부
-→ .atdd/design/{date}/{topic}/redteam/decisions.md에 거부 사유 기록
+→ {basePath}/redteam/decisions.md에 거부 사유 기록
 → 다음 단계 진행
 ```
 

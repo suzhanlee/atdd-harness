@@ -93,6 +93,7 @@ if (!topic) {
   "date": "{오늘날짜}",
   "status": "in_progress",
   "phase": "interview",
+  "basePath": ".atdd/{오늘날짜}/{topic}",
   "created_at": "{ISO8601}",
   "updated_at": "{ISO8601}"
 }
@@ -100,7 +101,7 @@ if (!topic) {
 
 ### 3. 작업 디렉토리 생성
 ```
-mkdir -p .atdd/design/{date}/{topic}
+mkdir -p {basePath}/interview
 ```
 
 ---
@@ -241,17 +242,24 @@ mkdir -p .atdd/design/{date}/{topic}
 - "프로젝트 시작할래요"
 - `/interview` 명령어 실행
 
+## 입력
+- `.atdd/context.json` (없으면 새로 생성)
+
+## 출력
+- `{basePath}/interview/requirements-draft.md`
+- `{basePath}/interview/interview-log.md`
+
 ## MUST 체크리스트 (실행 전)
 - [ ] topic 파라미터 확인 또는 요청
 - [ ] context.json 생성
-- [ ] 작업 디렉토리 생성
+- [ ] 작업 디렉토리 생성 (`{basePath}/interview/`)
 
 ## MUST 체크리스트 (실행 후)
 - [ ] Phase A: 빈 템플릿 작성 완료
 - [ ] Phase B: 구체화 질문 답변 완료
-- [ ] Phase C: requirements-draft.md 생성
+- [ ] Phase C: `{basePath}/interview/requirements-draft.md` 생성
 - [ ] Phase D: Self-Review 수행 (등급 B 이상)
-- [ ] interview-log.md 생성
+- [ ] `{basePath}/interview/interview-log.md` 생성
 - [ ] context.json phase 업데이트
 
 ## 출력 파일

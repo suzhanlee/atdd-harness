@@ -52,9 +52,9 @@ Phase D (Refinement)로 진행합니다.
 
 ## 입력 우선순위
 
-1. `.atdd/requirements/epics.md` (존재 시 Epic별 검증 모드)
-2. `.atdd/requirements/requirements-draft.md` (기본 모드)
-3. `.atdd/requirements/interview-log.md` (참조용)
+1. `{basePath}/interview/epics.md` (존재 시 Epic별 검증 모드)
+2. `{basePath}/interview/requirements-draft.md` (기본 모드)
+3. `{basePath}/interview/interview-log.md` (참조용)
 
 ---
 
@@ -187,7 +187,7 @@ Phase D (Refinement)로 진행합니다.
 
 ## MUST 체크리스트 (실행 전)
 
-- [ ] 입력 파일 존재: requirements-draft.md 또는 epics.md
+- [ ] 입력 파일 존재: `{basePath}/interview/requirements-draft.md` 또는 `{basePath}/interview/epics.md`
 - [ ] Phase A: Predict Matrix 제시
 
 ## MUST 체크리스트 (실행 후)
@@ -195,9 +195,17 @@ Phase D (Refinement)로 진행합니다.
 - [ ] Phase A: 사용자 예측 완료
 - [ ] Phase B: 실제 검증 수행
 - [ ] Phase C: Gap 분석 완료
-- [ ] Phase D: validation-report.md 생성
-- [ ] Phase D: refined-requirements.md 생성 (필요시)
+- [ ] Phase D: `{basePath}/validate/validation-report.md` 생성
+- [ ] Phase D: `{basePath}/validate/refined-requirements.md` 생성 (필요시)
 - [ ] 결과 판단: PASS → /design | FAIL → 수정 후 재실행
+
+## 입력
+- `{basePath}/interview/requirements-draft.md` (또는 `{basePath}/interview/epics.md`)
+- `{basePath}/interview/interview-log.md` (참조용)
+
+## 출력
+- `{basePath}/validate/validation-report.md`
+- `{basePath}/validate/refined-requirements.md` (필요시)
 
 ---
 

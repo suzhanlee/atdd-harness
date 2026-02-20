@@ -42,10 +42,8 @@ Read .atdd/context.json
 ```
 
 경로 결정:
-- `date = context.date`
-- `topic = context.topic`
-- `base_path = .atdd/design/{date}/{topic}`
-- `adr_path = .atdd/design/{date}/{topic}/adr`
+- `basePath = context.basePath` (또는 `.atdd/{date}/{topic}`으로 계산)
+- `adrPath = {basePath}/adr`
 
 context.json이 없으면 에러:
 ```
@@ -219,12 +217,12 @@ Q3: 미리 알았다면 어떤 다른 선택을 했을까?
 
 ## 입력
 - `.atdd/context.json` (작업 컨텍스트)
-- `.atdd/requirements/refined-requirements.md`
-- `.atdd/validation/validation-report.md`
+- `{basePath}/validate/refined-requirements.md`
+- `{basePath}/validate/validation-report.md`
 
 ## 출력
-- `.atdd/design/{date}/{topic}/adr/[번호]-[제목].md`
-- `.atdd/design/{date}/{topic}/adr/index.md`
+- `{basePath}/adr/[번호]-[제목].md`
+- `{basePath}/adr/index.md`
 
 ---
 
@@ -266,7 +264,7 @@ Architecture Decision Record는 아키텍처 의사결정을 기록하는 가벼
 
 ### 4. 저장 위치
 ```
-.atdd/design/{date}/{topic}/adr/
+{basePath}/adr/
 ├── 001-*.md
 ├── 002-*.md
 └── index.md

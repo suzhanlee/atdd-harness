@@ -35,7 +35,7 @@ Phase D (Coverage Check)  → 시나리오 완료
 ### Phase A 종료 필수 문구
 ```
 ---
-📁 파일 생성 완료: .atdd/scenarios/draft-happy-path.md
+📁 파일 생성 완료: {basePath}/scenarios/draft-happy-path.md
 👆 파일을 열어 핵심 시나리오(Happy Path)를 작성해주세요.
 작성 완료 후 "완료" 또는 "다음"이라고 입력해주세요.
 Phase B (Edge Case Hunt)로 진행합니다.
@@ -44,7 +44,7 @@ Phase B (Edge Case Hunt)로 진행합니다.
 ### Phase B 종료 필수 문구
 ```
 ---
-📁 파일 생성 완료: .atdd/scenarios/draft-edge-cases.md
+📁 파일 생성 완료: {basePath}/scenarios/draft-edge-cases.md
 👆 파일을 열어 최소 5개의 예외 케이스를 식별해주세요.
 식별 완료 후 "완료" 또는 "다음"이라고 입력해주세요.
 Phase C (Generation)로 진행합니다.
@@ -53,9 +53,9 @@ Phase C (Generation)로 진행합니다.
 ---
 
 ## 입력
-- `.atdd/requirements/refined-requirements.md`
-- `.atdd/design/erd.md`
-- `.atdd/design/domain-model.md`
+- `{basePath}/validate/refined-requirements.md`
+- `{basePath}/design/erd.md`
+- `{basePath}/design/domain-model.md`
 - `src/main/java/**/domain/entity/*.java`
 
 ---
@@ -68,14 +68,14 @@ Phase C (Generation)로 진행합니다.
 
 **진행 방식**:
 1. 요구사항 분석 → Feature명 추출
-2. `.atdd/scenarios/` 디렉토리 생성 (존재하지 않는 경우)
-3. `.atdd/scenarios/draft-happy-path.md` 파일 생성
+2. `{basePath}/scenarios/` 디렉토리 생성 (존재하지 않는 경우)
+3. `{basePath}/scenarios/draft-happy-path.md` 파일 생성
 4. 사용자가 파일을 열어 Given-When-Then 작성
 5. "완료" 또는 "다음" 입력 시 Phase B 진행
 
 **파일 생성 액션**:
 ```
-Write: .atdd/scenarios/draft-happy-path.md
+Write: {basePath}/scenarios/draft-happy-path.md
 ```
 
 **생성할 템플릿 파일 내용**:
@@ -146,13 +146,13 @@ Write: .atdd/scenarios/draft-happy-path.md
 **목적**: 사용자가 예외 케이스를 최소 5개 이상 식별
 
 **진행 방식**:
-1. `.atdd/scenarios/draft-edge-cases.md` 파일 생성
+1. `{basePath}/scenarios/draft-edge-cases.md` 파일 생성
 2. 사용자가 파일을 열어 Edge Case 식별
 3. "완료" 또는 "다음" 입력 시 Phase C 진행
 
 **파일 생성 액션**:
 ```
-Write: .atdd/scenarios/draft-edge-cases.md
+Write: {basePath}/scenarios/draft-edge-cases.md
 ```
 
 **생성할 워크시트 파일 내용**:
@@ -224,9 +224,9 @@ Write: .atdd/scenarios/draft-edge-cases.md
 **목적**: Happy Path와 Exception Path를 모두 포함한 시나리오 파일 생성
 
 **진행 방식**:
-1. `.atdd/context.json` 읽기 (topic, module 확인)
-2. `.atdd/scenarios/draft-happy-path.md` 읽기
-3. `.atdd/scenarios/draft-edge-cases.md` 읽기
+1. `.atdd/context.json` 읽기 (topic, module, basePath 확인)
+2. `{basePath}/scenarios/draft-happy-path.md` 읽기
+3. `{basePath}/scenarios/draft-edge-cases.md` 읽기
 4. **Step 정규화** (Step Naming Convention 적용)
 5. **Data Table 구조화**
 6. .feature 파일 생성 → `src/test/resources/features/{topic}.feature`
@@ -254,8 +254,8 @@ src/test/resources/features/{topic}.feature
 
 **파일 읽기 액션**:
 ```
-Read: .atdd/scenarios/draft-happy-path.md
-Read: .atdd/scenarios/draft-edge-cases.md
+Read: {basePath}/scenarios/draft-happy-path.md
+Read: {basePath}/scenarios/draft-edge-cases.md
 ```
 
 **Context 업데이트**:
@@ -405,23 +405,23 @@ Gherkin 품질 검증 ✅
 - Entity 설계 완료 후 자동 제안
 
 ## MUST 체크리스트 (실행 전)
-- [ ] refined-requirements.md 존재
-- [ ] design 파일 존재 (erd.md 또는 domain-model.md)
+- [ ] `{basePath}/validate/refined-requirements.md` 존재
+- [ ] design 파일 존재 (`{basePath}/design/erd.md` 또는 `{basePath}/design/domain-model.md`)
 
 ## MUST 체크리스트 (실행 후)
 - [ ] Phase A: Happy Path 작성 완료
 - [ ] Phase B: 예외 케이스 5개 이상 식별
 - [ ] Phase C: .feature 파일 생성
 - [ ] Phase D: 커버리지 검증 (Must Have 100%)
-- [ ] scenarios-summary.md 생성
+- [ ] `{basePath}/scenarios/scenarios-summary.md` 생성
 
 ---
 
 ## 출력 파일
 
 ### Draft 시나리오 (사용자 작성용)
-- `.atdd/scenarios/draft-happy-path.md` - Happy Path 템플릿
-- `.atdd/scenarios/draft-edge-cases.md` - Edge Case 워크시트
+- `{basePath}/scenarios/draft-happy-path.md` - Happy Path 템플릿
+- `{basePath}/scenarios/draft-edge-cases.md` - Edge Case 워크시트
 
 ### 최종 Feature 파일
 **경로**: `src/test/resources/features/{topic}.feature`
