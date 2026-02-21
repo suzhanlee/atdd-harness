@@ -25,7 +25,7 @@ ADR, redteam, design, redteam-design 결과물을 합쳐서 **학습 Episode**�
 
 ## 입력
 - `.atdd/context.json` (현재 작업 컨텍스트)
-- `{basePath}/adr/*.md` (ADR 문서들)
+- `{basePath}/adr/*.md` (ADR 문서들 - **Self-Critique 점수 포함**)
 - `{basePath}/redteam/*.md` (Critique 문서들)
 - `{basePath}/design/erd.md` (ERD)
 - `{basePath}/design/domain-model.md` (도메인 모델)
@@ -117,6 +117,20 @@ Glob {basePath}/scenarios/*.md
 
 ---
 
+## Competency Scores (역량 점수)
+
+### ADR Self-Critique 점수
+| ADR 번호 | Context | 대안분석 | Consequences | Reconsideration | 설득력 | 총점 | 등급 |
+|----------|---------|----------|--------------|-----------------|--------|------|------|
+| ADR-001 | X/5 | X/5 | X/5 | X/5 | X/5 | XX/25 | A/B/C/D/F |
+
+### 역량 성장 추세
+| 일시 | 평균 점수 | 비고 |
+|------|-----------|------|
+| {date} | XX/25 | [이번 작업] |
+
+---
+
 ## Context (맥락)
 [ADR Context에서 추출]
 - 어떤 문제/요구사항이 있었나?
@@ -201,6 +215,7 @@ Write docs/learnings/episodes/{date}/{topic}/episode.md
 ## 추출 규칙
 
 ### ADR에서 추출
+- **Self-Critique 점수**: `## AI Self-Critique 평가 결과` 섹션에서 각 항목별 점수와 총점 추출
 - **Context**: `## Context` 섹션에서 배경/문제 상황 추출
 - **Decision**: `## Decision` 섹션에서 최종 결정 추출
 - **Trade-off**: `## Trade-off Matrix` 섹션에서 대안들과 선택 이유 추출
@@ -247,6 +262,22 @@ Write docs/learnings/episodes/{date}/{topic}/episode.md
 
 ---
 
+## Competency Scores (역량 점수)
+
+### ADR Self-Critique 점수
+| ADR 번호 | Context | 대안분석 | Consequences | Reconsideration | 설득력 | 총점 | 등급 |
+|----------|---------|----------|--------------|-----------------|--------|------|------|
+| ADR-001 | 4/5 | 3/5 | 5/5 | 4/5 | 4/5 | 20/25 | B |
+| ADR-002 | 5/5 | 4/5 | 4/5 | 3/5 | 4/5 | 20/25 | B |
+
+### 역량 성장 추세
+| 일시 | 평균 점수 | 비고 |
+|------|-----------|------|
+| 2026-02-15 | 14/25 | 첫 ADR |
+| 2026-02-20 | 20/25 | +6 향상 |
+
+---
+
 ## Context (맥락)
 결제 시스템에서 다중 통화 지원과 동시성 제어가 필요한 상황.
 트래픽 1000 TPS 예상, 결제 실패 시 보상 트랜잭션 필요.
@@ -276,7 +307,7 @@ Write docs/learnings/episodes/{date}/{topic}/episode.md
 | 이슈 | 관점 | 결정 | 비고 |
 |------|------|------|------|
 | Payment의 상태 전이 | Invariants | ACCEPT | 상태 머신 패턴 적용 |
-| PaymentMethod 경계 | Aggregate | DEFER | 현재는 같은 Aggregate 유지 |
+| PaymentMethod 경계 | Aggregate | DEFER | 현재은 같은 Aggregate 유지 |
 
 ## Domain Model Result (설계 결과)
 
@@ -300,7 +331,13 @@ Write docs/learnings/episodes/{date}/{topic}/episode.md
 ---
 
 ## 다음 단계
-Episode 생성 후 설계 완료. `/gherkin` 실행하여 테스트 시나리오 작성.
+
+### [권장] 설계 내재화
+- `/internalize` 실행하여 이번 설계를 복습하고 내재화하세요.
+- **Active Recall** 방식으로 역량을 강화합니다.
+
+### 다음 Phase 진행
+- `/gherkin` 실행하여 테스트 시나리오 작성.
 
 ---
 
