@@ -1,5 +1,57 @@
 # ATDD Harness - Agent Definitions
 
+## Phase 0: ATDD Entry Agent
+
+### 목표
+ATDD 파이프라인의 진입점 역할을 한다. `/interview`를 실행하고, 완료 후 Stop Hook이 자동으로 `/validate`를 트리거한다.
+
+### 트리거
+- `/atdd`
+- `/atdd {topic}`
+- `/atdd --topic {topic}`
+
+### 입력
+- `--topic` 파라미터 또는 첫 번째 인자로 작업명 (선택)
+
+### 프로세스
+1. **Topic 파라미터 확인**:
+   - `--topic` 또는 첫 번째 인자 확인
+   - 없으면 AskUserQuestion으로 작업명 요청
+2. **Context 초기화**:
+   - `.atdd/context.json` 생성 (없는 경우)
+   - topic, date, status, phase 저장
+3. **Interview 실행**:
+   - `Skill("interview", args=topic)` 호출
+4. **Stop Hook 대기**:
+   - interview 완료 후 Stop Hook이 `/validate` 자동 실행
+
+### Stop Hook 동작
+```
+interview 완료 (requirements-draft.md 생성)
+    ↓
+Stop Hook 감지 → {"decision": "block", "reason": "Execute: Skill(\"validate\")"}
+    ↓
+validate 자동 실행
+    ↓
+validation-report.md + PASS → {"decision": "allow"}
+    ↓
+세션 종료
+```
+
+### 참조 파일
+- [SKILL.md](.claude/skills/atdd/SKILL.md)
+- [Stop Hook 스크립트](.claude/scripts/atdd-stop-hook.sh)
+
+### 출력
+- `.atdd/context.json` (작업 컨텍스트)
+- interview 산출물 (Phase 1 참조)
+- validation 산출물 (Stop Hook으로 자동 실행)
+
+### 상태 전이
+완료 → `/validate` 자동 실행 (Stop Hook)
+
+---
+
 ## Phase 1: Interview Agent
 
 ### 목표
@@ -570,6 +622,72 @@ ADR, redteam, design, redteam-design 결과물을 합쳐서 **학습 Episode**�
 
 ### 상태 전이
 완료 → `/gherkin` 호출 가능
+
+---
+
+## Phase 2.8: Internalize Agent
+
+### 목표
+저장된 Episode를 복습하여 설계 역량을 내재화한다.
+**바람직한 어려움 (Desirable Difficulties)** 을 통해 실제 역량 향상을 도모한다.
+
+### 트리거
+- `/internalize`
+- `/internalize --recent`
+- `/internalize --topic {키워드}`
+- `/internalize {episode경로}`
+- "에피소드 복습", "설계 복습", "내재화", "Active Recall"
+
+### 학습 이론
+Robert Bjork의 **Desirable Difficulties** 적용:
+- **Active Recall**: 문제를 먼저 보고 스스로 생각하기
+- **Retrieval Practice**: 기억에서 정보를 인출하는 연습
+- **Spacing Effect**: 시간 간격을 두고 복습
+
+### 입력
+- Episode 파일들 (`docs/learnings/episodes/**/episode.md`)
+
+### 매개변수
+| 매개변수 | 설명 |
+|----------|------|
+| 없음 | 전체 Episode 목록 표시 후 선택 |
+| `--recent` | 최근 30일 내 Episode만 필터링 |
+| `--topic {키워드}` | 태그/주제로 필터링 |
+| `{경로}` | 특정 Episode 직접 지정 |
+
+### 프로세스
+
+#### Phase 1: Episode 선택
+1. Episode 검색: `Glob docs/learnings/episodes/**/episode.md`
+2. 매개변수에 따른 필터링
+3. AskUserQuestion으로 사용자가 Episode 선택
+
+#### Phase 2: 문제 제시 (바람직한 어려움)
+1. Episode에서 **Context 섹션만** 추출
+2. 문제 형태로 제시:
+   - 상황 설명
+   - 설계 질문 (Entity, Aggregate, Trade-off)
+3. 사용자에게 생각할 시간 제공
+4. AskUserQuestion으로 "정답을 보시겠습니까?" 확인
+
+#### Phase 3: 정답 리마인드
+1. Episode의 **결과**를 공개:
+   - Decisions (설계 결정)
+   - Critique Feedback (비평 피드백)
+   - Domain Model Result (설계 결과물)
+   - Lessons Learned (배운 점)
+2. Self-Check 질문 제공
+
+### 참조 파일
+- [SKILL.md](.claude/skills/internalize/SKILL.md)
+- [context-helper.md](.claude/skills/shared/context-helper.md)
+- [episode-template.md](docs/learnings/episode-template.md)
+
+### 출력
+- 복습 세션 결과 (사용자 피드백)
+
+### 상태 전이
+독립 실행 (다른 Phase와 의존성 없음)
 
 ---
 
