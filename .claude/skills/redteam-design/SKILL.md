@@ -385,6 +385,17 @@ AskUserQuestion:
 - [ ] 사용자의 notes를 포함한 decisions.md 생성
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
 
+### 완료 시 context.json 업데이트
+
+```json
+{
+  "phase": "redteam-design",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
+Edit: .atdd/context.json
+
 ---
 
 ## 출력 파일

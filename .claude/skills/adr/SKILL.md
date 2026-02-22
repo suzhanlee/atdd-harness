@@ -399,6 +399,17 @@ ADR 작성 완료 후 `/redteam` 실행하여 설계 비평 수행
 - [ ] Phase D: Self-Critique 수행 (등급 B 이상)
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
 
+### 완료 시 context.json 업데이트
+
+```json
+{
+  "phase": "adr",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
+Edit: .atdd/context.json
+
 ---
 
 ## 참조

@@ -190,6 +190,17 @@ Glob docs/learnings/episodes/**/episode.md
 - [ ] Self-Check 질문 제공
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
 
+### 완료 시 context.json 업데이트
+
+```json
+{
+  "phase": "internalize",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
+Edit: .atdd/context.json
+
 ---
 
 ## 예시 실행

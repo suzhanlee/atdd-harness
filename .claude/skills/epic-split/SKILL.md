@@ -104,6 +104,17 @@ Epic 분해 완료 ✅
 - [ ] 결과: 분해 완료 → 첫 Epic부터 /validate 진행
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
 
+### 완료 시 context.json 업데이트
+
+```json
+{
+  "phase": "epic-split",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
+Edit: .atdd/context.json
+
 ## 다음 단계
 
 - Epic 분해 완료 시 첫 번째 Epic부터 `/validate` 실행

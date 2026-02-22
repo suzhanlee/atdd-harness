@@ -249,6 +249,17 @@ Write docs/learnings/episodes/{date}/{topic}/episode.md
 - [ ] Tags 추가 완료
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
 
+### 완료 시 context.json 업데이트
+
+```json
+{
+  "phase": "compound",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
+Edit: .atdd/context.json
+
 ---
 
 ## 예시 출력

@@ -219,6 +219,17 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 - [ ] 각 이슈에 대해 ACCEPT/DEFER/REJECT 결정 수집
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
 
+### 완료 시 context.json 업데이트
+
+```json
+{
+  "phase": "redteam",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
+Edit: .atdd/context.json
+
 ---
 
 ## 참조

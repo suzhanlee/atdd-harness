@@ -180,6 +180,24 @@ Phase 변경 시 updated_at과 phase를 갱신합니다.
 Edit .atdd/context.json
 ```
 
+### 4. Context 완료 업데이트
+
+각 스킬 완료 시 status를 "completed"로 변경합니다.
+
+```json
+{
+  ...기존필드,
+  "phase": "{현재_스킬명}",
+  "status": "completed",
+  "updated_at": "{현재시각}"
+}
+```
+Edit .atdd/context.json
+
+**중요**:
+- `phase`는 스킬명만 (예: "validate", NOT "validate_completed")
+- `status`는 반드시 "completed"
+
 ---
 
 ## 경로 계산 예시

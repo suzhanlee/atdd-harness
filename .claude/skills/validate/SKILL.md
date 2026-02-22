@@ -199,6 +199,17 @@ Phase D (Refinement)로 진행합니다.
 - [ ] 결과 판단: PASS → 검증 완료 | FAIL → 수정 후 재실행
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
 
+### 완료 시 context.json 업데이트
+
+```json
+{
+  "phase": "validate",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
+Edit: .atdd/context.json
+
 ## 입력
 - `{basePath}/interview/requirements-draft.md` (또는 `{basePath}/interview/epics.md`)
 - `{basePath}/interview/interview-log.md` (참조용)

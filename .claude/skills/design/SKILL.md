@@ -380,6 +380,17 @@ public class User {
 - [ ] `{basePath}/design/traceability-matrix.md` 생성
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
 
+### 완료 시 context.json 업데이트
+
+```json
+{
+  "phase": "design",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
+Edit: .atdd/context.json
+
 ---
 
 ## 출력 파일
