@@ -9,9 +9,9 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 
 ## ATDD 워크플로우
 ```
-/atdd → /interview → /epic-split? → /validate → /adr ↔ /redteam → /design → /redteam-design → /compound → /gherkin → /tdd → /refactor → /verify
-   ↓         ↓                                                                                                              ↓
-Phase 0   Phase 1                                                                                                     (독립 실행)
+/atdd → /interview → /validate → /gherkin → /epic-split? → /adr ↔ /redteam → /design → /redteam-design → /compound → /tdd → /refactor → /verify
+   ↓         ↓           ↓           ↓                                                                                                    ↓
+Phase 0   Phase 1     Phase 2     Phase 2.2                                                                                         (독립 실행)
                                                                                                                        /internalize
                                     ↑___________|
                                       반복 루프
@@ -34,18 +34,18 @@ Phase 0   Phase 1                                                               
 |--------|-------|------|
 | `/atdd` | 0 | ATDD 파이프라인 진입점 |
 | `/interview` | 1 | 요구사항 인터뷰 |
-| `/epic-split` | 1.5 | 큰 요구사항 Epic 분해 (선택) |
 | `/validate` | 2 | 요구사항 검증 |
+| `/gherkin` | 2.2 | Gherkin 시나리오 + Step Definition |
+| `/epic-split` | 1.5 | 큰 요구사항 Epic 분해 (선택) |
 | `/adr` | 2.5a | Architecture Decision Record 작성 |
 | `/redteam` | 2.5b | ADR 비판적 검토 (6관점) |
 | `/design` | 2.5 | Entity/Domain 설계 |
 | `/redteam-design` | 2.6 | 도메인 모델 비판적 검토 (RRAIRU) |
 | `/compound` | 2.7 | 학습 Episode 생성 |
 | `/internalize` | 2.8 | Episode 복습, Active Recall |
-| `/gherkin` | 3 | Gherkin 시나리오 추출 |
-| `/tdd` | 4 | TDD 코드 구현 (Inside-Out) |
-| `/refactor` | 5 | Clean Code 리팩토링 |
-| `/verify` | 6 | 최종 검증 |
+| `/tdd` | 3 | TDD 코드 구현 (Inside-Out) |
+| `/refactor` | 4 | Clean Code 리팩토링 |
+| `/verify` | 5 | 최종 검증 |
 
 ## Runtime Self-Healing 명령어
 | 명령어 | 설명 |
@@ -86,7 +86,7 @@ docs/learnings/episodes/{date}/{topic}/episode.md  # 학습 Episode
 
 ### 실행 흐름
 ```
-/atdd --topic {작업명} → /interview → (Stop Hook) → /validate → /adr → /redteam → /design → /redteam-design → /compound
+/atdd --topic {작업명} → /interview → (Stop Hook) → /validate → /gherkin → /adr → /redteam → /design → /redteam-design → /compound
 ```
 
 ### Episode 구성

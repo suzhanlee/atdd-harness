@@ -74,6 +74,7 @@ Phase C (Interface Definition)로 진행합니다.
 - `.atdd/context.json` (작업 컨텍스트)
 - `{basePath}/validate/refined-requirements.md`
 - `{basePath}/validate/validation-report.md`
+- `src/test/resources/features/{topic}.feature` (선택 - 있으면 참조)
 
 ## 출력
 - `{basePath}/design/erd.md`
@@ -465,7 +466,7 @@ JPA Entity 클래스
 ---
 
 ## 다음 단계
-설계 검증 완료 후 `/gherkin` 실행
+설계 검증 완료 후 `/redteam-design` 실행
 
 ---
 

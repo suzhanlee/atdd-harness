@@ -4,15 +4,15 @@
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────────────────────────┐     ┌─────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│    /atdd    │ ──▶ │  /interview │ ──▶ │  /validate  │ ──▶ │                       /design                           │ ──▶ │ /redteam-design │ ──▶ │  /compound  │ ──▶ │   /gherkin  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
-│   Phase 0   │     │   Phase 1   │     │   Phase 2   │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 2.6     │     │  Phase 2.7  │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │     │   Phase 6   │
+│    /atdd    │ ──▶ │  /interview │ ──▶ │  /validate  │ ──▶ │   /gherkin  │ ──▶ │                       /design                           │ ──▶ │ /redteam-design │ ──▶ │  /compound  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
+│   Phase 0   │     │   Phase 1   │     │   Phase 2   │     │  Phase 2.2  │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 2.6     │     │  Phase 2.7  │     │  Phase 3    │     │   Phase 4   │     │   Phase 5   │
 └─────────────┘     └─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │  (반복 루프)            │     └─────────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │             │  │ Phase2.5a│    │ Phase2.5b │                         │            │                    │                   │                   │                   │                   │
-       │                   │                   │             │  └──────────┘    └───────────┘                         │            ▼                    ▼                   ▼                   ▼                   ▼                   ▼
-       │                   │                   ▼             └─────────────────────────────────────────────────────────┘    design/redteam/        episodes/         scenarios/        Inside-Out TDD      refactoring/        reports/
-       │                   │             validation/                      │                                               ├─ design-          ├─ episode.md     ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
-       │                   │               ├─ report.md                    ▼                                               │  critique-*.md    └─ tags          └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
-       │                   │               └─ refined.md                design/                                         ├─ decisions.md
+       │                   │                   │                   │             │  │ Phase2.5a│    │ Phase2.5b │                         │            │                    │                   │                   │                   │
+       │                   │                   │                   │             │  └──────────┘    └───────────┘                         │            ▼                    ▼                   ▼                   ▼                   ▼
+       │                   │                   ▼                   ▼             └─────────────────────────────────────────────────────────┘    design/redteam/        episodes/         Inside-Out TDD      refactoring/        reports/
+       │                   │             validation/         scenarios/                      │                                              ├─ design-          ├─ episode.md     1. Entity Test       ├─ log.md           ├─ verification.md
+       │                   │               ├─ report.md      ├─ *.feature                   ▼                                               │  critique-*.md    └─ tags          2. Repository Test   └─ checklist.md     └─ coverage/
+       │                   │               └─ refined.md     └─ summary.md               design/                                         ├─ decisions.md
        │                   │                                             ├─ erd.md                                      └─ backlog.md
        │                   │                                             ├─ domain.md
        │                   │                                             ├─ traceability.md
@@ -37,7 +37,7 @@
                                               └─────────────────┘     Active Recall
 ```
 
-**Stop Hook**: `/atdd` → `/interview` 완료 후 자동으로 `/validate` 실행
+**Stop Hook**: `/atdd` → `/interview` 완료 후 자동으로 `/validate` → `/gherkin` 실행
 
 **Red Team 계열 스킬 분담**:
 - `/redteam` (Phase 2.5b): ADR(설계 의사결정) 비평 - Security, Performance, Scalability 등
@@ -157,7 +157,7 @@ validation-report.md + PASS
    └─▶ Write docs/learnings/episodes/{date}/{topic}/episode.md
 
 8. 완료 알림
-   └─▶ "Episode 생성 완료. 다음 단계: /gherkin"
+   └─▶ "Episode 생성 완료. 다음 단계: /tdd"
 ```
 
 ### Episode 구조
@@ -1012,7 +1012,7 @@ public class User {
                      모든 이슈 처리 완료
                               │
                               ▼
-                      Phase 3: Gherkin
+                      Phase 2.5: Design (또는 Phase 2.2: Gherkin로 돌아가서 재검토)
 ```
 
 ### Design Critique Report 예시
@@ -1163,19 +1163,16 @@ public class User {
 
 ---
 
-## Phase 3: Gherkin Workflow
+## Phase 2.2: Gherkin Workflow
 
 ### 진입 조건
-- `.atdd/design/erd.md` 존재
-- Entity 클래스 존재
+- `.atdd/validate/refined-requirements.md` 존재
 
 ### 실행 흐름
 
 ```
 1. 입력 로드
-   ├─▶ Read refined-requirements.md
-   ├─▶ Read erd.md
-   └─▶ Read Entity classes
+   └─▶ Read refined-requirements.md
 
 2. User Story → Scenario 변환
    ├─▶ "회원가입" → Feature: 회원 관리
@@ -1202,7 +1199,7 @@ public class User {
    └─▶ .atdd/scenarios/scenarios-summary.md
 
 8. 완료 알림
-   └─▶ "시나리오 작성 완료. 다음 단계: /tdd"
+   └─▶ "시나리오 작성 완료. 다음 단계: /adr (또는 /epic-split)"
 ```
 
 ### Feature File 예시
@@ -1250,11 +1247,11 @@ Feature: 회원 관리
 
 ---
 
-## Phase 4: TDD Workflow (Inside-Out)
+## Phase 3: TDD Workflow (Inside-Out)
 
 ### 진입 조건
 - `src/test/resources/features/**/*.feature` 존재
-- `.atdd/design/design-validation-report.md` PASS
+- `/compound` 완료
 
 ### TDD 사이클 (Inside-Out 접근)
 
@@ -1405,7 +1402,7 @@ class UserTest {
 
 ---
 
-## Phase 5: Refactor Workflow
+## Phase 4: Refactor Workflow
 
 ### 진입 조건
 - 모든 테스트 통과
@@ -1489,7 +1486,7 @@ class UserTest {
 
 ---
 
-## Phase 6: Verify Workflow
+## Phase 5: Verify Workflow
 
 ### 진입 조건
 - 리팩토링 완료

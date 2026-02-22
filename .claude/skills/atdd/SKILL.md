@@ -74,7 +74,11 @@ Stop Hook 감지 → {"decision": "block", "reason": "Execute: Skill(\"validate\
     ↓
 validate 자동 실행
     ↓
-validation-report.md + PASS → {"decision": "allow"}
+validation-report.md + PASS → {"decision": "block", "reason": "Execute: Skill(\"gherkin\")"}
+    ↓
+gherkin 자동 실행
+    ↓
+*.feature 파일 생성 → {"decision": "allow"}
     ↓
 세션 종료 👋
 ```
@@ -106,8 +110,13 @@ validation-report.md + PASS → {"decision": "allow"}
 ├── interview/
 │   ├── requirements-draft.md
 │   └── interview-log.md
-└── validate/
-    └── validation-report.md  # Stop Hook이 실행한 validate가 생성
+├── validate/
+│   ├── validation-report.md  # Stop Hook이 실행한 validate가 생성
+│   └── refined-requirements.md
+└── scenarios/
+    └── *.feature  # Stop Hook이 실행한 gherkin이 생성
+
+src/test/resources/features/{topic}.feature  # Gherkin 시나리오 파일
 ```
 
 ---
@@ -119,7 +128,9 @@ graph LR
     A[/atdd topic] --> B[Skill: interview]
     B --> C[Stop Hook]
     C --> D[Skill: validate]
-    D --> E[완료]
+    D --> E[Stop Hook]
+    E --> F[Skill: gherkin]
+    F --> G[완료]
 ```
 
 ---

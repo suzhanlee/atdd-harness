@@ -54,9 +54,7 @@ Phase C (Generation)로 진행합니다.
 
 ## 입력
 - `{basePath}/validate/refined-requirements.md`
-- `{basePath}/design/erd.md`
-- `{basePath}/design/domain-model.md`
-- `src/main/java/**/domain/entity/*.java`
+- `src/test/resources/features/{topic}.feature` (선택 - 있으면 덮어쓰기)
 
 ---
 
@@ -406,7 +404,6 @@ Gherkin 품질 검증 ✅
 
 ## MUST 체크리스트 (실행 전)
 - [ ] `{basePath}/validate/refined-requirements.md` 존재
-- [ ] design 파일 존재 (`{basePath}/design/erd.md` 또는 `{basePath}/design/domain-model.md`)
 
 ## MUST 체크리스트 (실행 후)
 - [ ] Phase A: Happy Path 작성 완료
@@ -499,7 +496,7 @@ Feature: 회원가입
 ---
 
 ## 다음 단계
-커버리지 검증 완료 후 `/tdd` 실행
+커버리지 검증 완료 후 `/adr` 실행 (또는 `/epic-split`으로 Epic 분해)
 
 ---
 

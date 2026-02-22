@@ -8,9 +8,10 @@ ATDD Harness는 단순한 ATDD(Acceptance Test-Driven Development) 도구가 아
 
 ### 1. 12개 전문 스킬 파이프라인
 ```
-/atdd → /interview → /validate → /adr ↔ /redteam → /design → /redteam-design → /compound → /gherkin → /tdd → /refactor → /verify
-                            └──────────────┘       └─────────────────┘
-                              듀얼 검증 루프           도메인 모델 비평
+/atdd → /interview → /validate → /gherkin → /adr ↔ /redteam → /design → /redteam-design → /compound → /tdd → /refactor → /verify
+                            │               └──────────────┘       └─────────────────┘
+                            │                 듀얼 검증 루프           도메인 모델 비평
+                            └─ ATDD 원칙: Acceptance Test 먼저 정의
 ```
 
 ### 2. ADR + Red Team 듀얼 검증
@@ -37,15 +38,15 @@ Loki 기반 로그 분석을 통한 회귀 테스트 및 품질 모니터링.
 ## ATDD 워크플로우
 
 ```
-┌─────────┐     ┌─────────────┐     ┌─────────────┐     ┌──────────────────────────────────────────────────────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  /atdd  │ ──▶ │  /interview │ ──▶ │  /validate  │ ──▶ │                            /design                              │ ──▶ │   /gherkin  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
-│ Phase 0 │     │   Phase 1   │     │   Phase 2   │     │  ┌──────────┐    ┌───────────┐    ┌───────────────┐            │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │     │   Phase 6   │
-└─────────┘     └─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │───▶│/redteam-design│──▶/compound│     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-                                          │             │  │ Phase2.5a│    │ Phase2.5b │    │   Phase 2.6   │  Phase 2.7 │           │                   │                   │                   │
-                                          ▼             │  └──────────┘    └───────────┘    └───────────────┘            │           ▼                   ▼                   ▼                   ▼
-                                    validation/         └──────────────────────────────────────────────────────────────────┘       scenarios/        Inside-Out TDD      refactoring/        reports/
-                                      ├─ report.md                                                                                  ├─ *.feature      1. Entity Test       ├─ log.md           ├─ verification.md
-                                      └─ refined.md                                                                                 └─ summary.md     2. Repository Test   └─ checklist.md     └─ coverage/
+┌─────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌──────────────────────────────────────────────────────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  /atdd  │ ──▶ │  /interview │ ──▶ │  /validate  │ ──▶ │   /gherkin  │ ──▶ │                            /design                              │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
+│ Phase 0 │     │   Phase 1   │     │   Phase 2   │     │  Phase 2.2  │     │  ┌──────────┐    ┌───────────┐    ┌───────────────┐            │     │   Phase 3   │     │   Phase 4   │     │   Phase 5   │
+└─────────┘     └─────────────┘     └─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │───▶│/redteam-design│──▶/compound│     └─────────────┘     └─────────────┘     └─────────────┘
+                                          │                   │             │  │ Phase2.5a│    │ Phase2.5b │    │   Phase 2.6   │  Phase 2.7 │           │                   │                   │
+                                          ▼                   ▼             │  └──────────┘    └───────────┘    └───────────────┘            │           ▼                   ▼                   ▼
+                                    validation/         scenarios/         └──────────────────────────────────────────────────────────────────┘     Inside-Out TDD      refactoring/        reports/
+                                      ├─ report.md        ├─ *.feature                                                                                 1. Entity Test       ├─ log.md           ├─ verification.md
+                                      └─ refined.md       └─ summary.md                                                                                2. Repository Test   └─ checklist.md     └─ coverage/
                                                                                                                                                         3. Service Test
                                                                                                                                                         4. E2E Test
 ```
@@ -59,6 +60,9 @@ ATDD 파이프라인 진입점. `/interview`를 실행하고 완료 후 Stop Hoo
 ### Phase 2: Validate
 요구사항의 Feasibility, Completeness, Consistency, Dependencies를 검증.
 
+### Phase 2.2: Gherkin
+요구사항을 Gherkin 시나리오(Happy Path + Exception Path)로 변환. **ATDD 원칙에 따라 설계 전에 테스트 시나리오를 먼저 정의.**
+
 ### Phase 2.5a: ADR
 Pre-Mortem → Trade-off Matrix → ADR 본문 → Self-Critique 4단계로 설계 의사결정 문서화.
 
@@ -71,19 +75,13 @@ Pre-Mortem → Trade-off Matrix → ADR 본문 → Self-Critique 4단계로 설�
 ### Phase 2.7: Compound
 설계 산출물을 학습 Episode로 저장하여 컴파운드 효과 제공.
 
-### Phase 3: Design
-Rich Domain Model 기반 Entity 설계 및 DDL 생성. 요구사항-도메인 매핑 검증 포함.
-
-### Phase 4: Gherkin
-요구사항을 Gherkin 시나리오(Happy Path + Exception Path)로 변환.
-
-### Phase 5: TDD (Inside-Out)
+### Phase 3: TDD (Inside-Out)
 Entity → Repository → Service → Controller 순서로 Inside-Out TDD 사이클 수행.
 
-### Phase 6: Refactor
+### Phase 4: Refactor
 Clean Code 원칙과 DDD 패턴으로 리팩토링.
 
-### Phase 7: Verify
+### Phase 5: Verify
 전체 테스트 실행, 커버리지 분석, 코드 품질 체크 후 최종 검증 리포트 생성.
 
 ---
@@ -195,31 +193,31 @@ cd atdd-harness
 # 2. 요구사항 검증
 /validate
 
-# 3-1. 아키텍처 결정 기록
-/adr
-
-# 3-2. 설계 비평
-/redteam
-
-# 3-3. 도메인 모델 비평
-/redteam-design
-
-# 3-4. 학습 Episode 생성
-/compound
-
-# 4. Entity/Domain 설계
-/design
-
-# 5. Gherkin 시나리오 추출
+# 2.2. Gherkin 시나리오 추출 (ATDD: 테스트 먼저!)
 /gherkin
 
-# 6. TDD 코드 구현
+# 2.5-1. 아키텍처 결정 기록
+/adr
+
+# 2.5-2. 설계 비평
+/redteam
+
+# 2.6. 도메인 모델 비평
+/redteam-design
+
+# 2.7. 학습 Episode 생성
+/compound
+
+# 2.5. Entity/Domain 설계
+/design
+
+# 3. TDD 코드 구현
 /tdd
 
-# 7. Clean Code 리팩토링
+# 4. Clean Code 리팩토링
 /refactor
 
-# 8. 최종 검증
+# 5. 최종 검증
 /verify
 ```
 
@@ -232,15 +230,15 @@ cd atdd-harness
 | `/atdd` | 0 | ATDD 파이프라인 진입점 | - |
 | `/interview` | 1 | 요구사항 인터뷰 | requirements-draft.md, interview-log.md |
 | `/validate` | 2 | 요구사항 검증 | validation-report.md, refined-requirements.md |
+| `/gherkin` | 2.2 | Gherkin 시나리오 추출 | *.feature, scenarios-summary.md |
 | `/adr` | 2.5a | 아키텍처 결정 기록 | adr/[번호]-[제목].md, index.md |
 | `/redteam` | 2.5b | 설계 비평 (6관점) | critique-[번호].md, decisions.md, backlog.md |
 | `/redteam-design` | 2.6 | 도메인 모델 비평 (RRAIRU) | design-critique.md |
 | `/compound` | 2.7 | 학습 Episode 생성 | episode.md |
-| `/design` | 3 | Entity/Domain 설계 | erd.md, domain-model.md, *.java |
-| `/gherkin` | 4 | Gherkin 시나리오 추출 | *.feature, scenarios-summary.md |
-| `/tdd` | 5 | TDD 코드 구현 (Inside-Out) | 테스트 코드, 프로덕션 코드 |
-| `/refactor` | 6 | Clean Code 리팩토링 | REFACTORING-log.md, clean-code-checklist.md |
-| `/verify` | 7 | 최종 검증 | VERIFICATION-report.md, coverage-report/ |
+| `/design` | 2.5 | Entity/Domain 설계 | erd.md, domain-model.md, *.java |
+| `/tdd` | 3 | TDD 코드 구현 (Inside-Out) | 테스트 코드, 프로덕션 코드 |
+| `/refactor` | 4 | Clean Code 리팩토링 | REFACTORING-log.md, clean-code-checklist.md |
+| `/verify` | 5 | 최종 검증 | VERIFICATION-report.md, coverage-report/ |
 | `/epic-split` | 1.5 | Epic 분해 (선택) | epics.md, epic-roadmap.md |
 | `/internalize` | 2.8 | Episode 복습 (Active Recall) | 복습 완료 |
 
