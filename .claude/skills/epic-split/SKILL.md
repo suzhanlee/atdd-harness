@@ -11,8 +11,22 @@ allowed-tools: Read, Write, Glob
 ## 목표
 큰 요구사항을 1시간 단위 Epic으로 분해하여 점진적 개발이 가능하게 한다.
 
-## 입력
-- `.atdd/requirements/requirements-draft.md`
+## 입력 파일 선택
+
+context.json을 먼저 확인하여 적절한 요구사항 파일 선택:
+
+```
+1. context.json 읽기
+   ├─▶ phase == "validate" AND status == "completed"
+   │       → refined-requirements.md 사용
+   └─▶ 그 외
+           → requirements-draft.md 사용
+```
+
+| 조건 | 파일 경로 |
+|------|----------|
+| validate 완료 후 | `{basePath}/validate/refined-requirements.md` |
+| interview 직후 | `.atdd/requirements/requirements-draft.md` |
 
 ## 실행 여부 판단
 
@@ -24,7 +38,9 @@ allowed-tools: Read, Write, Glob
 ## 프로세스
 
 ```
-1. requirements-draft.md 분석
+1. 입력 파일 결정 및 분석
+   ├─▶ context.json 확인 → validate 완료 여부 판단
+   ├─▶ 적절한 요구사항 파일 선택 (refined-requirements.md 또는 requirements-draft.md)
    └─▶ 기능 요구사항 개수 파악
 
 2. 실행 여부 판단
@@ -92,7 +108,8 @@ Epic 분해 완료 ✅
 
 ## MUST 체크리스트 (실행 전)
 
-- [ ] requirements-draft.md 존재 확인
+- [ ] context.json 확인 → validate 완료 여부 파악
+- [ ] 적절한 요구사항 파일 존재 확인
 - [ ] 기능 요구사항 개수 파악
 - [ ] 실행 여부 판단 (기능 >= 4 OR 예상 >= 4시간)
 
