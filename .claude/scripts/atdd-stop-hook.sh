@@ -16,6 +16,10 @@
 #   {"decision": "allow"} 또는 출력 없음 -> 세션 종료 허용
 #
 # ATDD Pipeline: interview → [epic-split] → validate → adr ↔ redteam → design ↔ redteam-design → compound → gherkin → tdd → refactor → verify
+#
+# State Management:
+#   - Skills update context.json: { "phase": "xxx", "status": "completed" }
+#   - Hook checks context.json status to determine completion
 
 set -euo pipefail
 
@@ -31,6 +35,7 @@ CWD=$(echo "$CWD" | sed 's|\\|/|g')
 
 # State file path
 STATE_FILE="$CWD/.atdd/state.json"
+CONTEXT_FILE="$CWD/.atdd/context.json"
 
 # Exit if no state file
 if [[ ! -f "$STATE_FILE" ]]; then
@@ -51,7 +56,6 @@ TOPIC=$(echo "$ATDD_STATE" | jq -r '.topic // empty')
 
 # Fallback: Try to get basePath from context.json if not in state
 if [[ -z "$BASE_PATH" ]]; then
-  CONTEXT_FILE="$CWD/.atdd/context.json"
   if [[ -f "$CONTEXT_FILE" ]]; then
     BASE_PATH=$(jq -r '.basePath // empty' "$CONTEXT_FILE" 2>/dev/null || echo "")
   fi
@@ -94,13 +98,27 @@ pipeline_complete() {
   jq -n '{decision: "allow"}'
 }
 
+# Helper function to check if phase is completed in context.json
+# Returns 0 (true) if completed, 1 (false) otherwise
+is_phase_completed() {
+  local expected_phase="$1"
+
+  if [[ ! -f "$CONTEXT_FILE" ]]; then
+    return 1
+  fi
+
+  local context_phase=$(jq -r '.phase // empty' "$CONTEXT_FILE" 2>/dev/null)
+  local context_status=$(jq -r '.status // empty' "$CONTEXT_FILE" 2>/dev/null)
+
+  [[ "$context_phase" == "$expected_phase" ]] && [[ "$context_status" == "completed" ]]
+}
+
 # Phase transition logic
 # Pipeline: interview → [epic-split] → validate → adr ↔ redteam → design ↔ redteam-design → compound → gherkin → tdd → refactor → verify
 case "$PHASE" in
   interview)
-    # Check if requirements-draft.md exists (interview complete)
-    REQUIREMENTS_FILE="$FULL_BASE_PATH/interview/requirements-draft.md"
-    if [[ -f "$REQUIREMENTS_FILE" ]]; then
+    # Check if interview phase is completed via context.json
+    if is_phase_completed "interview"; then
       update_phase "validate"
       trigger_next_skill "validate"
       exit 0
@@ -110,25 +128,19 @@ case "$PHASE" in
     ;;
 
   validate)
-    # Check if validation-report.md exists with PASS
-    VALIDATION_REPORT="$FULL_BASE_PATH/validate/validation-report.md"
-    if [[ -f "$VALIDATION_REPORT" ]]; then
-      if grep -qiE "(종합 결과.*✅|overall.*pass|결과.*pass|상태.*완료|status.*complete)" "$VALIDATION_REPORT" 2>/dev/null; then
-        update_phase "adr"
-        trigger_next_skill "adr"
-        exit 0
-      else
-        echo "⚠️ ATDD: Validation incomplete or failed for \"$TOPIC\"" >&2
-      fi
+    # Check if validate phase is completed via context.json
+    if is_phase_completed "validate"; then
+      update_phase "adr"
+      trigger_next_skill "adr"
+      exit 0
     else
       echo "📋 ATDD: Validation in progress for \"$TOPIC\"" >&2
     fi
     ;;
 
   adr)
-    # Check if ADR document exists
-    ADR_FILE="$FULL_BASE_PATH/adr/adr.md"
-    if [[ -f "$ADR_FILE" ]]; then
+    # Check if adr phase is completed via context.json
+    if is_phase_completed "adr"; then
       update_phase "redteam"
       trigger_next_skill "redteam"
       exit 0
@@ -138,28 +150,28 @@ case "$PHASE" in
     ;;
 
   redteam)
-    # Check if redteam critique report exists
-    REDTEAM_REPORT="$FULL_BASE_PATH/redteam/critique-report.md"
-    if [[ -f "$REDTEAM_REPORT" ]]; then
-      # Check if revision needed (feedback indicates issues)
-      if grep -qiE "(revision.*needed|수정.*필요|reject)" "$REDTEAM_REPORT" 2>/dev/null; then
-        update_phase "adr"
-        trigger_next_skill "adr"
-        exit 0
-      else
-        update_phase "design"
-        trigger_next_skill "design"
-        exit 0
+    # Check if redteam phase is completed via context.json
+    if is_phase_completed "redteam"; then
+      # Check if revision needed via redteam report
+      REDTEAM_REPORT="$FULL_BASE_PATH/redteam/critique-report.md"
+      if [[ -f "$REDTEAM_REPORT" ]]; then
+        if grep -qiE "(revision.*needed|수정.*필요|reject)" "$REDTEAM_REPORT" 2>/dev/null; then
+          update_phase "adr"
+          trigger_next_skill "adr"
+          exit 0
+        fi
       fi
+      update_phase "design"
+      trigger_next_skill "design"
+      exit 0
     else
       echo "📋 ATDD: Red Team review in progress for \"$TOPIC\"" >&2
     fi
     ;;
 
   design)
-    # Check if traceability-matrix.md exists (design complete)
-    TRACEABILITY_FILE="$FULL_BASE_PATH/design/traceability-matrix.md"
-    if [[ -f "$TRACEABILITY_FILE" ]]; then
+    # Check if design phase is completed via context.json
+    if is_phase_completed "design"; then
       update_phase "redteam-design"
       trigger_next_skill "redteam-design"
       exit 0
@@ -169,28 +181,28 @@ case "$PHASE" in
     ;;
 
   redteam-design)
-    # Check if redteam-design critique report exists
-    REDTEAM_DESIGN_REPORT="$FULL_BASE_PATH/redteam-design/critique-report.md"
-    if [[ -f "$REDTEAM_DESIGN_REPORT" ]]; then
-      # Check if revision needed
-      if grep -qiE "(revision.*needed|수정.*필요|reject)" "$REDTEAM_DESIGN_REPORT" 2>/dev/null; then
-        update_phase "design"
-        trigger_next_skill "design"
-        exit 0
-      else
-        update_phase "compound"
-        trigger_next_skill "compound"
-        exit 0
+    # Check if redteam-design phase is completed via context.json
+    if is_phase_completed "redteam-design"; then
+      # Check if revision needed via redteam-design report
+      REDTEAM_DESIGN_REPORT="$FULL_BASE_PATH/redteam-design/critique-report.md"
+      if [[ -f "$REDTEAM_DESIGN_REPORT" ]]; then
+        if grep -qiE "(revision.*needed|수정.*필요|reject)" "$REDTEAM_DESIGN_REPORT" 2>/dev/null; then
+          update_phase "design"
+          trigger_next_skill "design"
+          exit 0
+        fi
       fi
+      update_phase "compound"
+      trigger_next_skill "compound"
+      exit 0
     else
       echo "📋 ATDD: Red Team Design review in progress for \"$TOPIC\"" >&2
     fi
     ;;
 
   compound)
-    # Check if episode file exists
-    EPISODE_FILE="$FULL_BASE_PATH/compound/episode.md"
-    if [[ -f "$EPISODE_FILE" ]]; then
+    # Check if compound phase is completed via context.json
+    if is_phase_completed "compound"; then
       update_phase "gherkin"
       trigger_next_skill "gherkin"
       exit 0
@@ -200,9 +212,8 @@ case "$PHASE" in
     ;;
 
   gherkin)
-    # Check if *.feature files exist in scenarios directory
-    GHERKIN_DIR="$FULL_BASE_PATH/gherkin/scenarios"
-    if [[ -d "$GHERKIN_DIR" ]] && compgen -G "$GHERKIN_DIR/*.feature" > /dev/null 2>&1; then
+    # Check if gherkin phase is completed via context.json
+    if is_phase_completed "gherkin"; then
       update_phase "tdd"
       trigger_next_skill "tdd"
       exit 0
@@ -212,53 +223,19 @@ case "$PHASE" in
     ;;
 
   tdd)
-    # Check if tests exist and pass
-    # Look for test files in src/test
-    TEST_DIR="$CWD/src/test"
-    if [[ -d "$TEST_DIR" ]]; then
-      # Check for *Test.java files
-      TEST_COUNT=$(find "$TEST_DIR" -name "*Test.java" -type f 2>/dev/null | wc -l)
-      if [[ "$TEST_COUNT" -gt 0 ]]; then
-        # Try to run tests (if build tool available)
-        BUILD_SUCCESS=false
-
-        # Try Maven first
-        if [[ -f "$CWD/pom.xml" ]] && command -v mvn &> /dev/null; then
-          if mvn test -q -f "$CWD/pom.xml" > /dev/null 2>&1; then
-            BUILD_SUCCESS=true
-          fi
-        # Try Gradle
-        elif [[ -f "$CWD/build.gradle" ]] && command -v gradle &> /dev/null; then
-          if gradle -q -p "$CWD" test > /dev/null 2>&1; then
-            BUILD_SUCCESS=true
-          fi
-        # No build tool or tests pass without explicit run
-        else
-          # If no build tool, assume tests are written correctly
-          BUILD_SUCCESS=true
-        fi
-
-        if [[ "$BUILD_SUCCESS" == "true" ]]; then
-          update_phase "refactor"
-          trigger_next_skill "refactor"
-          exit 0
-        else
-          echo "⚠️ ATDD: Tests failing for \"$TOPIC\" - retry TDD" >&2
-        fi
-      else
-        echo "📋 ATDD: TDD in progress for \"$TOPIC\" (no tests yet)" >&2
-      fi
+    # Check if tdd phase is completed via context.json
+    if is_phase_completed "tdd"; then
+      update_phase "refactor"
+      trigger_next_skill "refactor"
+      exit 0
     else
       echo "📋 ATDD: TDD in progress for \"$TOPIC\"" >&2
     fi
     ;;
 
   refactor)
-    # Check for refactor complete marker or refactoring report
-    REFACTOR_MARKER="$FULL_BASE_PATH/refactor/complete.md"
-    REFACTOR_REPORT="$FULL_BASE_PATH/refactor/refactor-report.md"
-
-    if [[ -f "$REFACTOR_MARKER" ]] || [[ -f "$REFACTOR_REPORT" ]]; then
+    # Check if refactor phase is completed via context.json
+    if is_phase_completed "refactor"; then
       update_phase "verify"
       trigger_next_skill "verify"
       exit 0
@@ -268,11 +245,8 @@ case "$PHASE" in
     ;;
 
   verify)
-    # Check for verify complete marker
-    VERIFY_MARKER="$FULL_BASE_PATH/verify/complete.md"
-    VERIFY_REPORT="$FULL_BASE_PATH/verify/verification-report.md"
-
-    if [[ -f "$VERIFY_MARKER" ]] || [[ -f "$VERIFY_REPORT" ]]; then
+    # Check if verify phase is completed via context.json
+    if is_phase_completed "verify"; then
       update_phase "done"
       pipeline_complete
       exit 0
