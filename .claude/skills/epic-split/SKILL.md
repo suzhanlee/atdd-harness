@@ -102,7 +102,7 @@ Epic 분해 완료 ✅
 - Epic 개수: N개
 - 예상 총 소요: X시간
 
-각 Epic별로 순차적으로 /validate → /design → ... 실행하세요.
+각 Epic별로 순차적으로 /validate → /gherkin → /adr → /design → ... 실행하세요.
 로드맵: epic-roadmap.md 참조
 ```
 
@@ -135,7 +135,8 @@ Edit: .atdd/context.json
 ## 다음 단계
 
 - Epic 분해 완료 시 첫 번째 Epic부터 `/validate` 실행
-- 각 Epic별로 `/validate → /design → /gherkin → /tdd → /refactor → /verify` 수행
+- 각 Epic별로 `/validate → /gherkin → /adr → /redteam → /design → /tdd → /refactor → /verify` 수행
+  > 참고: `/adr ↔ /redteam`은 반복 루프 (설계 품질 향상까지)
 
 ## 참조
 
