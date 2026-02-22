@@ -207,6 +207,20 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 ## 다음 단계
 모든 결정 완료 후 `/design` 계속 진행 (Entity/Domain 구현)
 
+---
+
+## MUST 체크리스트 (실행 전)
+- [ ] context.json 존재
+- [ ] `{basePath}/adr/*.md` 파일 존재
+
+## MUST 체크리스트 (실행 후)
+- [ ] 6관점 분석 완료
+- [ ] Critique Report 생성
+- [ ] 각 이슈에 대해 ACCEPT/DEFER/REJECT 결정 수집
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
+
+---
+
 ## 참조
 - 6관점 체크리스트: [critique-perspectives.md](references/critique-perspectives.md)
 - Context Helper: [context-helper.md](../shared/context-helper.md)

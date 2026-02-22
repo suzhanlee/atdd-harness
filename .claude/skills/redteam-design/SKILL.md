@@ -383,6 +383,7 @@ AskUserQuestion:
 - [ ] 반영 방향 테이블 제시 (Reflection Before Decision)
 - [ ] 각 이슈에 대해 AskUserQuestion으로 결정 수집
 - [ ] 사용자의 notes를 포함한 decisions.md 생성
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
 
 ---
 

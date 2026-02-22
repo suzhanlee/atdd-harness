@@ -197,6 +197,7 @@ Phase D (Refinement)로 진행합니다.
 - [ ] Phase D: `{basePath}/validate/validation-report.md` 생성
 - [ ] Phase D: `{basePath}/validate/refined-requirements.md` 생성 (필요시)
 - [ ] 결과 판단: PASS → 검증 완료 | FAIL → 수정 후 재실행
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
 
 ## 입력
 - `{basePath}/interview/requirements-draft.md` (또는 `{basePath}/interview/epics.md`)

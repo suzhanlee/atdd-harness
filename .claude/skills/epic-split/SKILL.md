@@ -102,6 +102,7 @@ Epic 분해 완료 ✅
 - [ ] Epic 간 의존성 분석 완료
 - [ ] epic-roadmap.md에 구현 순서 명시
 - [ ] 결과: 분해 완료 → 첫 Epic부터 /validate 진행
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
 
 ## 다음 단계
 

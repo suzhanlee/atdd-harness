@@ -388,6 +388,19 @@ ADR 작성 완료 후 `/redteam` 실행하여 설계 비평 수행
 
 ---
 
+## MUST 체크리스트 (실행 전)
+- [ ] context.json 존재
+- [ ] `{basePath}/validate/refined-requirements.md` 존재
+
+## MUST 체크리스트 (실행 후)
+- [ ] Phase A: Pre-Mortem 답변 완료
+- [ ] Phase B: Trade-off Matrix 작성 (최소 3개 대안)
+- [ ] Phase C: ADR 파일 생성
+- [ ] Phase D: Self-Critique 수행 (등급 B 이상)
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
+
+---
+
 ## 참조
 - ADR 템플릿: [adr-template.md](references/adr-template.md)
 - Pre-Mortem 가이드: [adr-premortem-questions.md](references/adr-premortem-questions.md)

@@ -247,6 +247,7 @@ Write docs/learnings/episodes/{date}/{topic}/episode.md
 - [ ] Episode 파일 생성 완료
 - [ ] Lessons Learned 수집 완료
 - [ ] Tags 추가 완료
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
 
 ---
 

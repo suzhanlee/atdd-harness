@@ -188,6 +188,7 @@ Glob docs/learnings/episodes/**/episode.md
 - [ ] 문제(Context) 제시 완료
 - [ ] 사용자 확인 후 정답 공개
 - [ ] Self-Check 질문 제공
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
 
 ---
 

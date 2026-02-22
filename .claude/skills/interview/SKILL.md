@@ -291,7 +291,7 @@ mkdir -p {basePath}/interview
 - [ ] Phase C: `{basePath}/interview/requirements-draft.md` 생성
 - [ ] Phase D: Self-Review 수행 (등급 B 이상)
 - [ ] `{basePath}/interview/interview-log.md` 생성
-- [ ] context.json phase 업데이트
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
 
 ## CRITICAL 체크리스트 (위반 시 실패)
 - [ ] **Phase A 후 AskUserQuestion 사용자 확인 받음** (텍스트만 출력하고 진행 ❌)

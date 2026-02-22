@@ -414,6 +414,7 @@ Gherkin 품질 검증 ✅
 - [ ] Phase C: .feature 파일 생성
 - [ ] Phase D: 커버리지 검증 (Must Have 100%)
 - [ ] `{basePath}/scenarios/scenarios-summary.md` 생성
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
 
 ---
 

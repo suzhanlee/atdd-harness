@@ -378,6 +378,7 @@ public class User {
 - [ ] Phase D: 검증 완료 (Must Have 100%)
 - [ ] `{basePath}/design/erd.md`, `{basePath}/design/domain-model.md` 생성
 - [ ] `{basePath}/design/traceability-matrix.md` 생성
+- [ ] context.json 업데이트: `status`를 "completed"로 변경
 
 ---
 
