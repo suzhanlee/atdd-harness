@@ -14,15 +14,10 @@ set -euo pipefail
 # Read hook input from stdin
 HOOK_INPUT=$(cat)
 
-# Use Python for JSON parsing (more portable on Windows)
-parse_json() {
-  python -c "import json,sys; d=json.load(sys.stdin); print(d.get('$1', ''))"
-}
-
-# Extract fields using Python
-CWD=$(echo "$HOOK_INPUT" | parse_json 'cwd')
-SESSION_ID=$(echo "$HOOK_INPUT" | parse_json 'session_id')
-PROMPT=$(echo "$HOOK_INPUT" | parse_json 'prompt')
+# Extract fields using jq
+CWD=$(echo "$HOOK_INPUT" | jq -r '.cwd // empty')
+SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // empty')
+PROMPT=$(echo "$HOOK_INPUT" | jq -r '.prompt // empty')
 
 # Check if this is an atdd command
 if ! echo "$PROMPT" | grep -qiE "^/atdd"; then
@@ -37,79 +32,77 @@ if [[ -z "$TOPIC" ]]; then
   exit 0
 fi
 
-# Initialize state file using Python
-python - "$CWD" "$SESSION_ID" "$TOPIC" << 'PYTHON_SCRIPT'
-import json
-import os
-import sys
-from datetime import datetime
+# Normalize path (convert backslashes to forward slashes for Windows compatibility)
+CWD=$(echo "$CWD" | tr '\\' '/')
 
-cwd = sys.argv[1].replace('\\', '/')
-session_id = sys.argv[2]
-topic = sys.argv[3]
-
-# Normalize path
-state_file = os.path.join(cwd, '.atdd', 'state.json')
+# State file path
+STATE_FILE="$CWD/.atdd/state.json"
 
 # Ensure .atdd directory exists
-os.makedirs(os.path.dirname(state_file), exist_ok=True)
+mkdir -p "$(dirname "$STATE_FILE")"
 
-# Load or create state
-if os.path.exists(state_file):
-    with open(state_file, 'r') as f:
-        state = json.load(f)
-else:
-    state = {
-        'version': '1.0.0',
-        'project': {
-            'name': 'atdd-harness',
-            'description': 'ATDD Harness for Java/Spring',
-            'techStack': ['Java 17+', 'Spring Boot 3.x', 'MySQL', 'Cucumber', 'RestAssured', 'JUnit5']
-        },
-        'phases': {
-            'interview': {'status': 'pending', 'startedAt': None, 'completedAt': None, 'outputs': []},
-            'validate': {'status': 'pending', 'startedAt': None, 'completedAt': None, 'outputs': []},
-            'design': {'status': 'pending', 'startedAt': None, 'completedAt': None, 'outputs': []},
-            'gherkin': {'status': 'pending', 'startedAt': None, 'completedAt': None, 'outputs': []},
-            'tdd': {'status': 'pending', 'startedAt': None, 'completedAt': None, 'outputs': []},
-            'refactor': {'status': 'pending', 'startedAt': None, 'completedAt': None, 'outputs': []},
-            'verify': {'status': 'pending', 'startedAt': None, 'completedAt': None, 'outputs': []}
-        },
-        'currentPhase': None,
-        'history': [],
-        'sessions': {}
-    }
+# Generate date and timestamp
+DATE=$(date +%Y-%m-%d)
+TIMESTAMP=$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)
+BASE_PATH=".atdd/$DATE/$TOPIC"
 
-# Ensure sessions field exists
-if 'sessions' not in state:
-    state['sessions'] = {}
+# Default state structure
+DEFAULT_STATE=$(jq -n \
+  --arg topic "$TOPIC" \
+  --arg date "$DATE" \
+  '{
+    version: "1.0.0",
+    project: {
+      name: "atdd-harness",
+      description: "ATDD Harness for Java/Spring",
+      techStack: ["Java 17+", "Spring Boot 3.x", "MySQL", "Cucumber", "RestAssured", "JUnit5"]
+    },
+    phases: {
+      interview: {status: "pending", startedAt: null, completedAt: null, outputs: []},
+      validate: {status: "pending", startedAt: null, completedAt: null, outputs: []},
+      design: {status: "pending", startedAt: null, completedAt: null, outputs: []},
+      gherkin: {status: "pending", startedAt: null, completedAt: null, outputs: []},
+      tdd: {status: "pending", startedAt: null, completedAt: null, outputs: []},
+      refactor: {status: "pending", startedAt: null, completedAt: null, outputs: []},
+      verify: {status: "pending", startedAt: null, completedAt: null, outputs: []}
+    },
+    currentPhase: null,
+    history: [],
+    sessions: {}
+  }')
+
+# Load existing state or use default
+if [[ -f "$STATE_FILE" ]]; then
+  CURRENT_STATE=$(cat "$STATE_FILE")
+else
+  CURRENT_STATE="$DEFAULT_STATE"
+fi
 
 # Check if session already has atdd state
-if session_id in state.get('sessions', {}) and 'atdd' in state['sessions'].get(session_id, {}):
-    # Already initialized
-    sys.exit(0)
+EXISTS=$(echo "$CURRENT_STATE" | jq --arg sid "$SESSION_ID" 'has("sessions") and .sessions[$sid].atdd // false' 2>/dev/null || echo "false")
 
-# Calculate basePath
-date = datetime.now().strftime('%Y-%m-%d')
-base_path = f'.atdd/{date}/{topic}'
-timestamp = datetime.now().astimezone().isoformat()
+if [[ "$EXISTS" == "true" ]]; then
+  echo "🚀 ATDD already initialized for \"$TOPIC\" (session: ${SESSION_ID:0:8}...)" >&2
+  exit 0
+fi
 
-# Initialize atdd state
-state['sessions'][session_id] = {
-    'created_at': timestamp,
-    'atdd': {
-        'phase': 'interview',
-        'iteration': 0,
-        'max_iterations': 10,
-        'basePath': base_path,
-        'topic': topic
+# Add session and save state
+echo "$CURRENT_STATE" | jq \
+  --arg sid "$SESSION_ID" \
+  --arg ts "$TIMESTAMP" \
+  --arg bp "$BASE_PATH" \
+  --arg topic "$TOPIC" \
+  '.sessions[$sid] = {
+    created_at: $ts,
+    atdd: {
+      phase: "interview",
+      iteration: 0,
+      max_iterations: 10,
+      basePath: $bp,
+      topic: $topic
     }
-}
+  }' > "$STATE_FILE"
 
-with open(state_file, 'w') as f:
-    json.dump(state, f, indent=2)
-
-print(f'🚀 ATDD initialized for "{topic}" (session: {session_id[:8]}...)', file=sys.stderr)
-PYTHON_SCRIPT
+echo "🚀 ATDD initialized for \"$TOPIC\" (session: ${SESSION_ID:0:8}...)" >&2
 
 exit 0
