@@ -1,0 +1,82 @@
+{
+  "teamName": "error-healer",
+  "description": "Agent team for analyzing and fixing errors from S3 logs",
+  "version": "1.0.0",
+  "roles": {
+    "team-lead": {
+      "description": "Orchestrates the error healing workflow",
+      "responsibilities": [
+        "Parse parameters and validate configuration",
+        "Collect logs from S3",
+        "Classify errors by type and severity",
+        "Spawn and coordinate teammates",
+        "Create summary reports"
+      ]
+    },
+    "analyzer": {
+      "description": "Analyzes individual errors using 5 Whys",
+      "responsibilities": [
+        "Investigate error root cause",
+        "Evaluate severity (P0-P3)",
+        "Recommend fix approach"
+      ],
+      "model": "haiku",
+      "maxInstances": 5
+    },
+    "fixer": {
+      "description": "Implements fixes and creates PRs",
+      "responsibilities": [
+        "Write Gherkin test scenarios",
+        "Implement fix code (TDD)",
+        "Run tests and verify",
+        "Create commits and PRs"
+      ],
+      "model": "sonnet",
+      "maxInstances": 3
+    }
+  },
+  "workflow": {
+    "phases": [
+      {
+        "name": "collect",
+        "description": "Collect error logs from S3",
+        "role": "team-lead"
+      },
+      {
+        "name": "classify",
+        "description": "Classify errors by type and severity",
+        "role": "team-lead"
+      },
+      {
+        "name": "analyze",
+        "description": "Analyze errors in parallel",
+        "role": "analyzer",
+        "parallel": true
+      },
+      {
+        "name": "fix",
+        "description": "Fix P0-P2 errors and create PRs",
+        "role": "fixer",
+        "parallel": true,
+        "condition": "not dry-run"
+      },
+      {
+        "name": "summarize",
+        "description": "Create summary issue and report",
+        "role": "team-lead"
+      }
+    ]
+  },
+  "defaults": {
+    "maxErrors": 10,
+    "parallelWorkers": 3,
+    "severityThreshold": "P2",
+    "dryRun": false
+  },
+  "limits": {
+    "maxParallelAnalyzers": 5,
+    "maxParallelFixers": 3,
+    "timeoutMs": 600000,
+    "maxRetries": 2
+  }
+}
