@@ -9,12 +9,12 @@ ATDD(Acceptance Test-Driven Development) 하네스. 요구사항 인터뷰부터
 
 ## ATDD 워크플로우
 ```
-/atdd → /interview → /validate → /gherkin → /epic-split? → /adr ↔ /redteam → /design → /redteam-design → /compound → /tdd → /refactor → /verify
-   ↓         ↓           ↓           ↓                                                                                                    ↓
-Phase 0   Phase 1     Phase 2     Phase 2.2                                                                                         (독립 실행)
+/atdd → /interview → /validate → /epic-split → /gherkin → /adr ↔ /redteam → /design → /redteam-design → /compound → /tdd → /refactor → /verify
+   ↓         ↓           ↓            ↓            ↓
+Phase 0   Phase 1     Phase 2     Phase 2.1    Phase 2.2
                                                                                                                        /internalize
-                                    ↑___________|
-                                      반복 루프
+                                                                              ↑___________|
+                                                                                반복 루프
 ```
 
 ## 주요 디렉토리
@@ -36,7 +36,7 @@ Phase 0   Phase 1     Phase 2     Phase 2.2                                     
 | `/interview` | 1 | 요구사항 인터뷰 |
 | `/validate` | 2 | 요구사항 검증 |
 | `/gherkin` | 2.2 | Gherkin 시나리오 + Step Definition |
-| `/epic-split` | 1.5 | 큰 요구사항 Epic 분해 (선택) |
+| `/epic-split` | 2.1 | 큰 요구사항 Epic 분해 (validate 후 필수 실행) |
 | `/adr` | 2.5a | Architecture Decision Record 작성 |
 | `/redteam` | 2.5b | ADR 비판적 검토 (6관점) |
 | `/design` | 2.5 | Entity/Domain 설계 |
@@ -86,7 +86,7 @@ docs/learnings/episodes/{date}/{topic}/episode.md  # 학습 Episode
 
 ### 실행 흐름
 ```
-/atdd --topic {작업명} → /interview → (Stop Hook) → /validate → /gherkin → /adr → /redteam → /design → /redteam-design → /compound
+/atdd --topic {작업명} → /interview → (Stop Hook) → /validate → /epic-split → /gherkin → /adr → /redteam → /design → /redteam-design → /compound
 ```
 
 ### Episode 구성

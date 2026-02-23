@@ -3,29 +3,28 @@
 ## 전체 워크플로우
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────────────────────────┐     ┌─────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│    /atdd    │ ──▶ │  /interview │ ──▶ │  /validate  │ ──▶ │   /gherkin  │ ──▶ │                       /design                           │ ──▶ │ /redteam-design │ ──▶ │  /compound  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
-│   Phase 0   │     │   Phase 1   │     │   Phase 2   │     │  Phase 2.2  │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 2.6     │     │  Phase 2.7  │     │  Phase 3    │     │   Phase 4   │     │   Phase 5   │
-└─────────────┘     └─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │  (반복 루프)            │     └─────────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │                   │             │  │ Phase2.5a│    │ Phase2.5b │                         │            │                    │                   │                   │                   │
-       │                   │                   │                   │             │  └──────────┘    └───────────┘                         │            ▼                    ▼                   ▼                   ▼                   ▼
-       │                   │                   ▼                   ▼             └─────────────────────────────────────────────────────────┘    design/redteam/        episodes/         Inside-Out TDD      refactoring/        reports/
-       │                   │             validation/         scenarios/                      │                                              ├─ design-          ├─ episode.md     1. Entity Test       ├─ log.md           ├─ verification.md
-       │                   │               ├─ report.md      ├─ *.feature                   ▼                                               │  critique-*.md    └─ tags          2. Repository Test   └─ checklist.md     └─ coverage/
-       │                   │               └─ refined.md     └─ summary.md               design/                                         ├─ decisions.md
-       │                   │                                             ├─ erd.md                                      └─ backlog.md
-       │                   │                                             ├─ domain.md
-       │                   │                                             ├─ traceability.md
-       │                   │                                             ├─ validation.md
-       │                   │                                             ├─ adr/               # ADR 문서들
-       │                   │                                             │   ├─ 001-*.md
-       │                   │                                             │   └─ index.md
-       │                   │                                             ├─ redteam/           # Red Team 결과 (ADR)
-       │                   │                                             │   ├─ critique-*.md
-       │                   │                                             │   ├─ decisions.md
-       │                   │                                             │   └─ backlog.md
-       │                   │                                             ├─ *.sql
-       │                   │                                             └─ *.java
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────────────────────────────────┐     ┌─────────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│    /atdd    │ ──▶ │  /interview │ ──▶ │  /validate  │ ──▶ │ /epic-split │ ──▶ │   /gherkin  │ ──▶ │                       /design                           │ ──▶ │ /redteam-design │ ──▶ │  /compound  │ ──▶ │    /tdd     │ ──▶ │  /refactor  │ ──▶ │   /verify   │
+│   Phase 0   │     │   Phase 1   │     │   Phase 2   │     │  Phase 2.1  │     │  Phase 2.2  │     │  ┌──────────┐    ┌───────────┐                         │     │   Phase 2.6     │     │  Phase 2.7  │     │  Phase 3    │     │   Phase 4   │     │   Phase 5   │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     │  │   /adr   │◀──▶│  /redteam │  (반복 루프)            │     └─────────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+       │                   │                   │                   │                   │             │  │ Phase2.5a│    │ Phase2.5b │                         │            │                    │                   │                   │                   │
+       │                   │                   ▼                   ▼                   ▼             │  └──────────┘    └───────────┘                         │            ▼                    ▼                   ▼                   ▼                   ▼
+       │                   │             validation/           epics/           scenarios/                      │                                              ├─ design-          ├─ episode.md     Inside-Out TDD      refactoring/        reports/
+       │                   │               ├─ report.md      ├─ epics.md        ├─ *.feature                   ▼                                               │  critique-*.md    └─ tags          1. Entity Test       ├─ log.md           ├─ verification.md
+       │                   │               └─ refined.md     └─ roadmap.md      └─ summary.md               design/                                         ├─ decisions.md
+       │                   │                                                                 ├─ erd.md                                      └─ backlog.md
+       │                   │                                                                 ├─ domain.md
+       │                   │                                                                 ├─ traceability.md
+       │                   │                                                                 ├─ validation.md
+       │                   │                                                                 ├─ adr/               # ADR 문서들
+       │                   │                                                                 │   ├─ 001-*.md
+       │                   │                                                                 │   └─ index.md
+       │                   │                                                                 ├─ redteam/           # Red Team 결과 (ADR)
+       │                   │                                                                 │   ├─ critique-*.md
+       │                   │                                                                 │   ├─ decisions.md
+       │                   │                                                                 │   └─ backlog.md
+       │                   │                                                                 ├─ *.sql
+       │                   │                                                                 └─ *.java
        ▼                   ▼
    context.json      requirements/
                        ├─ draft.md
@@ -37,7 +36,7 @@
                                               └─────────────────┘     Active Recall
 ```
 
-**Stop Hook**: `/atdd` → `/interview` 완료 후 자동으로 `/validate` → `/gherkin` 실행
+**Stop Hook**: `/atdd` → `/interview` 완료 후 자동으로 `/validate` → `/epic-split` → `/gherkin` 실행
 
 **Red Team 계열 스킬 분담**:
 - `/redteam` (Phase 2.5b): ADR(설계 의사결정) 비평 - Security, Performance, Scalability 등

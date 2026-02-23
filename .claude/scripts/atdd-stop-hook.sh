@@ -15,7 +15,7 @@
 #   {"decision": "block", "reason": "Execute: Skill(\"validate\")"} -> 세션 종료 차단, 스킬 실행
 #   {"decision": "allow"} 또는 출력 없음 -> 세션 종료 허용
 #
-# ATDD Pipeline: interview → [epic-split] → validate → adr ↔ redteam → design ↔ redteam-design → compound → gherkin → tdd → refactor → verify
+# ATDD Pipeline: interview → validate → epic-split → gherkin → adr ↔ redteam → design ↔ redteam-design → compound → tdd → refactor → verify
 #
 # SSoT: context.json (Single Source of Truth)
 # State Management:
@@ -108,7 +108,7 @@ is_phase_completed() {
 }
 
 # Phase transition logic
-# Pipeline: interview → [epic-split] → validate → adr ↔ redteam → design ↔ redteam-design → compound → gherkin → tdd → refactor → verify
+# Pipeline: interview → validate → epic-split → gherkin → adr ↔ redteam → design ↔ redteam-design → compound → tdd → refactor → verify
 case "$PHASE" in
   interview)
     # Check if interview phase is completed
@@ -124,11 +124,33 @@ case "$PHASE" in
   validate)
     # Check if validate phase is completed
     if is_phase_completed "validate"; then
+      update_phase "epic-split"
+      trigger_next_skill "epic-split"
+      exit 0
+    else
+      echo "📋 ATDD: Validation in progress for \"$TOPIC\"" >&2
+    fi
+    ;;
+
+  epic-split)
+    # Check if epic-split phase is completed
+    if is_phase_completed "epic-split"; then
+      update_phase "gherkin"
+      trigger_next_skill "gherkin"
+      exit 0
+    else
+      echo "📋 ATDD: Epic split in progress for \"$TOPIC\"" >&2
+    fi
+    ;;
+
+  gherkin)
+    # Check if gherkin phase is completed
+    if is_phase_completed "gherkin"; then
       update_phase "adr"
       trigger_next_skill "adr"
       exit 0
     else
-      echo "📋 ATDD: Validation in progress for \"$TOPIC\"" >&2
+      echo "📋 ATDD: Gherkin in progress for \"$TOPIC\"" >&2
     fi
     ;;
 
@@ -197,22 +219,11 @@ case "$PHASE" in
   compound)
     # Check if compound phase is completed
     if is_phase_completed "compound"; then
-      update_phase "gherkin"
-      trigger_next_skill "gherkin"
-      exit 0
-    else
-      echo "📋 ATDD: Compound learning in progress for \"$TOPIC\"" >&2
-    fi
-    ;;
-
-  gherkin)
-    # Check if gherkin phase is completed
-    if is_phase_completed "gherkin"; then
       update_phase "tdd"
       trigger_next_skill "tdd"
       exit 0
     else
-      echo "📋 ATDD: Gherkin in progress for \"$TOPIC\"" >&2
+      echo "📋 ATDD: Compound learning in progress for \"$TOPIC\"" >&2
     fi
     ;;
 
