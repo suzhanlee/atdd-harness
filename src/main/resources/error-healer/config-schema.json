@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Error Healer Configuration",
+  "description": "Configuration schema for Error Healer skill",
+  "type": "object",
+  "properties": {
+    "s3": {
+      "type": "object",
+      "description": "S3/Loki log storage configuration",
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "description": "S3 bucket name or path (supports environment variable substitution)",
+          "examples": ["my-loki-bucket", "${S3_BUCKET}"]
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Log path prefix within the bucket",
+          "default": "loki/",
+          "examples": ["loki/", "logs/app/"]
+        },
+        "region": {
+          "type": "string",
+          "description": "AWS region",
+          "default": "ap-northeast-2",
+          "examples": ["ap-northeast-2", "us-east-1"]
+        }
+      },
+      "required": ["bucket"]
+    },
+    "github": {
+      "type": "object",
+      "description": "GitHub configuration for PR creation",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "GitHub repository (owner/repo format)",
+          "examples": ["myorg/myrepo", "${GITHUB_REPOSITORY}"]
+        },
+        "defaultBranch": {
+          "type": "string",
+          "description": "Default branch for PR targets",
+          "default": "main"
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "description": "Analysis behavior configuration",
+      "properties": {
+        "maxErrors": {
+          "type": "integer",
+          "description": "Maximum number of errors to process",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 100
+        },
+        "parallelWorkers": {
+          "type": "integer",
+          "description": "Number of parallel analysis workers",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 10
+        },
+        "severityThreshold": {
+          "type": "string",
+          "description": "Minimum severity level for PR creation",
+          "enum": ["P0", "P1", "P2", "P3"],
+          "default": "P2"
+        },
+        "modelForAnalysis": {
+          "type": "string",
+          "description": "Claude model for error analysis",
+          "enum": ["haiku", "sonnet", "opus"],
+          "default": "haiku"
+        },
+        "modelForFix": {
+          "type": "string",
+          "description": "Claude model for code fixes",
+          "enum": ["haiku", "sonnet", "opus"],
+          "default": "sonnet"
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "description": "Error classification rules",
+      "properties": {
+        "userErrors": {
+          "type": "array",
+          "description": "Patterns for user/expected errors (P3)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "httpStatus": {
+                "type": "array",
+                "items": { "type": "integer" }
+              },
+              "exception": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "systemErrors": {
+          "type": "array",
+          "description": "Patterns for system/unexpected errors (P0-P2)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "httpStatus": {
+                "type": "array",
+                "items": { "type": "integer" }
+              },
+              "exception": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Hook scripts for quality gates",
+      "properties": {
+        "prePr": {
+          "type": "string",
+          "description": "Script to run before PR creation",
+          "examples": [".claude/hooks/error-healer-quality.sh"]
+        },
+        "postPr": {
+          "type": "string",
+          "description": "Script to run after PR creation"
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "description": "Output configuration",
+      "properties": {
+        "reportDir": {
+          "type": "string",
+          "description": "Directory for error reports",
+          "default": ".atdd/runtime/errors"
+        },
+        "createSummaryIssue": {
+          "type": "boolean",
+          "description": "Whether to create a summary GitHub issue",
+          "default": true
+        }
+      }
+    }
+  },
+  "required": ["s3"]
+}
