@@ -1,28 +1,4 @@
 {
-  "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/scripts/atdd-stop-hook.sh"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/scripts/atdd-init-hook.sh"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "WebSearch",
@@ -46,7 +22,33 @@
       "Bash(winget install:*)",
       "Bash(bash:*)",
       "Bash(echo '{\"session_id\":\"test-123-456-789\",\"cwd\":\"/tmp/test-atdd\",\"prompt\":\"/atdd payment-system\"}' | .claude/scripts/atdd-init-hook.sh 2>&1)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Skill(validate)",
+      "Skill(commit)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/atdd-stop-hook.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/atdd-init-hook.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
