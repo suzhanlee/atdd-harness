@@ -48,7 +48,18 @@ context.json이 없으면 에러:
 
 ## STOP PROTOCOL
 
-### 4-Phase 진행 규칙
+### ⚠️ 종료 전 필수 체크리스트
+
+**스킬 종료 전 반드시 수행:**
+- [ ] context.json의 `status`를 "completed"로 변경
+- [ ] context.json의 `updated_at`을 현재 시간으로 변경
+- [ ] 산출물 파일이 올바른 경로에 생성되었는지 확인
+
+**❌ 위 체크리스트 미완료 시 스킬이 완료되지 않은 것으로 간주**
+
+---
+
+### 4-Phase 진행 규칠
 각 Phase는 반드시 **별도 턴**으로 진행한다. 사용자가 다음 단계로 진행할 준비가 될 때까지 대기한다.
 
 ```
@@ -467,6 +478,28 @@ JPA Entity 클래스
 
 ## 다음 단계
 설계 검증 완료 후 `/redteam-design` 실행
+
+---
+
+## Definition of Done (DoD)
+
+**⚠️ 스킬 완료로 인정받기 위해 다음 조건을 모두 충족해야 함:**
+
+| # | 조건 | 검증 |
+|---|------|------|
+| 1 | context.json `status` = "completed" | 필수 |
+| 2 | context.json `updated_at` = 현재 시간 | 필수 |
+| 3 | 산출물 파일 생성 완료 (`erd.md`, `domain-model.md`, `traceability-matrix.md`) | 필수 |
+| 4 | 검증 완료 (Must Have 100%) | 필수 |
+
+**context.json 업데이트 예시:**
+```json
+{
+  "phase": "design",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
 
 ---
 

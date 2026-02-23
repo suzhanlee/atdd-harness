@@ -209,6 +209,17 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 
 ---
 
+## ⚠️ 종료 전 필수 체크리스트
+
+**스킬 종료 전 반드시 수행:**
+- [ ] context.json의 `status`를 "completed"로 변경
+- [ ] context.json의 `updated_at`을 현재 시간으로 변경
+- [ ] 산출물 파일이 올바른 경로에 생성되었는지 확인
+
+**❌ 위 체크리스트 미완료 시 스킬이 완료되지 않은 것으로 간주**
+
+---
+
 ## MUST 체크리스트 (실행 전)
 - [ ] context.json 존재
 - [ ] `{basePath}/adr/*.md` 파일 존재
@@ -229,6 +240,28 @@ Critique Report를 받은 후, 각 이슈에 대해 결정:
 }
 ```
 Edit: .atdd/context.json
+
+---
+
+## Definition of Done (DoD)
+
+**⚠️ 스킬 완료로 인정받기 위해 다음 조건을 모두 충족해야 함:**
+
+| # | 조건 | 검증 |
+|---|------|------|
+| 1 | context.json `status` = "completed" | 필수 |
+| 2 | context.json `updated_at` = 현재 시간 | 필수 |
+| 3 | 산출물 파일 생성 완료 (`critique-*.md`, `decisions.md`) | 필수 |
+| 4 | 6관점 분석 완료 (Security, Performance, Scalability, Maintainability, Business, Reliability) | 필수 |
+
+**context.json 업데이트 예시:**
+```json
+{
+  "phase": "redteam",
+  "status": "completed",
+  "updated_at": "{ISO8601}"
+}
+```
 
 ---
 
