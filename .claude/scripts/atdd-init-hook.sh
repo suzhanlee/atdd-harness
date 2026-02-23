@@ -8,6 +8,9 @@
 #   - session_id: actual Claude Code session ID
 #   - cwd: current working directory
 #   - prompt: user's input text
+#
+# SSoT: context.json (Single Source of Truth)
+# This file is the only state file for ATDD workflow.
 
 set -euo pipefail
 
@@ -35,74 +38,60 @@ fi
 # Normalize path (convert backslashes to forward slashes for Windows compatibility)
 CWD=$(echo "$CWD" | tr '\\' '/')
 
-# State file path
-STATE_FILE="$CWD/.atdd/state.json"
+# Context file path (SSoT)
+CONTEXT_FILE="$CWD/.atdd/context.json"
 
 # Ensure .atdd directory exists
-mkdir -p "$(dirname "$STATE_FILE")"
+mkdir -p "$(dirname "$CONTEXT_FILE")"
+
+# Check if context.json already exists for this topic
+if [[ -f "$CONTEXT_FILE" ]]; then
+  EXISTING_TOPIC=$(jq -r '.topic // empty' "$CONTEXT_FILE" 2>/dev/null || echo "")
+  EXISTING_STATUS=$(jq -r '.status // empty' "$CONTEXT_FILE" 2>/dev/null || echo "")
+
+  # If same topic and still in progress, skip initialization
+  if [[ "$EXISTING_TOPIC" == "$TOPIC" ]] && [[ "$EXISTING_STATUS" == "in_progress" ]]; then
+    echo "🚀 ATDD already initialized for \"$TOPIC\"" >&2
+    exit 0
+  fi
+
+  # If different topic or completed, archive old context by renaming
+  EXISTING_DATE=$(jq -r '.date // empty' "$CONTEXT_FILE" 2>/dev/null || date +%Y-%m-%d)
+  EXISTING_BASE=$(jq -r '.basePath // empty' "$CONTEXT_FILE" 2>/dev/null || echo "")
+  if [[ -n "$EXISTING_TOPIC" ]] && [[ -n "$EXISTING_BASE" ]]; then
+    ARCHIVE_NAME="context-${EXISTING_DATE}-${EXISTING_TOPIC}.json"
+    mv "$CONTEXT_FILE" "$(dirname "$CONTEXT_FILE")/$ARCHIVE_NAME" 2>/dev/null || true
+    echo "📦 Archived previous ATDD context: $ARCHIVE_NAME" >&2
+  fi
+fi
 
 # Generate date and timestamp
 DATE=$(date +%Y-%m-%d)
 TIMESTAMP=$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)
 BASE_PATH=".atdd/$DATE/$TOPIC"
 
-# Default state structure
-DEFAULT_STATE=$(jq -n \
+# Create context.json (SSoT)
+jq -n \
   --arg topic "$TOPIC" \
   --arg date "$DATE" \
-  '{
-    version: "1.0.0",
-    project: {
-      name: "atdd-harness",
-      description: "ATDD Harness for Java/Spring",
-      techStack: ["Java 17+", "Spring Boot 3.x", "MySQL", "Cucumber", "RestAssured", "JUnit5"]
-    },
-    phases: {
-      interview: {status: "pending", startedAt: null, completedAt: null, outputs: []},
-      validate: {status: "pending", startedAt: null, completedAt: null, outputs: []},
-      design: {status: "pending", startedAt: null, completedAt: null, outputs: []},
-      gherkin: {status: "pending", startedAt: null, completedAt: null, outputs: []},
-      tdd: {status: "pending", startedAt: null, completedAt: null, outputs: []},
-      refactor: {status: "pending", startedAt: null, completedAt: null, outputs: []},
-      verify: {status: "pending", startedAt: null, completedAt: null, outputs: []}
-    },
-    currentPhase: null,
-    history: [],
-    sessions: {}
-  }')
-
-# Load existing state or use default
-if [[ -f "$STATE_FILE" ]]; then
-  CURRENT_STATE=$(cat "$STATE_FILE")
-else
-  CURRENT_STATE="$DEFAULT_STATE"
-fi
-
-# Check if session already has atdd state
-EXISTS=$(echo "$CURRENT_STATE" | jq --arg sid "$SESSION_ID" 'has("sessions") and .sessions[$sid].atdd // false' 2>/dev/null || echo "false")
-
-if [[ "$EXISTS" == "true" ]]; then
-  echo "🚀 ATDD already initialized for \"$TOPIC\" (session: ${SESSION_ID:0:8}...)" >&2
-  exit 0
-fi
-
-# Add session and save state
-echo "$CURRENT_STATE" | jq \
-  --arg sid "$SESSION_ID" \
   --arg ts "$TIMESTAMP" \
   --arg bp "$BASE_PATH" \
-  --arg topic "$TOPIC" \
-  '.sessions[$sid] = {
+  '{
+    topic: $topic,
+    date: $date,
+    status: "in_progress",
+    phase: "interview",
+    featurePath: null,
+    module: null,
+    basePath: $bp,
     created_at: $ts,
-    atdd: {
-      phase: "interview",
-      iteration: 0,
-      max_iterations: 10,
-      basePath: $bp,
-      topic: $topic
-    }
-  }' > "$STATE_FILE"
+    updated_at: $ts
+  }' > "$CONTEXT_FILE"
 
-echo "🚀 ATDD initialized for \"$TOPIC\" (session: ${SESSION_ID:0:8}...)" >&2
+# Ensure the base directory exists for outputs
+mkdir -p "$CWD/$BASE_PATH"
+
+echo "🚀 ATDD initialized for \"$TOPIC\"" >&2
+echo "📁 Base path: $BASE_PATH" >&2
 
 exit 0

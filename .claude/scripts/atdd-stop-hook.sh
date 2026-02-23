@@ -2,7 +2,7 @@
 # atdd-stop-hook.sh - Stop hook for ATDD orchestration
 #
 # Purpose: Track ATDD pipeline state and trigger next skills
-# Activation: Stop event + session has atdd state
+# Activation: Stop event + context.json exists with in_progress status
 #
 # ultrawork 방식: jq + bash로 JSON 출력하여 다음 스킬 트리거
 #
@@ -17,9 +17,10 @@
 #
 # ATDD Pipeline: interview → [epic-split] → validate → adr ↔ redteam → design ↔ redteam-design → compound → gherkin → tdd → refactor → verify
 #
+# SSoT: context.json (Single Source of Truth)
 # State Management:
 #   - Skills update context.json: { "phase": "xxx", "status": "completed" }
-#   - Hook checks context.json status to determine completion
+#   - Hook checks context.json to determine next action
 
 set -euo pipefail
 
@@ -33,53 +34,49 @@ SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // empty')
 # Normalize Windows paths
 CWD=$(echo "$CWD" | sed 's|\\|/|g')
 
-# State file path
-STATE_FILE="$CWD/.atdd/state.json"
+# Context file path (SSoT)
 CONTEXT_FILE="$CWD/.atdd/context.json"
 
-# Exit if no state file
-if [[ ! -f "$STATE_FILE" ]]; then
+# Exit if no context file
+if [[ ! -f "$CONTEXT_FILE" ]]; then
   exit 0
 fi
 
-# Check if this session has atdd state
-ATDD_STATE=$(jq -e --arg sid "$SESSION_ID" '.sessions[$sid].atdd // empty' "$STATE_FILE" 2>/dev/null || echo "")
+# Read context.json (SSoT)
+PHASE=$(jq -r '.phase // "interview"' "$CONTEXT_FILE" 2>/dev/null)
+STATUS=$(jq -r '.status // empty' "$CONTEXT_FILE" 2>/dev/null)
+TOPIC=$(jq -r '.topic // empty' "$CONTEXT_FILE" 2>/dev/null)
+BASE_PATH=$(jq -r '.basePath // empty' "$CONTEXT_FILE" 2>/dev/null)
 
-if [[ -z "$ATDD_STATE" ]]; then
+# Only process if ATDD is in progress
+if [[ "$STATUS" != "in_progress" ]] && [[ "$STATUS" != "completed" ]]; then
   exit 0
 fi
 
-# Extract atdd state fields
-PHASE=$(echo "$ATDD_STATE" | jq -r '.phase // "interview"')
-BASE_PATH=$(echo "$ATDD_STATE" | jq -r '.basePath // empty')
-TOPIC=$(echo "$ATDD_STATE" | jq -r '.topic // empty')
-
-# Fallback: Try to get basePath from context.json if not in state
-if [[ -z "$BASE_PATH" ]]; then
-  if [[ -f "$CONTEXT_FILE" ]]; then
-    BASE_PATH=$(jq -r '.basePath // empty' "$CONTEXT_FILE" 2>/dev/null || echo "")
-  fi
-fi
-
-if [[ -z "$BASE_PATH" ]]; then
+if [[ -z "$BASE_PATH" ]] || [[ -z "$TOPIC" ]]; then
   exit 0
 fi
 
 # Full path for base directory
 FULL_BASE_PATH="$CWD/$BASE_PATH"
 
-# Function to update phase in state file
+# Function to update phase in context.json (SSoT)
 update_phase() {
   local new_phase="$1"
+  local timestamp=$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)
   local tmp_file=$(mktemp)
-  jq --arg sid "$SESSION_ID" --arg phase "$new_phase" \
-    '.sessions[$sid].atdd.phase = $phase' "$STATE_FILE" > "$tmp_file" && mv "$tmp_file" "$STATE_FILE"
+  jq --arg phase "$new_phase" --arg ts "$timestamp" \
+    '.phase = $phase | .status = "in_progress" | .updated_at = $ts' \
+    "$CONTEXT_FILE" > "$tmp_file" && mv "$tmp_file" "$CONTEXT_FILE"
 }
 
-# Function to cleanup session
-cleanup_session() {
+# Function to mark pipeline as done
+mark_done() {
+  local timestamp=$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)
   local tmp_file=$(mktemp)
-  jq --arg sid "$SESSION_ID" 'del(.sessions[$sid])' "$STATE_FILE" > "$tmp_file" && mv "$tmp_file" "$STATE_FILE"
+  jq --arg ts "$timestamp" \
+    '.phase = "done" | .status = "completed" | .updated_at = $ts' \
+    "$CONTEXT_FILE" > "$tmp_file" && mv "$tmp_file" "$CONTEXT_FILE"
 }
 
 # Helper function to trigger next skill
@@ -94,19 +91,16 @@ trigger_next_skill() {
 pipeline_complete() {
   echo "🎉 ATDD: Pipeline complete for \"$TOPIC\"" >&2
   echo "📁 Results: $BASE_PATH" >&2
-  cleanup_session
+  mark_done
   jq -n '{decision: "allow"}'
 }
 
-# Helper function to check if phase is completed in context.json
+# Helper function to check if phase is completed
 # Returns 0 (true) if completed, 1 (false) otherwise
 is_phase_completed() {
   local expected_phase="$1"
 
-  if [[ ! -f "$CONTEXT_FILE" ]]; then
-    return 1
-  fi
-
+  # Re-read context.json to get latest state
   local context_phase=$(jq -r '.phase // empty' "$CONTEXT_FILE" 2>/dev/null)
   local context_status=$(jq -r '.status // empty' "$CONTEXT_FILE" 2>/dev/null)
 
@@ -117,7 +111,7 @@ is_phase_completed() {
 # Pipeline: interview → [epic-split] → validate → adr ↔ redteam → design ↔ redteam-design → compound → gherkin → tdd → refactor → verify
 case "$PHASE" in
   interview)
-    # Check if interview phase is completed via context.json
+    # Check if interview phase is completed
     if is_phase_completed "interview"; then
       update_phase "validate"
       trigger_next_skill "validate"
@@ -128,7 +122,7 @@ case "$PHASE" in
     ;;
 
   validate)
-    # Check if validate phase is completed via context.json
+    # Check if validate phase is completed
     if is_phase_completed "validate"; then
       update_phase "adr"
       trigger_next_skill "adr"
@@ -139,7 +133,7 @@ case "$PHASE" in
     ;;
 
   adr)
-    # Check if adr phase is completed via context.json
+    # Check if adr phase is completed
     if is_phase_completed "adr"; then
       update_phase "redteam"
       trigger_next_skill "redteam"
@@ -150,7 +144,7 @@ case "$PHASE" in
     ;;
 
   redteam)
-    # Check if redteam phase is completed via context.json
+    # Check if redteam phase is completed
     if is_phase_completed "redteam"; then
       # Check if revision needed via redteam report
       REDTEAM_REPORT="$FULL_BASE_PATH/redteam/critique-report.md"
@@ -170,7 +164,7 @@ case "$PHASE" in
     ;;
 
   design)
-    # Check if design phase is completed via context.json
+    # Check if design phase is completed
     if is_phase_completed "design"; then
       update_phase "redteam-design"
       trigger_next_skill "redteam-design"
@@ -181,7 +175,7 @@ case "$PHASE" in
     ;;
 
   redteam-design)
-    # Check if redteam-design phase is completed via context.json
+    # Check if redteam-design phase is completed
     if is_phase_completed "redteam-design"; then
       # Check if revision needed via redteam-design report
       REDTEAM_DESIGN_REPORT="$FULL_BASE_PATH/redteam-design/critique-report.md"
@@ -201,7 +195,7 @@ case "$PHASE" in
     ;;
 
   compound)
-    # Check if compound phase is completed via context.json
+    # Check if compound phase is completed
     if is_phase_completed "compound"; then
       update_phase "gherkin"
       trigger_next_skill "gherkin"
@@ -212,7 +206,7 @@ case "$PHASE" in
     ;;
 
   gherkin)
-    # Check if gherkin phase is completed via context.json
+    # Check if gherkin phase is completed
     if is_phase_completed "gherkin"; then
       update_phase "tdd"
       trigger_next_skill "tdd"
@@ -223,7 +217,7 @@ case "$PHASE" in
     ;;
 
   tdd)
-    # Check if tdd phase is completed via context.json
+    # Check if tdd phase is completed
     if is_phase_completed "tdd"; then
       update_phase "refactor"
       trigger_next_skill "refactor"
@@ -234,7 +228,7 @@ case "$PHASE" in
     ;;
 
   refactor)
-    # Check if refactor phase is completed via context.json
+    # Check if refactor phase is completed
     if is_phase_completed "refactor"; then
       update_phase "verify"
       trigger_next_skill "verify"
@@ -245,9 +239,8 @@ case "$PHASE" in
     ;;
 
   verify)
-    # Check if verify phase is completed via context.json
+    # Check if verify phase is completed
     if is_phase_completed "verify"; then
-      update_phase "done"
       pipeline_complete
       exit 0
     else
@@ -256,8 +249,7 @@ case "$PHASE" in
     ;;
 
   done)
-    # Already done - cleanup and allow
-    cleanup_session
+    # Already done - allow
     jq -n '{decision: "allow"}'
     exit 0
     ;;
