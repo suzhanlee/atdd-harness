@@ -5,15 +5,24 @@
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
 # IDE
 .idea/
 *.iml
 *.iws
 *.ipr
 .vscode/
+out/
 
 # Claude Code
 .claude/settings.json
+.claude/settings.local.json
 
 # OS
 .DS_Store
@@ -26,6 +35,22 @@ logs/
 # Spring
 application-local.yml
 application-dev.yml
+
+# Security
+.env
+*.pem
+*.key
+credentials*.json
+
+# Database
+*.db
+*.h2.db
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
 
 # Test output
 test-output/
