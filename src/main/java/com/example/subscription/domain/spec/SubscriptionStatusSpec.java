@@ -1,6 +1,10 @@
 package com.example.subscription.domain.spec;
 
 import com.example.subscription.domain.vo.SubscriptionStatus;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 구독 상태 전이 규칙 Specification.
@@ -24,6 +28,58 @@ import com.example.subscription.domain.vo.SubscriptionStatus;
  */
 public final class SubscriptionStatusSpec {
 
+    /** 상태 전이 매트릭스: FROM 상태 -> 가능한 TO 상태 목록 */
+    private static final Map<SubscriptionStatus, Set<SubscriptionStatus>> TRANSITIONS = new HashMap<>();
+
+    /** Apple 이벤트 타입 -> 구독 상태 매핑 */
+    private static final Map<String, SubscriptionStatus> EVENT_STATUS_MAP = new HashMap<>();
+
+    /** 종료 상태 목록 */
+    private static final Set<SubscriptionStatus> TERMINAL_STATUSES =
+            EnumSet.of(SubscriptionStatus.EXPIRED, SubscriptionStatus.REFUNDED, SubscriptionStatus.REVOKED);
+
+    /** 활성 상태 목록 (서비스 이용 가능) */
+    private static final Set<SubscriptionStatus> ACTIVE_STATUSES =
+            EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.GRACE_PERIOD, SubscriptionStatus.BILLING_RETRY);
+
+    static {
+        // ACTIVE에서 가능한 전이
+        // Note: ACTIVE → BILLING_RETRY is NOT allowed. Billing retry only after GRACE_PERIOD.
+        TRANSITIONS.put(
+                SubscriptionStatus.ACTIVE,
+                EnumSet.of(
+                        SubscriptionStatus.EXPIRED,
+                        SubscriptionStatus.GRACE_PERIOD,
+                        SubscriptionStatus.REFUNDED,
+                        SubscriptionStatus.REVOKED));
+
+        // GRACE_PERIOD에서 가능한 전이
+        TRANSITIONS.put(
+                SubscriptionStatus.GRACE_PERIOD,
+                EnumSet.of(
+                        SubscriptionStatus.ACTIVE, SubscriptionStatus.EXPIRED, SubscriptionStatus.BILLING_RETRY));
+
+        // BILLING_RETRY에서 가능한 전이
+        TRANSITIONS.put(
+                SubscriptionStatus.BILLING_RETRY, EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.EXPIRED));
+
+        // 종료 상태는 전이 불가
+        TRANSITIONS.put(SubscriptionStatus.EXPIRED, EnumSet.noneOf(SubscriptionStatus.class));
+        TRANSITIONS.put(SubscriptionStatus.REFUNDED, EnumSet.noneOf(SubscriptionStatus.class));
+        TRANSITIONS.put(SubscriptionStatus.REVOKED, EnumSet.noneOf(SubscriptionStatus.class));
+
+        // Apple 이벤트 타입 매핑
+        EVENT_STATUS_MAP.put("SUBSCRIBED", SubscriptionStatus.ACTIVE);
+        EVENT_STATUS_MAP.put("DID_RENEW", SubscriptionStatus.ACTIVE);
+        EVENT_STATUS_MAP.put("DID_FAIL_TO_RENEW", SubscriptionStatus.GRACE_PERIOD);
+        EVENT_STATUS_MAP.put("EXPIRED", SubscriptionStatus.EXPIRED);
+        EVENT_STATUS_MAP.put("GRACE_PERIOD_EXPIRED", SubscriptionStatus.EXPIRED);
+        EVENT_STATUS_MAP.put("REFUND", SubscriptionStatus.REFUNDED);
+        EVENT_STATUS_MAP.put("REVOKE", SubscriptionStatus.REVOKED);
+        EVENT_STATUS_MAP.put("PRICE_CHANGE", SubscriptionStatus.ACTIVE);
+        EVENT_STATUS_MAP.put("BILLING_RECOVERY", SubscriptionStatus.ACTIVE);
+    }
+
     private SubscriptionStatusSpec() {
         // Utility class
     }
@@ -36,7 +92,8 @@ public final class SubscriptionStatusSpec {
      * @return 전이가 유효하면 true
      */
     public static boolean canTransition(SubscriptionStatus from, SubscriptionStatus to) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        Set<SubscriptionStatus> allowedTargets = TRANSITIONS.get(from);
+        return allowedTargets != null && allowedTargets.contains(to);
     }
 
     /**
@@ -47,17 +104,23 @@ public final class SubscriptionStatusSpec {
      * @throws IllegalStateException 유효하지 않은 상태 전이인 경우
      */
     public static void validateTransition(SubscriptionStatus from, SubscriptionStatus to) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        if (!canTransition(from, to)) {
+            throw new IllegalStateException(
+                    String.format("Invalid status transition: %s -> %s", from, to));
+        }
     }
 
     /**
      * Apple 이벤트 타입에 따른 목표 상태를 반환한다.
      *
      * @param eventType Apple 이벤트 타입 (SUBSCRIBED, DID_RENEW 등)
-     * @return 목표 상태
+     * @return 목표 상태, 알 수 없는 이벤트면 null
      */
     public static SubscriptionStatus getTargetStatus(String eventType) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        if (eventType == null) {
+            return null;
+        }
+        return EVENT_STATUS_MAP.get(eventType.toUpperCase());
     }
 
     /**
@@ -69,7 +132,7 @@ public final class SubscriptionStatusSpec {
      * @return 종료 상태이면 true
      */
     public static boolean isTerminalStatus(SubscriptionStatus status) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return TERMINAL_STATUSES.contains(status);
     }
 
     /**
@@ -81,6 +144,6 @@ public final class SubscriptionStatusSpec {
      * @return 활성 상태이면 true
      */
     public static boolean isActiveStatus(SubscriptionStatus status) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return ACTIVE_STATUSES.contains(status);
     }
 }
