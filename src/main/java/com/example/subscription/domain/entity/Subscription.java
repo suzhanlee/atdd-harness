@@ -50,6 +50,7 @@ public class Subscription {
 
     /** 제품 ID (Embedded VO) */
     @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "product_id", nullable = false, length = 100))
     private ProductId productId;
 
     /** 구독 상태 */

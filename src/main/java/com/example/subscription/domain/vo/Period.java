@@ -1,5 +1,6 @@
 package com.example.subscription.domain.vo;
 
+import jakarta.persistence.Embeddable;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -16,10 +17,14 @@ import java.util.Objects;
  *   <li>startAt은 endAt보다 이전이어야 함
  * </ul>
  */
+@Embeddable
 public class Period {
 
-    private final Instant startAt;
-    private final Instant endAt;
+    private Instant startAt;
+    private Instant endAt;
+
+    /** JPA 기본 생성자 */
+    protected Period() {}
 
     /**
      * Period 객체를 생성한다.

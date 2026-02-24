@@ -1,5 +1,6 @@
 package com.example.subscription.domain.vo;
 
+import jakarta.persistence.Embeddable;
 import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.Objects;
@@ -17,10 +18,14 @@ import java.util.Objects;
  *   <li>amount는 0 이상이어야 함 (환불 계산 시 음수 허용 고려 필요)
  * </ul>
  */
+@Embeddable
 public class Money {
 
-    private final BigDecimal amount;
-    private final Currency currency;
+    private BigDecimal amount;
+    private String currencyCode;
+
+    /** JPA 기본 생성자 */
+    protected Money() {}
 
     /**
      * Money 객체를 생성한다.
@@ -37,7 +42,7 @@ public class Money {
             throw new IllegalArgumentException("amount must be non-negative");
         }
         this.amount = amount;
-        this.currency = currency;
+        this.currencyCode = currency.getCurrencyCode();
     }
 
     /**
@@ -55,7 +60,7 @@ public class Money {
      * @return 통화
      */
     public Currency getCurrency() {
-        return currency;
+        return Currency.getInstance(currencyCode);
     }
 
     /**
@@ -67,7 +72,7 @@ public class Money {
      */
     public Money add(Money other) {
         validateSameCurrency(other);
-        return new Money(this.amount.add(other.amount), this.currency);
+        return new Money(this.amount.add(other.amount), getCurrency());
     }
 
     /**
@@ -79,7 +84,7 @@ public class Money {
      */
     public Money subtract(Money other) {
         validateSameCurrency(other);
-        return new Money(this.amount.subtract(other.amount), this.currency);
+        return new Money(this.amount.subtract(other.amount), getCurrency());
     }
 
     /**
@@ -89,7 +94,7 @@ public class Money {
      * @return 곱한 결과
      */
     public Money multiply(BigDecimal multiplier) {
-        return new Money(this.amount.multiply(multiplier), this.currency);
+        return new Money(this.amount.multiply(multiplier), getCurrency());
     }
 
     /**
@@ -119,9 +124,9 @@ public class Money {
      * @throws IllegalArgumentException 통화가 다른 경우
      */
     private void validateSameCurrency(Money other) {
-        if (!this.currency.equals(other.currency)) {
+        if (!this.currencyCode.equals(other.currencyCode)) {
             throw new IllegalArgumentException(
-                    "Currency mismatch: " + this.currency + " vs " + other.currency);
+                    "Currency mismatch: " + this.currencyCode + " vs " + other.currencyCode);
         }
     }
 
@@ -131,16 +136,16 @@ public class Money {
         if (o == null || getClass() != o.getClass()) return false;
         Money money = (Money) o;
         return Objects.equals(amount, money.amount)
-                && Objects.equals(currency, money.currency);
+                && Objects.equals(currencyCode, money.currencyCode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(amount, currency);
+        return Objects.hash(amount, currencyCode);
     }
 
     @Override
     public String toString() {
-        return String.format("%s %s", currency.getCurrencyCode(), amount);
+        return String.format("%s %s", currencyCode, amount);
     }
 }

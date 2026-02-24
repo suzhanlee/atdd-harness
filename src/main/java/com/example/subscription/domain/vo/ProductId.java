@@ -1,5 +1,6 @@
 package com.example.subscription.domain.vo;
 
+import jakarta.persistence.Embeddable;
 import java.util.Objects;
 
 /**
@@ -15,9 +16,13 @@ import java.util.Objects;
  *   <li>value는 비어있지 않아야 함
  * </ul>
  */
+@Embeddable
 public class ProductId {
 
-    private final String value;
+    private String value;
+
+    /** JPA 기본 생성자 */
+    protected ProductId() {}
 
     /**
      * ProductId 객체를 생성한다.
