@@ -5,7 +5,7 @@
   "phase": "tdd",
   "basePath": ".atdd/apple-iap-subscription-refund-upgrade",
   "created_at": "2026-02-23T10:00:00+09:00",
-  "updated_at": "2026-02-24T22:30:00+09:00",
+  "updated_at": "2026-02-24T23:30:00+09:00",
   "design": {
     "completed": true,
     "must_have_coverage": "100%",
@@ -101,10 +101,15 @@
     ]
   },
   "tdd": {
-    "completed_cycles": 3,
+    "completed_cycles": 6,
     "total_cycles": 6,
     "domain_layer_implemented": true,
-    "unit_tests": 146,
+    "repository_layer_implemented": true,
+    "service_layer_implemented": true,
+    "e2e_layer_implemented": true,
+    "unit_tests": 176,
+    "integration_tests": 30,
+    "service_tests": 18,
     "test_files": [
       "src/test/java/com/example/unit/domain/vo/MoneyTest.java",
       "src/test/java/com/example/unit/domain/vo/PeriodTest.java",
@@ -113,7 +118,15 @@
       "src/test/java/com/example/unit/domain/entity/SubscriptionTest.java",
       "src/test/java/com/example/unit/domain/entity/TransactionTest.java",
       "src/test/java/com/example/unit/domain/entity/RefundTest.java",
-      "src/test/java/com/example/unit/domain/entity/SubscriptionHistoryTest.java"
+      "src/test/java/com/example/unit/domain/entity/SubscriptionHistoryTest.java",
+      "src/test/java/com/example/integration/SubscriptionRepositoryTest.java",
+      "src/test/java/com/example/integration/TransactionRepositoryTest.java",
+      "src/test/java/com/example/integration/RefundRepositoryTest.java",
+      "src/test/java/com/example/unit/domain/service/UpgradeServiceImplTest.java",
+      "src/test/java/com/example/unit/domain/service/RefundCalculationServiceImplTest.java",
+      "src/test/java/com/example/e2e/CucumberSpringConfiguration.java",
+      "src/test/java/com/example/e2e/step/CommonStepDefinitions.java",
+      "src/test/java/com/example/e2e/step/SubscriptionStepDefinitions.java"
     ],
     "implemented_files": [
       "src/main/java/com/example/subscription/domain/vo/Money.java",
@@ -124,12 +137,20 @@
       "src/main/java/com/example/subscription/domain/entity/Subscription.java",
       "src/main/java/com/example/subscription/domain/entity/Transaction.java",
       "src/main/java/com/example/subscription/domain/entity/Refund.java",
-      "src/main/java/com/example/subscription/domain/entity/SubscriptionHistory.java"
+      "src/main/java/com/example/subscription/domain/entity/SubscriptionHistory.java",
+      "src/main/java/com/example/subscription/domain/repository/SubscriptionRepository.java",
+      "src/main/java/com/example/subscription/domain/repository/TransactionRepository.java",
+      "src/main/java/com/example/subscription/domain/repository/RefundRepository.java",
+      "src/main/java/com/example/subscription/domain/service/UpgradeService.java",
+      "src/main/java/com/example/subscription/domain/service/UpgradeServiceImpl.java",
+      "src/main/java/com/example/subscription/domain/service/RefundCalculationService.java",
+      "src/main/java/com/example/subscription/domain/service/RefundCalculationServiceImpl.java"
     ],
-    "pending_cycles": [
-      "Repository Integration Test",
-      "Domain Service Implementation",
-      "Cucumber Step Definitions (E2E)"
+    "pending_implementations": [
+      "Application Layer (Use Cases)",
+      "Infrastructure Layer (Apple API Client)",
+      "Presentation Layer (Controllers)",
+      "Cucumber Full E2E Tests"
     ]
   }
 }
