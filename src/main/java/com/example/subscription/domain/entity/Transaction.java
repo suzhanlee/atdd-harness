@@ -3,6 +3,7 @@ package com.example.subscription.domain.entity;
 import com.example.subscription.domain.vo.Money;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * 결제/갱신 트랜잭션 Entity.
@@ -83,7 +84,20 @@ public class Transaction {
      */
     public static Transaction create(
             Long subscriptionId, String transactionId, Type type, Money amount, Instant purchasedAt) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        Objects.requireNonNull(subscriptionId, "subscriptionId must not be null");
+        Objects.requireNonNull(transactionId, "transactionId must not be null");
+        Objects.requireNonNull(type, "type must not be null");
+        Objects.requireNonNull(purchasedAt, "purchasedAt must not be null");
+
+        Transaction transaction = new Transaction();
+        transaction.subscriptionId = subscriptionId;
+        transaction.transactionId = transactionId;
+        transaction.type = type;
+        transaction.amount = amount;
+        transaction.purchasedAt = purchasedAt;
+        transaction.createdAt = Instant.now();
+
+        return transaction;
     }
 
     // Getters
@@ -122,6 +136,6 @@ public class Transaction {
      * @return 환불이면 true
      */
     public boolean isRefund() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return type == Type.REFUND;
     }
 }

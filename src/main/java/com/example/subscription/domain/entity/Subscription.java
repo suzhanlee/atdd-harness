@@ -1,10 +1,12 @@
 package com.example.subscription.domain.entity;
 
+import com.example.subscription.domain.spec.SubscriptionStatusSpec;
 import com.example.subscription.domain.vo.Period;
 import com.example.subscription.domain.vo.ProductId;
 import com.example.subscription.domain.vo.SubscriptionStatus;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * 구독 Aggregate Root.
@@ -93,7 +95,23 @@ public class Subscription {
      */
     public static Subscription create(
             String originalTransactionId, Long userId, ProductId productId, Period period) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        Objects.requireNonNull(originalTransactionId, "originalTransactionId must not be null");
+        Objects.requireNonNull(userId, "userId must not be null");
+        Objects.requireNonNull(productId, "productId must not be null");
+        Objects.requireNonNull(period, "period must not be null");
+
+        Subscription subscription = new Subscription();
+        subscription.originalTransactionId = originalTransactionId;
+        subscription.userId = userId;
+        subscription.productId = productId;
+        subscription.status = SubscriptionStatus.ACTIVE;
+        subscription.expiresAt = period.getEndAt();
+        subscription.currentPeriodStart = period.getStartAt();
+        subscription.currentPeriodEnd = period.getEndAt();
+        subscription.createdAt = Instant.now();
+        subscription.updatedAt = Instant.now();
+
+        return subscription;
     }
 
     /**
@@ -107,7 +125,21 @@ public class Subscription {
      * @throws IllegalStateException 갱신 불가능한 상태인 경우
      */
     public void renew(Instant newExpiresAt, Instant newPeriodStart, Instant newPeriodEnd) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        // 불변식: expiresAt >= currentPeriodEnd
+        if (newExpiresAt.isBefore(newPeriodEnd)) {
+            throw new IllegalArgumentException("expiresAt must be >= currentPeriodEnd");
+        }
+
+        // 상태 전이 검증
+        if (!SubscriptionStatusSpec.isActiveStatus(status)) {
+            throw new IllegalStateException("Cannot renew from status: " + status);
+        }
+
+        this.expiresAt = newExpiresAt;
+        this.currentPeriodStart = newPeriodStart;
+        this.currentPeriodEnd = newPeriodEnd;
+        this.status = SubscriptionStatus.ACTIVE;
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -118,7 +150,9 @@ public class Subscription {
      * @throws IllegalStateException 이미 만료된 상태인 경우
      */
     public void expire() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        SubscriptionStatusSpec.validateTransition(status, SubscriptionStatus.EXPIRED);
+        this.status = SubscriptionStatus.EXPIRED;
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -129,7 +163,9 @@ public class Subscription {
      * @throws IllegalStateException 환불 불가능한 상태인 경우
      */
     public void refund() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        SubscriptionStatusSpec.validateTransition(status, SubscriptionStatus.REFUNDED);
+        this.status = SubscriptionStatus.REFUNDED;
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -141,7 +177,9 @@ public class Subscription {
      * @throws IllegalArgumentException 유효하지 않은 상태 전이인 경우
      */
     public void changeStatus(SubscriptionStatus newStatus) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        SubscriptionStatusSpec.validateTransition(status, newStatus);
+        this.status = newStatus;
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -153,7 +191,9 @@ public class Subscription {
      * @throws IllegalStateException 유예 기간 진입 불가능한 상태인 경우
      */
     public void enterGracePeriod(Instant gracePeriodEnd) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        SubscriptionStatusSpec.validateTransition(status, SubscriptionStatus.GRACE_PERIOD);
+        this.status = SubscriptionStatus.GRACE_PERIOD;
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -166,7 +206,17 @@ public class Subscription {
      * @throws IllegalStateException 업그레이드 불가능한 상태인 경우
      */
     public void upgrade(ProductId newProductId) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        if (status != SubscriptionStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot upgrade from status: " + status);
+        }
+
+        // 동일 등급 또는 하위 등급으로는 업그레이드 불가
+        if (!newProductId.isHigherTierThan(this.productId)) {
+            throw new IllegalArgumentException("Cannot upgrade to same or lower tier");
+        }
+
+        this.productId = newProductId;
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -177,7 +227,9 @@ public class Subscription {
      * @throws IllegalStateException 취소 불가능한 상태인 경우
      */
     public void revoke() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        SubscriptionStatusSpec.validateTransition(status, SubscriptionStatus.REVOKED);
+        this.status = SubscriptionStatus.REVOKED;
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -188,7 +240,9 @@ public class Subscription {
      * @throws IllegalStateException 진입 불가능한 상태인 경우
      */
     public void enterBillingRetry() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        SubscriptionStatusSpec.validateTransition(status, SubscriptionStatus.BILLING_RETRY);
+        this.status = SubscriptionStatus.BILLING_RETRY;
+        this.updatedAt = Instant.now();
     }
 
     // Getters
@@ -243,7 +297,7 @@ public class Subscription {
      * @return 활성 상태이면 true
      */
     public boolean isActive() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return SubscriptionStatusSpec.isActiveStatus(status);
     }
 
     /**
@@ -252,6 +306,6 @@ public class Subscription {
      * @return 만료되었으면 true
      */
     public boolean isExpired() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return status == SubscriptionStatus.EXPIRED;
     }
 }

@@ -3,6 +3,7 @@ package com.example.subscription.domain.entity;
 import com.example.subscription.domain.vo.Money;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * 환불 정보 Entity.
@@ -93,7 +94,21 @@ public class Refund {
             Reason reason,
             String appleReasonCode,
             Instant refundedAt) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        Objects.requireNonNull(subscriptionId, "subscriptionId must not be null");
+        Objects.requireNonNull(originalTransactionId, "originalTransactionId must not be null");
+        Objects.requireNonNull(refundAmount, "refundAmount must not be null");
+        Objects.requireNonNull(refundedAt, "refundedAt must not be null");
+
+        Refund refund = new Refund();
+        refund.subscriptionId = subscriptionId;
+        refund.originalTransactionId = originalTransactionId;
+        refund.refundAmount = refundAmount;
+        refund.reason = reason;
+        refund.appleReasonCode = appleReasonCode;
+        refund.refundedAt = refundedAt;
+        refund.createdAt = Instant.now();
+
+        return refund;
     }
 
     // Getters

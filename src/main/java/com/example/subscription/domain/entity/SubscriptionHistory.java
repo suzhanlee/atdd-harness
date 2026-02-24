@@ -3,6 +3,7 @@ package com.example.subscription.domain.entity;
 import com.example.subscription.domain.vo.SubscriptionStatus;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * 구독 상태 변경 이력 Entity.
@@ -82,7 +83,20 @@ public class SubscriptionHistory {
             String reason,
             String transactionId,
             Instant changedAt) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        Objects.requireNonNull(subscriptionId, "subscriptionId must not be null");
+        Objects.requireNonNull(fromStatus, "fromStatus must not be null");
+        Objects.requireNonNull(toStatus, "toStatus must not be null");
+        Objects.requireNonNull(changedAt, "changedAt must not be null");
+
+        SubscriptionHistory history = new SubscriptionHistory();
+        history.subscriptionId = subscriptionId;
+        history.fromStatus = fromStatus;
+        history.toStatus = toStatus;
+        history.reason = reason;
+        history.transactionId = transactionId;
+        history.changedAt = changedAt;
+
+        return history;
     }
 
     // Getters
