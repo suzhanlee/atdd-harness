@@ -57,6 +57,10 @@ Apple Webhook은 구독 상태 변경 이벤트를 실시간으로 전달한다.
 1. **메시지 브로커**: RabbitMQ 사용
 2. **처리 흐름**: Webhook 수신 → 큐 적재 → 즉시 200 응답 → 컨슈머 비동기 처리
 3. **장애 대응**: DLQ(Dead Letter Queue) + 재처리 스케줄러
+4. **사용자별 순서 보장**: Consistent Hashing Exchange로 사용자 ID 기반 라우팅
+5. **재시도 정책 통합**:
+   - Webhook 수신 즉시 200 응답 (Apple 재시도 방지)
+   - 큐 내부 재시도: 최대 3회, 지수 백오프 (1s, 5s, 30s)
 
 ---
 

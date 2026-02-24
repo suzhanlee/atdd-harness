@@ -57,6 +57,9 @@ Apple App Store Server Notifications V2는 모든 Webhook 요청을 JWS(JSON Web
 1. **JWS 검증 라이브러리**: `nimbus-jose-jwt` 사용
 2. **공개키 캐싱 전략**: Redis 사용 (24시간 TTL)
 3. **Fallback 전략**: Redis 장애 시 Apple API 직접 호출
+4. **x5c 인증서 체인 검증**: Apple Root CA 기반 전체 체인 검증
+5. **Replay Attack 방지**: `signedDate` 타임스탬프 검증 (5분 이내) + Redis 기반 중복 방지
+6. **키 로테이션 대응**: 검증 실패 시 즉시 캐시 무효화 및 재조회
 
 ---
 
@@ -133,8 +136,12 @@ Apple API 직접 호출은 신뢰성이 가장 높지만, 트래픽 증가 시 �
 ### 위험
 - **Redis 장애**: Fallback 로직으로 전환하나 초기 지연 발생
   - 완화 전략: Redis Sentinel/Cluster 구성, Circuit Breaker 패턴
+  - **Fallback 전환 기준**: 연결 타임아웃 500ms 초과 시 전환, 3회 연속 실패 시 Circuit Open
 - **키 로테이션 미감지**: 캐시된 키가 만료되기 전 로테이션 발생
   - 완화 전략: 검증 실패 시 즉시 캐시 무효화 및 재조회
+  - **모니터링**: 키 로테이션 감지 시 즉시 알림, 실제 로테이션 주기 수집
+- **이중 장애 (Redis + Apple API)**: 두 시스템 모두 장애 시 모든 Webhook 검증 실패
+  - 완화 전략: 실패한 Webhook을 DLQ에 저장하여 후속 복구, 수동 개입을 위한 운영 가이드 문서화
 
 ---
 

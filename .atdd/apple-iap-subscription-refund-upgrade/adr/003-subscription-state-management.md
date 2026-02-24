@@ -58,6 +58,8 @@ Apple IAP 구독은 다양한 상태(ACTIVE, EXPIRED, GRACE_PERIOD, BILLING_RETR
 2. **이력 관리**: `SubscriptionHistory` Entity로 모든 변경 이력 기록
 3. **트랜잭션**: 동기 처리 (Aggregate Root 내에서 상태 변경 + 이력 기록)
 4. **동시성 제어**: 낙관적 락 (JPA @Version)
+5. **멱등성 구현**: `transactionId` 기반 멱등성 키 사용 (Redis TTL 24시간)
+6. **상태 전이 검증**: 테스트 코드로 상태 전이 매트릭스 검증, CI에서 커버리지 측정
 
 ---
 
@@ -157,6 +159,28 @@ Event Sourcing은 완벽한 이력 추적이 가능하지만, 팀 경험 부족�
 
 **재검토 시점**: 2026-08-24 또는 위 조건 달성 시
 **Event Sourcing 전환 고려**: 이력 기반 비즈니스 로직 복잡도 증가 시
+
+---
+
+## Apple 이벤트 타입 매핑 테이블
+
+| Apple 이벤트 타입 | 상태 전이 | 설명 |
+|-------------------|-----------|------|
+| SUBSCRIBED | → ACTIVE | 신규 구독 |
+| DID_RENEW | → ACTIVE | 갱신 성공 |
+| DID_FAIL_TO_RENEW | → BILLING_RETRY | 갱신 실패 |
+| DID_CHANGE_RENEWAL_STATUS | (상태 유지) | 갱신 의사 변경 |
+| EXPIRED | → EXPIRED | 구독 만료 |
+| GRACE_PERIOD_EXPIRED | → EXPIRED | 유예 기간 종료 |
+| OFFER_REDEEMED | → ACTIVE | 프로모션 코드 사용 |
+| PRICE_CHANGE | (상태 유지) | 가격 변경 통지 |
+| REFUND | → REFUNDED | 환불 처리 |
+| REFUND_DECLINED | (상태 유지) | 환불 거절 |
+| RENEWAL_EXTENDED | (만료일 연장) | 갱신 기간 연장 |
+| RENEWAL_EXTENSION | (만료일 연장) | 갱신 연장 요청 |
+| REVOKE | → REVOKED | 가족 공유 취소 |
+
+**정의되지 않은 이벤트**: 로그 기록 후 기본 처리 (상태 유지)
 
 ---
 
