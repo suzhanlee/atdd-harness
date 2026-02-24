@@ -2,10 +2,27 @@
   "topic": "apple-iap-subscription-refund-upgrade",
   "date": "2026-02-23",
   "status": "in_progress",
-  "phase": "redteam",
+  "phase": "tdd",
   "basePath": ".atdd/apple-iap-subscription-refund-upgrade",
   "created_at": "2026-02-23T10:00:00+09:00",
-  "updated_at": "2026-02-24T18:40:00+09:00",
+  "updated_at": "2026-02-24T22:30:00+09:00",
+  "design": {
+    "completed": true,
+    "must_have_coverage": "100%",
+    "should_have_coverage": "100%",
+    "apple_event_coverage": "100%",
+    "entities": 4,
+    "value_objects": 5,
+    "domain_events": 5,
+    "repositories": 3,
+    "use_cases": 4,
+    "controllers": 2,
+    "files": [
+      "design/erd.md",
+      "design/domain-model.md",
+      "design/traceability-matrix.md"
+    ]
+  },
   "gherkin": {
     "completed": true,
     "happy_path_scenarios": 17,
@@ -18,6 +35,7 @@
     "completed": true,
     "adrs_written": 3,
     "self_critique_avg": "4.4/5",
+    "redteam_updated": true,
     "files": [
       "001-apple-webhook-jws-verification.md",
       "002-async-message-processing-rabbitmq.md",
@@ -30,10 +48,88 @@
     "high_issues": 4,
     "medium_issues": 15,
     "low_issues": 3,
+    "accept_count": 9,
+    "defer_count": 12,
+    "reject_count": 0,
     "critique_files": [
       "critique-001.md",
       "critique-002.md",
       "critique-003.md"
+    ]
+  },
+  "redteam_design": {
+    "completed": true,
+    "review_date": "2026-02-24",
+    "method": "RRAIRU",
+    "total_issues": 8,
+    "high_issues": 2,
+    "medium_issues": 4,
+    "low_issues": 2,
+    "accept_count": 7,
+    "defer_count": 1,
+    "reject_count": 0,
+    "critique_file": "redteam/design-critique-2026-02-24.md",
+    "key_decisions": [
+      "INV-1: expiresAt >= currentPeriodEnd 불변식 추가",
+      "INV-2: upgrade() 내부 productId 검증 추가",
+      "RESP-1: ProductId는 식별자만, Service에서 비교",
+      "REQ-1: isTrialPeriod 필드 추가",
+      "AGG-1: Transaction을 별도 Aggregate로 명시",
+      "INV-3: Money는 양수, 환불은 별도 VO",
+      "UBIQ-1: 용어 가이드 문서화"
+    ]
+  },
+  "compound": {
+    "completed": true,
+    "episode_file": "docs/learnings/episodes/2026-02-23/apple-iap-subscription-refund-upgrade/episode.md",
+    "adr_avg_score": "22/25",
+    "lessons": [
+      "재시도 정책 통합의 중요성",
+      "불변식 이중 검증",
+      "Aggregate 경계 설계"
+    ],
+    "tags": [
+      "Apple-IAP",
+      "구독",
+      "환불",
+      "Webhook",
+      "JWS",
+      "RabbitMQ",
+      "DDD",
+      "낙관적락",
+      "Redis"
+    ]
+  },
+  "tdd": {
+    "completed_cycles": 3,
+    "total_cycles": 6,
+    "domain_layer_implemented": true,
+    "unit_tests": 146,
+    "test_files": [
+      "src/test/java/com/example/unit/domain/vo/MoneyTest.java",
+      "src/test/java/com/example/unit/domain/vo/PeriodTest.java",
+      "src/test/java/com/example/unit/domain/vo/ProductIdTest.java",
+      "src/test/java/com/example/unit/domain/spec/SubscriptionStatusSpecTest.java",
+      "src/test/java/com/example/unit/domain/entity/SubscriptionTest.java",
+      "src/test/java/com/example/unit/domain/entity/TransactionTest.java",
+      "src/test/java/com/example/unit/domain/entity/RefundTest.java",
+      "src/test/java/com/example/unit/domain/entity/SubscriptionHistoryTest.java"
+    ],
+    "implemented_files": [
+      "src/main/java/com/example/subscription/domain/vo/Money.java",
+      "src/main/java/com/example/subscription/domain/vo/Period.java",
+      "src/main/java/com/example/subscription/domain/vo/ProductId.java",
+      "src/main/java/com/example/subscription/domain/vo/SubscriptionStatus.java",
+      "src/main/java/com/example/subscription/domain/spec/SubscriptionStatusSpec.java",
+      "src/main/java/com/example/subscription/domain/entity/Subscription.java",
+      "src/main/java/com/example/subscription/domain/entity/Transaction.java",
+      "src/main/java/com/example/subscription/domain/entity/Refund.java",
+      "src/main/java/com/example/subscription/domain/entity/SubscriptionHistory.java"
+    ],
+    "pending_cycles": [
+      "Repository Integration Test",
+      "Domain Service Implementation",
+      "Cucumber Step Definitions (E2E)"
     ]
   }
 }
