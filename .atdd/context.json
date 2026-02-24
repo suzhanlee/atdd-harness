@@ -2,10 +2,10 @@
   "topic": "apple-iap-subscription-refund-upgrade",
   "date": "2026-02-23",
   "status": "in_progress",
-  "phase": "design",
+  "phase": "redteam",
   "basePath": ".atdd/apple-iap-subscription-refund-upgrade",
   "created_at": "2026-02-23T10:00:00+09:00",
-  "updated_at": "2026-02-24T01:30:00+09:00",
+  "updated_at": "2026-02-24T18:40:00+09:00",
   "gherkin": {
     "completed": true,
     "happy_path_scenarios": 17,
@@ -13,5 +13,27 @@
     "total_scenarios": 56,
     "must_have_coverage": "100%",
     "feature_file": "src/test/resources/features/apple-iap-subscription.feature"
+  },
+  "adr": {
+    "completed": true,
+    "adrs_written": 3,
+    "self_critique_avg": "4.4/5",
+    "files": [
+      "001-apple-webhook-jws-verification.md",
+      "002-async-message-processing-rabbitmq.md",
+      "003-subscription-state-management.md"
+    ]
+  },
+  "redteam": {
+    "completed": true,
+    "total_issues": 22,
+    "high_issues": 4,
+    "medium_issues": 15,
+    "low_issues": 3,
+    "critique_files": [
+      "critique-001.md",
+      "critique-002.md",
+      "critique-003.md"
+    ]
   }
 }
