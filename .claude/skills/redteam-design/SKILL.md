@@ -23,6 +23,33 @@ Red Team 관점에서 도메인 모델(Entity, VO, Aggregate, Domain Service)을
 
 ---
 
+## STOP PROTOCOL
+
+### ⚠️ 종료 전 필수 체크리스트
+
+**스킬 종료 전 반드시 수행:**
+- [ ] context.json의 **최상위 `status`**를 "completed"로 변경
+- [ ] context.json의 `updated_at`을 현재 시간으로 변경
+- [ ] 산출물 파일이 올바른 경로에 생성되었는지 확인
+
+**❌ 위 체크리스트 미완료 시 Hook이 다음 skill을 트리거하지 않음**
+
+### 완료 시 context.json 업데이트 예시
+
+```json
+{
+  "phase": "redteam-design",
+  "status": "completed",  // ⚠️ 반드시 "completed"로 변경
+  "updated_at": "2026-02-24T21:30:00+09:00",
+  "redteam_design": {
+    "completed": true,
+    ...
+  }
+}
+```
+
+---
+
 ## Context Helper
 - [context-helper.md](../shared/context-helper.md)
 
@@ -149,6 +176,12 @@ Glob src/main/java/**/domain/entity/*.java → Read each file
 - **ACCEPT**: 비평 수용, 설계 수정
 - **DEFER**: 나중에 처리, Backlog 추가
 - **REJECT**: 거부, 사유 문서화
+
+### 6. 종료 처리
+모든 결정 완료 후:
+1. context.json의 `status`를 "completed"로 변경
+2. `updated_at` 업데이트
+3. 세션 종료 → Hook이 `/compound` 자동 실행
 
 ---
 
@@ -433,8 +466,8 @@ Critique Report
 
 | # | 조건 | 검증 |
 |---|------|------|
-| 1 | context.json `status` = "completed" | 필수 |
-| 2 | context.json `updated_at` = 현재 시간 | 필수 |
+| 1 | context.json **최상위** `status` = "completed" | 필수 |
+| 2 | context.json `phase` = "redteam-design" | 필수 |
 | 3 | 산출물 파일 생성 완료 (`design-critique-*.md`, `decisions.md`) | 필수 |
 | 4 | 6관점 분석 완료 (RRAIRU: Responsibility, Requirements Fit, Aggregate Boundary, Invariants, Relationships, Ubiquitous Language) | 필수 |
 
@@ -442,7 +475,7 @@ Critique Report
 ```json
 {
   "phase": "redteam-design",
-  "status": "completed",
+  "status": "completed",  // ⚠️ 최상위 레벨의 status
   "updated_at": "{ISO8601}"
 }
 ```
