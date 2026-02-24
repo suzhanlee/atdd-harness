@@ -27,11 +27,10 @@ public class ProductId {
      * @throws IllegalArgumentException value가 비어있는 경우
      */
     public ProductId(String value) {
-        // TODO: TDD에서 불변식 검증 구현
-        // Objects.requireNonNull(value, "value must not be null");
-        // if (value.isBlank()) {
-        //     throw new IllegalArgumentException("value must not be blank");
-        // }
+        Objects.requireNonNull(value, "value must not be null");
+        if (value.isBlank()) {
+            throw new IllegalArgumentException("value must not be blank");
+        }
         this.value = value;
     }
 
@@ -47,13 +46,36 @@ public class ProductId {
     /**
      * 이 Product ID가 다른 Product ID보다 상위 등급인지 확인한다.
      *
-     * <p>업그레이드 가능 여부 판단에 사용된다. 등급 비교는 별도 설정 또는 Apple API를 통해 확인 필요.
+     * <p>업그레이드 가능 여부 판단에 사용된다. 등급 비교는 Product ID의 접두사로 판단한다.
+     *
+     * <p>등급 순서: basic < pro < ultra
      *
      * @param other 비교할 Product ID
      * @return 상위 등급이면 true
      */
     public boolean isHigherTierThan(ProductId other) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현 - 등급 비교 로직 필요");
+        int thisTier = getTierLevel(this.value);
+        int otherTier = getTierLevel(other.value);
+        return thisTier > otherTier;
+    }
+
+    /**
+     * Product ID의 등급 레벨을 반환한다.
+     *
+     * @param productIdValue Product ID 값
+     * @return 등급 레벨 (높을수록 상위 등급)
+     */
+    private int getTierLevel(String productIdValue) {
+        String lowerValue = productIdValue.toLowerCase();
+        if (lowerValue.startsWith("ultra")) {
+            return 3;
+        } else if (lowerValue.startsWith("pro")) {
+            return 2;
+        } else if (lowerValue.startsWith("basic")) {
+            return 1;
+        }
+        // 알 수 없는 등급은 기본적으로 BASIC으로 처리
+        return 1;
     }
 
     @Override

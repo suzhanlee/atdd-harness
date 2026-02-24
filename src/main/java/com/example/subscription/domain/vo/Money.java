@@ -31,12 +31,11 @@ public class Money {
      * @throws NullPointerException amount 또는 currency가 null인 경우
      */
     public Money(BigDecimal amount, Currency currency) {
-        // TODO: TDD에서 불변식 검증 구현
-        // Objects.requireNonNull(amount, "amount must not be null");
-        // Objects.requireNonNull(currency, "currency must not be null");
-        // if (amount.compareTo(BigDecimal.ZERO) < 0) {
-        //     throw new IllegalArgumentException("amount must be non-negative");
-        // }
+        Objects.requireNonNull(amount, "amount must not be null");
+        Objects.requireNonNull(currency, "currency must not be null");
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("amount must be non-negative");
+        }
         this.amount = amount;
         this.currency = currency;
     }
@@ -67,7 +66,8 @@ public class Money {
      * @throws IllegalArgumentException 통화가 다른 경우
      */
     public Money add(Money other) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        validateSameCurrency(other);
+        return new Money(this.amount.add(other.amount), this.currency);
     }
 
     /**
@@ -78,7 +78,8 @@ public class Money {
      * @throws IllegalArgumentException 통화가 다른 경우
      */
     public Money subtract(Money other) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        validateSameCurrency(other);
+        return new Money(this.amount.subtract(other.amount), this.currency);
     }
 
     /**
@@ -88,7 +89,7 @@ public class Money {
      * @return 곱한 결과
      */
     public Money multiply(BigDecimal multiplier) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return new Money(this.amount.multiply(multiplier), this.currency);
     }
 
     /**
@@ -98,7 +99,8 @@ public class Money {
      * @return 크면 true
      */
     public boolean isGreaterThan(Money other) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        validateSameCurrency(other);
+        return this.amount.compareTo(other.amount) > 0;
     }
 
     /**
@@ -107,7 +109,20 @@ public class Money {
      * @return 0원이면 true
      */
     public boolean isZero() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return this.amount.compareTo(BigDecimal.ZERO) == 0;
+    }
+
+    /**
+     * 통화가 같은지 검증한다.
+     *
+     * @param other 비교할 금액
+     * @throws IllegalArgumentException 통화가 다른 경우
+     */
+    private void validateSameCurrency(Money other) {
+        if (!this.currency.equals(other.currency)) {
+            throw new IllegalArgumentException(
+                    "Currency mismatch: " + this.currency + " vs " + other.currency);
+        }
     }
 
     @Override

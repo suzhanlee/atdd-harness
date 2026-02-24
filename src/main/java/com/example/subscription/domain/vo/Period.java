@@ -30,12 +30,11 @@ public class Period {
      * @throws NullPointerException startAt 또는 endAt이 null인 경우
      */
     public Period(Instant startAt, Instant endAt) {
-        // TODO: TDD에서 불변식 검증 구현
-        // Objects.requireNonNull(startAt, "startAt must not be null");
-        // Objects.requireNonNull(endAt, "endAt must not be null");
-        // if (startAt.isAfter(endAt)) {
-        //     throw new IllegalArgumentException("startAt must be before endAt");
-        // }
+        Objects.requireNonNull(startAt, "startAt must not be null");
+        Objects.requireNonNull(endAt, "endAt must not be null");
+        if (!startAt.isBefore(endAt)) {
+            throw new IllegalArgumentException("startAt must be before endAt");
+        }
         this.startAt = startAt;
         this.endAt = endAt;
     }
@@ -61,21 +60,25 @@ public class Period {
     /**
      * 주어진 시간이 이 기간에 포함되는지 확인한다.
      *
+     * <p>시작 시간은 포함하고, 종료 시간은 포함하지 않는다 [start, end)
+     *
      * @param instant 확인할 시간
      * @return 포함되면 true
      */
     public boolean contains(Instant instant) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return !instant.isBefore(startAt) && instant.isBefore(endAt);
     }
 
     /**
      * 이 기간이 다른 기간과 겹치는지 확인한다.
      *
+     * <p>두 기간이 교집합이 있으면 true를 반환한다.
+     *
      * @param other 다른 기간
      * @return 겹치면 true
      */
     public boolean overlaps(Period other) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return this.startAt.isBefore(other.endAt) && other.startAt.isBefore(this.endAt);
     }
 
     /**
@@ -84,7 +87,7 @@ public class Period {
      * @return 기간 길이 (초)
      */
     public long getDurationInSeconds() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return endAt.getEpochSecond() - startAt.getEpochSecond();
     }
 
     @Override
