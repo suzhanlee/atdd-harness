@@ -851,3 +851,79 @@ DEFER 결정된 이슈들을 추적하는 Backlog
 - **완료일**: YYYY-MM-DD
 - **조치**: ADR-001 수정, bcrypt 적용
 ```
+
+---
+
+## 18. Skill Template (SKILL.md)
+
+> **참고**: 스킬 작성 가이드라인은 [skill-writing-meta-rules.md](.claude/skills/shared/skill-writing-meta-rules.md)를 참조
+
+```markdown
+---
+name: skill-name-with-hyphens
+description: Use when [구체적 트리거 조건]
+---
+
+# Skill Name
+
+## Overview
+핵심 원칙을 1-2문장으로 설명
+
+## When to Use
+- 트리거 조건 1
+- 트리거 조건 2
+
+## Process / Pattern
+
+### Step 1: [단계명]
+- 세부 내용
+
+### Step 2: [단계명]
+- 세부 내용
+
+## Quick Reference
+
+| 상황 | 행동 |
+|------|------|
+| Case 1 | Action 1 |
+| Case 2 | Action 2 |
+
+## Implementation
+
+```java
+// 코드 예시 (필요한 경우만)
+```
+
+## Common Mistakes
+- [ ] 실수 1
+- [ ] 실수 2
+
+## Definition of Done
+- [ ] 완료 조건 1
+- [ ] 완료 조건 2
+
+## References
+- [관련 문서](링크)
+```
+
+---
+
+## 19. Skill Reference File Template
+
+```markdown
+# Reference Title
+
+## Purpose
+이 참조 파일의 목적
+
+## Details
+상세 내용
+
+## Examples
+```java
+// 예시 코드
+```
+
+## Related
+- 관련 항목
+```
