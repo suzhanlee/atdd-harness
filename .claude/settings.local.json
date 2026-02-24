@@ -26,7 +26,9 @@
       "Skill(validate)",
       "Skill(commit)",
       "Skill(epic-split)",
-      "Skill(gherkin)"
+      "Skill(gherkin)",
+      "Skill(adr)",
+      "Skill(redteam)"
     ]
   },
   "hooks": {
