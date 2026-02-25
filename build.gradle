@@ -44,6 +44,8 @@ dependencies {
 
     // JUnit5
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.platform:junit-platform-suite:1.10.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-console:1.10.1'
 
     // Mockito
     testImplementation 'org.mockito:mockito-junit-jupiter'
@@ -72,6 +74,8 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform {
         excludeTags 'integration', 'e2e'
+        // Exclude cucumber engine from unit tests
+        excludeEngines 'cucumber'
     }
     finalizedBy jacocoTestReport
 }
@@ -88,12 +92,12 @@ tasks.register('integrationTest', Test) {
 
 // Cucumber E2E Test Task
 tasks.register('cucumber', JavaExec) {
-    dependsOn 'compileTestJava'
+    dependsOn 'compileTestJava', 'processTestResources'
     group = 'verification'
     description = 'Runs Cucumber E2E tests'
 
     mainClass = 'org.junit.platform.console.ConsoleLauncher'
-    classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+    classpath = configurations.testRuntimeClasspath + sourceSets.main.output + sourceSets.test.output
 
     args = [
         '--include-engine', 'cucumber',

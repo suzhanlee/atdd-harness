@@ -29,7 +29,9 @@
       "Skill(gherkin)",
       "Skill(adr)",
       "Skill(redteam)",
-      "Skill(skill-validator)"
+      "Skill(skill-validator)",
+      "Skill(tdd)",
+      "Bash(head:*)"
     ]
   },
   "hooks": {

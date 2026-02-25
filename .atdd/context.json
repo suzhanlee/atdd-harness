@@ -2,10 +2,10 @@
   "topic": "apple-iap-subscription-refund-upgrade",
   "date": "2026-02-23",
   "status": "in_progress",
-  "phase": "adr",
+  "phase": "tdd",
   "basePath": ".atdd/apple-iap-subscription-refund-upgrade",
   "created_at": "2026-02-23T10:00:00+09:00",
-  "updated_at": "2026-02-25T21:09:01+09:00",
+  "updated_at": "2026-02-25T22:30:00+09:00",
   "design": {
     "completed": true,
     "must_have_coverage": "100%",
@@ -158,10 +158,9 @@
       "src/main/java/com/example/subscription/domain/service/RefundCalculationService.java",
       "src/main/java/com/example/subscription/domain/service/RefundCalculationServiceImpl.java"
     ],
+    "presentation_layer_implemented": true,
+    "controller_tests": 15,
     "pending_implementations": [
-      "Application Layer (Use Cases)",
-      "Infrastructure Layer (Apple API Client)",
-      "Presentation Layer (Controllers)",
       "Cucumber Full E2E Tests"
     ]
   }
