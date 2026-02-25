@@ -5,7 +5,7 @@ disable-model-invocation: false
 user-invocable: true
 context: fork
 agent: general-purpose
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash, EnterPlanMode, AskUserQuestion, Task
 references:
   - references/e2e-test-template.md
   - references/unit-test-template.md
@@ -23,6 +23,47 @@ references:
 ## 목표
 TDD 사이클을 통해 코드를 구현한다.
 
+## 워크플로우 요약
+
+| 단계 | 액션 | 산출물 |
+|------|------|--------|
+| 1 | Context 로드 | featurePath, module 확인 |
+| 2 | Plan Mode 진입 | 구현 계획 승인 |
+| 3 | Domain TDD | Entity/VO + 단위 테스트 |
+| 4 | Repository TDD | Repository + 통합 테스트 |
+| 5 | Application TDD | Service + 단위 테스트 |
+| 6 | API TDD | Controller + E2E 테스트 |
+| 7 | 검증 | `./gradlew check` 통과 |
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     TDD 전체 워크플로우                       │
+├─────────────────────────────────────────────────────────────┤
+│  Context 로드 → Plan Mode → [계층별 TDD 반복] → 검증         │
+│                              │                              │
+│                              ▼                              │
+│                    ┌─────────────────┐                      │
+│                    │  Domain Layer   │ ← RED: 테스트 작성   │
+│                    │     (1단계)      │ ← GREEN: 구현       │
+│                    └────────┬────────┘                      │
+│                             ▼                               │
+│                    ┌─────────────────┐                      │
+│                    │ Repository Layer│ ← RED: 테스트 작성   │
+│                    │     (2단계)      │ ← GREEN: 구현       │
+│                    └────────┬────────┘                      │
+│                             ▼                               │
+│                    ┌─────────────────┐                      │
+│                    │Application Layer│ ← RED: 테스트 작성   │
+│                    │     (3단계)      │ ← GREEN: 구현       │
+│                    └────────┬────────┘                      │
+│                             ▼                               │
+│                    ┌─────────────────┐                      │
+│                    │   API Layer     │ ← RED: 테스트 작성   │
+│                    │     (4단계)      │ ← GREEN: 구현       │
+│                    └─────────────────┘                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ## 입력
 - `.atdd/context.json` - featurePath, module 참조
 - `src/test/resources/features/**/*.feature` - featurePath 없을 때 기본 경로
@@ -39,12 +80,6 @@ TDD 사이클을 통해 코드를 구현한다.
 ### 멀티 모듈 지원
 - `context.module` 있으면 `{module}/src/test/resources/features/` 경로 사용
 - 단일 모듈이면 루트 기준 `src/test/resources/features/` 사용
-
-## 템플릿
-- E2E 테스트: [e2e-test-template.md](references/e2e-test-template.md)
-- 단위 테스트: [unit-test-template.md](references/unit-test-template.md)
-- Repository 테스트: [repository-test-template.md](references/repository-test-template.md)
-- SQL 데이터: [sql-data-guide.md](references/sql-data-guide.md)
 
 ## 트리거
 - `/tdd` 명령어 실행
@@ -148,9 +183,39 @@ public class UserService {
 **버그 수정?** → 실패하는 테스트 먼저 작성 → 수정 → 통과 확인
 **리팩토링만?** → `/refactor` 스킬 사용 (Phase 5)
 
-## 프로세스
+## Plan Mode
 
-### 0. Context 로드
+TDD 구현 전 반드시 계획을 수립하고 사용자 승인을 받는다.
+
+### 진입 조건
+- `/tdd` 명령어 실행 시 자동으로 Plan Mode 진입
+- EnterPlanMode 도구 사용
+
+### 계획 수립 프로세스
+
+1. **Feature 분석**
+   - Gherkin 시나리오 분석
+   - 각 Step별 필요한 구현 요소 파악
+
+2. **구현 계획 작성** (Plan 파일에 작성)
+   - 계층별 구현 목록 (Domain → Repository → Application → API)
+   - 생성할 파일 목록
+   - 기존 코드 영향도
+   - 테스트 전략
+
+3. **사용자 승인**
+   - ExitPlanMode로 승인 요청
+   - 승인 후 TDD 사이클 진행
+
+### Plan Mode 없이 진행하면 안 되는 이유
+- **범위 크리프 방지**: 명확한 구현 경계 설정
+- **누락 방지**: 필요한 파일/테스트 미리 파악
+- **재작업 최소화**: 순서대로 진행
+- **사용자 동의**: 예상치 못한 구현 방지
+
+## 상세 단계
+
+### 1. Context 로드
 ```
 Read .atdd/context.json
 ```
@@ -168,12 +233,12 @@ ELSE:
     feature_path = "src/test/resources/features/**/*.feature"
 ```
 
-### 1. Feature 파일 분석
+### 2. Feature 파일 분석
 ```bash
 Read {feature_path}
 ```
 
-### 2. Step Definition 생성 (RED)
+### 3. Step Definition 생성 (RED)
 
 **Step 패턴 준수**:
 - [step-naming-convention.md](../gherkin/references/step-naming-convention.md)에 정의된 패턴 사용
@@ -201,7 +266,7 @@ public class UserStepDefinitions {
 }
 ```
 
-### 3. 단위 테스트 작성 (RED)
+### 4. 단위 테스트 작성 (RED)
 JUnit5 테스트 작성
 
 ```java
@@ -230,7 +295,7 @@ class UserServiceTest {
 }
 ```
 
-### 4. 프로덕션 코드 구현 (GREEN)
+### 5. 프로덕션 코드 구현 (GREEN)
 
 #### Repository 구현
 ```java
@@ -275,7 +340,7 @@ public class UserController {
 }
 ```
 
-### 5. 테스트 통과 확인 및 루프 (GREEN)
+### 6. 테스트 통과 확인 및 루프 (GREEN)
 
 ```
     ┌──────────────────────────────────────┐
@@ -313,7 +378,7 @@ public class UserController {
 ./gradlew cucumber        # E2E 테스트
 ```
 
-### 6. 커버리지 확인
+### 7. 커버리지 확인
 
 ```bash
 ./gradlew jacocoTestReport
@@ -371,58 +436,14 @@ class OrderRepositoryTest {
 
 ## 계층별 TDD (Layered TDD)
 
-### Inside-Out 개발 순서
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                          API Layer                               │
-│                    (Controller, E2E Test)                        │
-│    4단계: Cucumber E2E 테스트 → Controller 구현                   │
-├─────────────────────────────────────────────────────────────────┤
-│                      Application Layer                           │
-│                    (Service, Facade)                             │
-│    3단계: Service 단위 테스트 → Service 구현                       │
-├─────────────────────────────────────────────────────────────────┤
-│                      Repository Layer                            │
-│              (Repository, @DataJpaTest)                          │
-│    2단계: Repository 통합 테스트 → Repository 구현                 │
-├─────────────────────────────────────────────────────────────────┤
-│                        Domain Layer                              │
-│                  (Entity, VO, Domain Service)                    │
-│    1단계: Domain 단위 테스트 → Entity/VO 구현                      │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 계층별 특징
-
 | 계층 | 테스트 타입 | TestDataManager | 특징 |
 |------|------------|-----------------|------|
-| Domain | 순수 Java 단위 테스트 | ❌ 사용 안 함 | Mock 없음, 빠른 실행 |
-| Repository | @DataJpaTest 통합 테스트 | ✅ 사용 | 실제 DB 테스트 |
-| Application | Mockito 단위 테스트 | ❌ 사용 안 함 | Mock 기반 |
-| API | Cucumber E2E 테스트 | ✅ 사용 | 전체 스택 테스트 |
+| Domain (1단계) | 순수 Java 단위 테스트 | ❌ | Mock 없음, 빠른 실행 |
+| Repository (2단계) | @DataJpaTest 통합 테스트 | ✅ | 실제 DB 테스트 |
+| Application (3단계) | Mockito 단위 테스트 | ❌ | Mock 기반 |
+| API (4단계) | Cucumber E2E 테스트 | ✅ | 전체 스택 테스트 |
 
-### 계층별 테스트 실행
-
-```bash
-# 1단계: Domain 단위 테스트
-./gradlew test --tests "*.domain.*"
-
-# 2단계: Repository 통합 테스트
-./gradlew integrationTest
-
-# 3단계: Application 단위 테스트
-./gradlew test --tests "*.application.*"
-
-# 4단계: E2E 테스트
-./gradlew cucumber
-
-# 전체 검증
-./gradlew check
-```
-
-### 참조
-- [layered-tdd-guide.md](references/layered-tdd-guide.md) - 상세 가이드
+> **상세 가이드**: [layered-tdd-guide.md](references/layered-tdd-guide.md)
 
 ## 출력 파일
 
@@ -440,21 +461,14 @@ Repository 테스트 클래스들
 
 ## 검증 체크리스트
 
-- [ ] 모든 테스트 통과
-- [ ] 커버리지 80% 이상
-- [ ] 모든 Gherkin 시나리오 실행
-- [ ] 코드 컴파일 에러 없음
-- [ ] Lint 에러 없음
-
-## ⚠️ 종료 전 필수 체크리스트
-
 **스킬 종료 전 반드시 수행:**
-- [ ] 모든 테스트 통과 확인 (`./gradlew check`)
-- [ ] 커버리지 80% 이상 달성 확인
-- [ ] context.json의 `status`를 "completed"로 변경
-- [ ] context.json의 `updated_at`을 현재 시간으로 변경
+- [ ] 모든 테스트 통과 (`./gradlew check`)
+- [ ] 커버리지 80% 이상
+- [ ] 모든 Gherkin 시나리오 실행 완료
+- [ ] context.json `status` = "completed"
+- [ ] context.json `updated_at` = 현재 시간
 
-**❌ 위 체크리스트 미완료 시 스킬이 완료되지 않은 것으로 간주**
+**❌ 미완료 시 스킬이 완료되지 않은 것으로 간주**
 
 ## 다음 단계
 모든 테스트 통과 후 `/refactor` 실행
@@ -473,8 +487,6 @@ Repository 테스트 클래스들
 
 ## Definition of Done (DoD)
 
-**⚠️ 스킬 완료로 인정받기 위해 다음 조건을 모두 충족해야 함:**
-
 | # | 조건 | 검증 |
 |---|------|------|
 | 1 | 모든 테스트 통과 | 필수 |
@@ -482,12 +494,3 @@ Repository 테스트 클래스들
 | 3 | context.json `status` = "completed" | 필수 |
 | 4 | context.json `updated_at` = 현재 시간 | 필수 |
 | 5 | 모든 Gherkin 시나리오 실행 완료 | 필수 |
-
-**context.json 업데이트 예시:**
-```json
-{
-  "phase": "tdd",
-  "status": "completed",
-  "updated_at": "{ISO8601}"
-}
-```
