@@ -78,4 +78,13 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
      * @return 존재하면 true
      */
     boolean existsByOriginalTransactionId(String originalTransactionId);
+
+    /**
+     * 사용자 ID와 상태로 구독을 조회한다.
+     *
+     * @param userId 사용자 ID
+     * @param status 구독 상태
+     * @return 해당 상태의 구독 목록
+     */
+    List<Subscription> findByUserIdAndStatus(Long userId, SubscriptionStatus status);
 }
