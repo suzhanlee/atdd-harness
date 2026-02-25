@@ -37,6 +37,22 @@ public interface ValidateReceiptUseCase {
      */
     ValidationResult validateWithDetails(String receiptData);
 
+    /**
+     * ID로 구독을 조회한다.
+     *
+     * @param id 구독 ID
+     * @return 구독 정보
+     */
+    Optional<Subscription> findById(Long id);
+
+    /**
+     * 사용자 ID로 구독 목록을 조회한다.
+     *
+     * @param userId 사용자 ID
+     * @return 구독 목록
+     */
+    java.util.List<Subscription> findByUserId(Long userId);
+
     /** 영수증 검증 결과 */
     record ValidationResult(
             boolean valid,

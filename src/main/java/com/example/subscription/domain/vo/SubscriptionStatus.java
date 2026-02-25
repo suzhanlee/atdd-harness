@@ -12,6 +12,7 @@ package com.example.subscription.domain.vo;
  *   <li>ACTIVE → EXPIRED, GRACE_PERIOD, BILLING_RETRY, REFUNDED, REVOKED
  *   <li>GRACE_PERIOD → ACTIVE, EXPIRED, BILLING_RETRY
  *   <li>BILLING_RETRY → ACTIVE, EXPIRED
+ *   <li>IN_TRIAL → ACTIVE, EXPIRED
  *   <li>EXPIRED → (종료 상태)
  *   <li>REFUNDED → (종료 상태)
  *   <li>REVOKED → (종료 상태)
@@ -22,6 +23,9 @@ package com.example.subscription.domain.vo;
 public enum SubscriptionStatus {
     /** 활성 구독 상태 - 정상적으로 결제되고 서비스 이용 중 */
     ACTIVE,
+
+    /** 무료 체험 상태 - 무료 체험 기간 중 */
+    IN_TRIAL,
 
     /** 만료 상태 - 구독 기간 종료 또는 갱신 실패로 인한 만료 */
     EXPIRED,

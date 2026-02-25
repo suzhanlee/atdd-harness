@@ -40,7 +40,7 @@ public final class SubscriptionStatusSpec {
 
     /** 활성 상태 목록 (서비스 이용 가능) */
     private static final Set<SubscriptionStatus> ACTIVE_STATUSES =
-            EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.GRACE_PERIOD, SubscriptionStatus.BILLING_RETRY);
+            EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.GRACE_PERIOD, SubscriptionStatus.BILLING_RETRY, SubscriptionStatus.IN_TRIAL);
 
     static {
         // ACTIVE에서 가능한 전이
@@ -52,6 +52,11 @@ public final class SubscriptionStatusSpec {
                         SubscriptionStatus.GRACE_PERIOD,
                         SubscriptionStatus.REFUNDED,
                         SubscriptionStatus.REVOKED));
+
+        // IN_TRIAL에서 가능한 전이
+        TRANSITIONS.put(
+                SubscriptionStatus.IN_TRIAL,
+                EnumSet.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.EXPIRED));
 
         // GRACE_PERIOD에서 가능한 전이
         TRANSITIONS.put(
@@ -78,6 +83,7 @@ public final class SubscriptionStatusSpec {
         EVENT_STATUS_MAP.put("REVOKE", SubscriptionStatus.REVOKED);
         EVENT_STATUS_MAP.put("PRICE_CHANGE", SubscriptionStatus.ACTIVE);
         EVENT_STATUS_MAP.put("BILLING_RECOVERY", SubscriptionStatus.ACTIVE);
+        EVENT_STATUS_MAP.put("START_TRIAL", SubscriptionStatus.IN_TRIAL);
     }
 
     private SubscriptionStatusSpec() {

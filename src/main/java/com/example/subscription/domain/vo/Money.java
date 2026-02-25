@@ -28,6 +28,19 @@ public class Money {
     protected Money() {}
 
     /**
+     * 0원 Money 객체를 생성한다.
+     *
+     * @param currencyCode 통화 코드 (예: "USD")
+     * @return 0원 Money 객체
+     */
+    public static Money zero(String currencyCode) {
+        Money money = new Money();
+        money.amount = BigDecimal.ZERO;
+        money.currencyCode = currencyCode;
+        return money;
+    }
+
+    /**
      * Money 객체를 생성한다.
      *
      * @param amount 금액 (null 불가)

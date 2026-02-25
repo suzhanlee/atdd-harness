@@ -129,7 +129,7 @@ public class WebhookEvent {
      * @return 샌드박스 환경이면 true
      */
     public boolean isSandbox() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return "SANDBOX".equalsIgnoreCase(environment);
     }
 
     /**
@@ -139,7 +139,11 @@ public class WebhookEvent {
      * @return 유효하면 true
      */
     public boolean isRecent(int maxAgeMinutes) {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        if (signedDate == null) {
+            return false;
+        }
+        Instant cutoff = Instant.now().minus(maxAgeMinutes, java.time.temporal.ChronoUnit.MINUTES);
+        return signedDate.isAfter(cutoff);
     }
 
     @Override
