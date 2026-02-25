@@ -11,6 +11,7 @@ references:
   - references/unit-test-template.md
   - references/repository-test-template.md
   - references/sql-data-guide.md
+  - references/test-data-manager-quick-ref.md
   - references/test-data-manager-template.md
   - references/layered-tdd-guide.md
   - ../gherkin/references/step-naming-convention.md
@@ -346,57 +347,25 @@ src/test/java/
 
 ## TestDataManager 패턴
 
-### 개념
-EntityManager를 래핑하여 테스트 데이터 셋업을 자동화하는 유틸리티. Given 절의 데이터 준비를 간소화하고 복잡한 FK 관계를 자동으로 처리한다.
+> **상세 가이드**: [test-data-manager-quick-ref.md](references/test-data-manager-quick-ref.md)
 
-### 사용 시나리오
-1. **E2E 테스트 Given절**: Cucumber Step Definition에서 데이터 셋업
-2. **Repository 테스트 데이터 준비**: @DataJpaTest에서 데이터 생성
-3. **복잡한 FK 관계의 데이터 셋업**: FK 엔티티 자동 조회/생성
+EntityManager를 래핑하여 테스트 데이터 셋업을 자동화. E2E/Repository 테스트에서 Given 절을 간소화한다.
 
-### 기본 구조
 ```java
 @DataJpaTest
 @Import({UserTestDataManager.class, OrderTestDataManager.class})
 class OrderRepositoryTest {
-
-    @Autowired
-    private OrderTestDataManager orderDataManager;
-
-    @Autowired
-    private UserTestDataManager userDataManager;
-
-    @BeforeEach
-    void setUp() {
-        orderDataManager.deleteAll();
-        userDataManager.deleteAll();
-    }
+    @Autowired private OrderTestDataManager orderDataManager;
+    @Autowired private UserTestDataManager userDataManager;
 
     @Test
     void findByUser() {
-        // given - TestDataManager로 간단히 셋업
         User user = userDataManager.createByEmail("test@test.com");
         orderDataManager.createDefault(user);
-        orderDataManager.clear();
-
         // when & then...
     }
 }
 ```
-
-### 주요 메서드 패턴
-
-| 메서드 | 용도 |
-|--------|------|
-| `createFromDataTable(DataTable)` | Gherkin Given절에서 사용 |
-| `createDefault()` | 기본값으로 빠른 생성 |
-| `findByXxxOrCreate(value)` | 조회 후 없으면 생성 |
-| `createWithStatus(status)` | 상태 기반 생성 |
-| `createDaysAgo(days)` | 시간 기반 생성 |
-
-### 참조
-- [test-data-manager-template.md](references/test-data-manager-template.md) - 구현 가이드
-- [advanced-given-patterns.md](../gherkin/references/advanced-given-patterns.md) - Gherkin 패턴
 
 ---
 
