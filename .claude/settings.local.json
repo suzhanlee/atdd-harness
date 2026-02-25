@@ -28,7 +28,8 @@
       "Skill(epic-split)",
       "Skill(gherkin)",
       "Skill(adr)",
-      "Skill(redteam)"
+      "Skill(redteam)",
+      "Skill(skill-validator)"
     ]
   },
   "hooks": {
