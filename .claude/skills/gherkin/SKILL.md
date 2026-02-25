@@ -276,8 +276,16 @@ Write: {basePath}/scenarios/draft-edge-cases.md
 3. `{basePath}/scenarios/draft-edge-cases.md` 읽기
 4. **Step 정규화** (Step Naming Convention 적용)
 5. **Data Table 구조화**
-6. .feature 파일 생성 → `src/test/resources/features/{topic}.feature`
-7. context.json 업데이트 (featurePath, phase 기록)
+6. **Epic별 Feature 파일 분리** 또는 단일 파일 생성
+7. context.json 업데이트 (featurePath/featurePaths, phase 기록)
+
+**파일 분리 로직**:
+```
+IF {basePath}/epic-split/epics.md 존재 THEN
+  → Epic별 Feature 파일 분리 생성
+ELSE
+  → 기존대로 단일 파일 생성 (호환성)
+```
 
 **Context 로드**:
 ```
@@ -292,12 +300,50 @@ Read: .atdd/context.json
 
 **Feature 파일 경로 결정**:
 ```
-# 단일 모듈 프로젝트
+# Epic별 분리 (epic-split/epics.md 존재 시)
+src/test/resources/features/{topic}-{nn}-{title}.feature
+
+# 단일 모듈 프로젝트 (epic-split 없음)
 src/test/resources/features/{topic}.feature
 
 # 멀티 모듈 프로젝트 (module이 있는 경우)
 {module}/src/test/resources/features/{topic}.feature
 ```
+
+---
+
+### Phase C: Epic별 Feature 파일 분리
+
+**파일 분리 조건**:
+1. `{basePath}/epic-split/epics.md` 존재 시 Epic별 분리
+2. 없으면 단일 파일 생성 (기존 방식)
+
+**파일 네이밍 규칙**:
+```
+{topic}-{epic번호}-{epic제목-kebab}.feature
+```
+
+예시:
+- `apple-iap-subscription-01-purchase.feature`
+- `apple-iap-subscription-02-verification.feature`
+
+**크기 가이드라인**:
+
+| 지표 | 권장 | 제한 |
+|------|------|------|
+| 시나리오/Feature | ≤ 10 | ≤ 15 |
+| 라인/Feature | ≤ 250 | ≤ 400 |
+| Background Steps | ≤ 5 | ≤ 10 |
+
+**분리 처리 순서**:
+1. `{basePath}/epic-split/epics.md` 읽기
+2. Epic 번호와 제목 파싱
+3. draft-happy-path.md, draft-edge-cases.md에서 Epic별 시나리오 분류
+   - 주석 마커 `# Feature N: ... (Epic N)` 기준
+4. Epic별 .feature 파일 생성
+5. context.json에 featurePaths 배열로 저장
+
+**상세 가이드**: [feature-split-guide.md](references/feature-split-guide.md)
 
 **파일 읽기 액션**:
 ```
@@ -306,11 +352,29 @@ Read: {basePath}/scenarios/draft-edge-cases.md
 ```
 
 **Context 업데이트**:
+
+단일 파일 (Epic 정보 없음):
 ```json
 {
   ...기존필드,
   "phase": "gherkin",
   "featurePath": "src/test/resources/features/{topic}.feature",
+  "module": "{선택된_모듈_또는_null}",
+  "updated_at": "{현재시각}"
+}
+```
+
+Epic별 분리 (epic-split/epics.md 존재):
+```json
+{
+  ...기존필드,
+  "phase": "gherkin",
+  "featurePath": "src/test/resources/features/{topic}/",
+  "featurePaths": [
+    "src/test/resources/features/{topic}-01-{epic1}.feature",
+    "src/test/resources/features/{topic}-02-{epic2}.feature",
+    "src/test/resources/features/{topic}-03-{epic3}.feature"
+  ],
   "module": "{선택된_모듈_또는_null}",
   "updated_at": "{현재시각}"
 }
@@ -542,6 +606,14 @@ Feature: 회원가입
 1. 회원가입 - 4개 시나리오
 2. 로그인 - 3개 시나리오
 
+## Epic별 파일 구조 (Epic 분리 시)
+
+| Epic | Feature File | 시나리오 | 라인 수 |
+|------|--------------|----------|---------|
+| Epic 1 | apple-iap-subscription-01-purchase.feature | 9 | 120 |
+| Epic 2 | apple-iap-subscription-02-verification.feature | 6 | 85 |
+| Epic 3 | apple-iap-subscription-03-subscription.feature | 8 | 110 |
+
 ## 시나리오 통계
 - 총 Feature 수: 2
 - 총 Scenario 수: 7
@@ -689,5 +761,6 @@ Scenario: 정상적인 회원가입
 - 커버리지 매트릭스: [coverage-matrix.md](references/coverage-matrix.md)
 - 시나리오 템플릿: [scenario-template.md](references/scenario-template.md)
 - Step 네이밍 컨벤션: [step-naming-convention.md](references/step-naming-convention.md)
+- Feature 파일 분리 가이드: [feature-split-guide.md](references/feature-split-guide.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)
