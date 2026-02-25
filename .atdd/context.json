@@ -2,10 +2,10 @@
   "topic": "apple-iap-subscription-refund-upgrade",
   "date": "2026-02-23",
   "status": "in_progress",
-  "phase": "tdd",
+  "phase": "adr",
   "basePath": ".atdd/apple-iap-subscription-refund-upgrade",
   "created_at": "2026-02-23T10:00:00+09:00",
-  "updated_at": "2026-02-24T23:30:00+09:00",
+  "updated_at": "2026-02-25T21:09:01+09:00",
   "design": {
     "completed": true,
     "must_have_coverage": "100%",
@@ -29,7 +29,19 @@
     "edge_case_scenarios": 39,
     "total_scenarios": 56,
     "must_have_coverage": "100%",
-    "feature_file": "src/test/resources/features/apple-iap-subscription.feature"
+    "should_have_coverage": "100%",
+    "could_have_coverage": "100%",
+    "feature_file": "src/test/resources/features/apple-iap-subscription/",
+    "feature_paths": [
+      "src/test/resources/features/apple-iap-subscription-01-purchase.feature",
+      "src/test/resources/features/apple-iap-subscription-02-verification.feature",
+      "src/test/resources/features/apple-iap-subscription-03-webhook.feature",
+      "src/test/resources/features/apple-iap-subscription-04-event-processing.feature",
+      "src/test/resources/features/apple-iap-subscription-05-upgrade.feature",
+      "src/test/resources/features/apple-iap-subscription-06-free-trial.feature",
+      "src/test/resources/features/apple-iap-subscription-07-history.feature"
+    ],
+    "epic_split": true
   },
   "adr": {
     "completed": true,
