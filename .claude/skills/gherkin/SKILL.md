@@ -87,61 +87,6 @@ Phase C (Generation)로 진행합니다.
 Write: {basePath}/scenarios/draft-happy-path.md
 ```
 
-**생성할 템플릿 파일 내용**:
-
-```gherkin
-Feature: [기능명 - 요구사항에서 추출]
-  # 관련 요구사항: M1, M2, ...
-
-  Background:
-    Given 데이터베이스가 초기화되어 있다
-
-  # ============================================
-  # Happy Path (정상 흐름)
-  # ============================================
-
-  @happy
-  Scenario: 정상적인 [기능명]
-    # WHY: Given은 테스트 전제 조건을 명확히 한다
-    Given 다음 [엔티티명]가 존재한다
-      | id | 필드1 | 필드2 |
-      | 1  | 값1   | 값2   |
-
-    # WHY: When은 단일 행동만 테스트하여 실패 원인 파악이 쉽다
-    When [엔티티명] [행동] 요청을 보낸다
-      | 필드1 | 필드2 | 필드3 |
-      | 값1   | 값2   | 값3   |
-
-    # WHY: Then은 구체적인 상태 코드로 검증 가능해야 한다
-    Then 상태 코드 201을 받는다
-    And 응답의 "필드1" 필드는 "값1"이다
-
-  # ============================================
-  # Edge Cases (예외 흐름) - 아래에 추가
-  # ============================================
-
-  @edge @validation
-  Scenario: [필수값 누락/형식 오류]
-    # WHY: Edge Case는 Given 없이 When부터 시작 가능 (입력 검증)
-    When [엔티티명] [행동] 요청을 보낸다
-      | 필드1 | 필드2 |
-      |       | 값2   |
-
-    Then 상태 코드 400을 받는다
-    And 에러 메시지는 "[에러메시지]"이다
-
-  @edge @business
-  Scenario: [비즈니스 규칙 위반]
-    Given 다음 [엔티티명]가 존재한다
-      | id | 상태필드 |
-      | 1  | [상태값] |
-
-    When [엔티티명] [행동] 요청을 보낸다: 1
-
-    Then 상태 코드 400을 받는다
-    And 에러 메시지는 "[비즈니스규칙위반메시지]"이다
-```
-
 **작성 가이드**:
 
 | 섹션 | 작성 요령 |
@@ -150,7 +95,7 @@ Feature: [기능명 - 요구사항에서 추출]
 | When | 단일 행동, 구체적인 요청 파라미터 |
 | Then | 검증 가능한 결과, 상태 코드/응답 필드 |
 
-**상세 가이드**: [blank-scenario-template.md](references/blank-scenario-template.md)
+**상세 템플릿**: [blank-scenario-template.md](references/blank-scenario-template.md)
 
 **Phase A 종료 후**:
 - STOP Protocol 적용 → 사용자 파일 편집 대기
@@ -170,75 +115,6 @@ Feature: [기능명 - 요구사항에서 추출]
 **파일 생성 액션**:
 ```
 Write: {basePath}/scenarios/draft-edge-cases.md
-```
-
-**생성할 워크시트 파일 내용**:
-
-```gherkin
-# Edge Cases for: [Feature명]
-# 아래에 예외 케이스를 Gherkin 시나리오로 작성하세요
-# 최소 5개 이상 작성 필요
-
-  # ============================================
-  # 1. 입력 검증 실패 (@validation)
-  # ============================================
-
-  @edge @validation
-  Scenario: [필수값 누락]
-    When [엔티티명] [행동] 요청을 보낸다
-      | 필드1 | 필드2 |
-      |       | 값2   |
-    Then 상태 코드 400을 받는다
-
-  @edge @validation
-  Scenario: [형식 오류]
-    When [엔티티명] [행동] 요청을 보낸다
-      | 필드1      | 필드2 |
-      | 잘못된형식 | 값2   |
-    Then 상태 코드 400을 받는다
-
-  # ============================================
-  # 2. 비즈니스 규칙 위반 (@business)
-  # ============================================
-
-  @edge @business
-  Scenario: [중복/상태 위반]
-    Given 다음 [엔티티명]가 존재한다
-      | id | 필드1 |
-      | 1  | 값1   |
-    When [엔티티명] [행동] 요청을 보낸다
-      | 필드1 | 필드2 |
-      | 값1   | 값2   |
-    Then 상태 코드 409을 받는다
-
-  # ============================================
-  # 3. 권한/인증 실패 (@auth)
-  # ============================================
-
-  @edge @auth
-  Scenario: [인증 없이 접근]
-    When 인증 없이 [엔티티명] [행동] 요청을 보낸다
-    Then 상태 코드 401을 받는다
-
-  # ============================================
-  # 4. 리소스 없음 (@notfound)
-  # ============================================
-
-  @edge @notfound
-  Scenario: [존재하지 않는 리소스]
-    When [엔티티명] 조회 요청을 보낸다: 999
-    Then 상태 코드 404을 받는다
-
-  # ============================================
-  # 5. 경계값 (@boundary)
-  # ============================================
-
-  @edge @boundary
-  Scenario: [최소/최대값]
-    When [엔티티명] [행동] 요청을 보낸다
-      | 필드1     | 필드2 |
-      | 0 또는 -1 | 값2   |
-    Then 상태 코드 400을 받는다
 ```
 
 **작성 체크리스트**:
@@ -279,14 +155,6 @@ Write: {basePath}/scenarios/draft-edge-cases.md
 6. **Epic별 Feature 파일 분리** 또는 단일 파일 생성
 7. context.json 업데이트 (featurePath/featurePaths, phase 기록)
 
-**파일 분리 로직**:
-```
-IF {basePath}/epic-split/epics.md 존재 THEN
-  → Epic별 Feature 파일 분리 생성
-ELSE
-  → 기존대로 단일 파일 생성 (호환성)
-```
-
 **Context 로드**:
 ```
 Read: .atdd/context.json
@@ -310,9 +178,7 @@ src/test/resources/features/{topic}.feature
 {module}/src/test/resources/features/{topic}.feature
 ```
 
----
-
-### Phase C: Epic별 Feature 파일 분리
+#### Epic별 Feature 파일 분리
 
 **파일 분리 조건**:
 1. `{basePath}/epic-split/epics.md` 존재 시 Epic별 분리
@@ -380,31 +246,6 @@ Epic별 분리 (epic-split/epics.md 존재):
 }
 ```
 Edit: .atdd/context.json
-```
-
-**Step 정규화 규칙**:
-
-| 원본 | 정규화 |
-|------|--------|
-| `유저를 만든다` | `사용자 생성 요청을 보낸다` |
-| `성공한다` | `상태 코드 201를 받는다` |
-| `실패한다` | `상태 코드 400를 받는다` |
-
-**Data Table 변환**:
-
-```gherkin
-# 변환 전 (Markdown)
-**When (행동)**:
-- [x] POST /api/v1/users
-      email: test@test.com
-      password: password123!
-
-# 변환 후 (Gherkin)
-# WHY: Data Table은 테스트 데이터를 구조화하여 TDD 구현 시 명확한 입력을 제공한다.
-When 회원가입 요청을 보낸다
-  | email         | password     |
-  | test@test.com | password123! |
-```
 
 **시나리오 작성 원칙**:
 
@@ -497,21 +338,6 @@ Gherkin 품질 검증 ✅
 
 ---
 
-## Gherkin 키워드
-
-| 키워드 | 설명 | 예시 |
-|--------|------|------|
-| Feature | 기능 단위 | Feature: 회원 관리 |
-| Background | 공통 전제조건 | Given 데이터베이스 초기화 |
-| Scenario | 테스트 시나리오 | Scenario: 회원가입 |
-| Given | 전제조건 | Given 로그인 페이지 |
-| When | 행동 | When 회원가입 버튼 클릭 |
-| Then | 결과 | Then 회원가입 성공 메시지 |
-| And/But | 추가 조건 | And 이메일 인증 완료 |
-| Scenario Outline | 데이터 기반 테스트 | Examples 테이블 사용 |
-
----
-
 ## 트리거
 - `/gherkin` 명령어 실행
 - Entity 설계 완료 후 자동 제안
@@ -558,61 +384,15 @@ Edit: .atdd/context.json
 
 > context.json의 `featurePath` 필드에 이 경로가 기록됩니다.
 
-### features/{topic}.feature
-```gherkin
-Feature: 회원가입
-
-  Background:
-    Given 데이터베이스가 초기화되어 있다
-
-  # WHY: Happy Path는 정상 흐름을 명확히 문서화한다
-  Scenario: 정상적인 회원가입
-    Given 회원가입 페이지에 접속한다
-    When 다음 정보로 회원가입 요청을 보낸다
-      | email         | password     | name   |
-      | test@test.com | password123! | 테스터 |
-    Then 상태 코드 201을 받는다
-    And 응답의 "email" 필드는 "test@test.com"이다
-
-  # WHY: Edge Case는 비즈니스 규칙 위반을 검증한다
-  Scenario: 중복 이메일로 회원가입
-    Given 다음 사용자가 이미 존재한다
-      | id | email         |
-      | 1  | test@test.com |
-    When 다음 정보로 회원가입 요청을 보낸다
-      | email         | password     | name   |
-      | test@test.com | password456! | 테스터2 |
-    Then 상태 코드 409를 받는다
-
-  # WHY: Scenario Outline은 여러 입력 케이스를 효율적으로 테스트한다
-  Scenario Outline: 잘못된 형식으로 회원가입
-    When 다음 정보로 회원가입 요청을 보낸다
-      | email    | password   | name    |
-      | <email>  | <password> | <name>  |
-    Then 상태 코드 400를 받는다
-
-    Examples:
-      | email         | password     | name   |
-      |               | password123! | 테스터 |
-      | invalid-email | password123! | 테스터 |
-      | test@test.com | 123          | 테스터 |
-```
-
 ### scenarios-summary.md
+**경로**: `{basePath}/scenarios/scenarios-summary.md`
+
 ```markdown
 # 시나리오 요약
 
 ## Feature 목록
 1. 회원가입 - 4개 시나리오
 2. 로그인 - 3개 시나리오
-
-## Epic별 파일 구조 (Epic 분리 시)
-
-| Epic | Feature File | 시나리오 | 라인 수 |
-|------|--------------|----------|---------|
-| Epic 1 | apple-iap-subscription-01-purchase.feature | 9 | 120 |
-| Epic 2 | apple-iap-subscription-02-verification.feature | 6 | 85 |
-| Epic 3 | apple-iap-subscription-03-subscription.feature | 8 | 110 |
 
 ## 시나리오 통계
 - 총 Feature 수: 2
@@ -627,61 +407,6 @@ Feature: 회원가입
 
 ---
 
-## Common Mistakes
-
-### ❌ BAD vs ✅ GOOD
-
-#### ❌ BAD: 모호한 시나리오
-```gherkin
-# BAD: "어떤 데이터" - 구체적이지 않음
-Scenario: 회원가입
-  Given 데이터가 있다
-  When 회원가입한다
-  Then 성공한다
-```
-
-#### ✅ GOOD: 구체적인 시나리오
-```gherkin
-# GOOD: 구체적인 데이터, 명확한 검증
-# WHY: Data Table을 사용하면 테스트 데이터를 한눈에 볼 수 있고,
-#      TDD 구현 시 어떤 데이터가 필요한지 명확해진다.
-Scenario: 정상적인 회원가입
-  Given 데이터베이스가 초기화되어 있다
-  When 다음 정보로 회원가입 요청을 보낸다
-    | email         | password     | name   |
-    | test@test.com | password123! | 테스터 |
-  Then 상태 코드 201을 받는다
-  And 응답의 "email" 필드는 "test@test.com"이다
-```
-
-#### ❌ BAD: 여러 행동 혼합
-```gherkin
-# BAD: 하나의 시나리오에 여러 행동
-Scenario: 회원가입하고 로그인하고 프로필 수정
-  When 회원가입하고 로그인하고 프로필을 수정한다
-  Then 모두 성공한다
-```
-
-#### ✅ GOOD: 단일 행동
-```gherkin
-# GOOD: 하나의 행동만 테스트
-# WHY: 단일 행동 테스트는 실패 원인을 쉽게 파악할 수 있다.
-Scenario: 정상적인 회원가입
-  When 회원가입 요청을 보낸다
-  Then 상태 코드 201을 받는다
-```
-
-### ❌ Step Naming Anti-Patterns
-
-| ❌ BAD | ✅ GOOD | 이유 |
-|--------|---------|------|
-| `유저를 만든다` | `사용자 생성 요청을 보낸다` | TDD에서 인식 가능한 패턴 |
-| `성공한다` | `상태 코드 201을 받는다` | 구체적인 검증 |
-| `실패한다` | `상태 코드 400을 받는다` | 구체적인 검증 |
-| `어떤 데이터` | Data Table 사용 | 재현 가능한 테스트 |
-
----
-
 ## Red Flags - STOP and Start Over
 
 다음 중 하나라도 해당하면 **시나리오를 삭제하고 다시 작성**:
@@ -689,7 +414,7 @@ Scenario: 정상적인 회원가입
 - "어떤 데이터", "특정 값" 등 모호한 표현 사용
 - 하나의 시나리오에 여러 행동 혼합
 - Then에 상태 코드가 없음
-- Given 없이 When부터 시작
+- Given 없이 When부터 시작 (입력 검증 제외)
 - Data Table 없이 문장으로만 데이터 표현
 - "성공한다", "실패한다" 등 구체적이지 않은 검증
 
@@ -730,15 +455,6 @@ Scenario: 정상적인 회원가입
 - Don't skip Edge Case Hunt
 - Don't proceed without 5+ edge cases
 - Don't ignore coverage gaps
-
-**context.json 업데이트 예시:**
-```json
-{
-  "phase": "gherkin",
-  "status": "completed",
-  "updated_at": "{ISO8601}"
-}
-```
 
 ---
 

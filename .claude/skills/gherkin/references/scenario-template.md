@@ -257,17 +257,6 @@ Feature: 상품 검색
 
 ---
 
-## Step Definition Naming Convention
-
-| Step | Naming Pattern | Example |
-|------|---------------|---------|
-| Given | `{entity}가 존재한다` | `사용자가 존재한다` |
-| When | `{action} 요청을 보낸다` | `회원가입 요청을 보낸다` |
-| Then | `상태 코드 {code}를 받는다` | `상태 코드 201를 받는다` |
-| Then | `응답의 "{field}" 필드는 "{value}"이다` | `응답의 "email" 필드는 "test@test.com"이다` |
-
----
-
 ## Best Practices
 
 1. **하나의 시나리오 = 하나의 행동**
