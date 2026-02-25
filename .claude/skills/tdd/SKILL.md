@@ -11,7 +11,10 @@ references:
   - references/unit-test-template.md
   - references/repository-test-template.md
   - references/sql-data-guide.md
+  - references/test-data-manager-template.md
+  - references/layered-tdd-guide.md
   - ../gherkin/references/step-naming-convention.md
+  - ../gherkin/references/advanced-given-patterns.md
 ---
 
 # TDD 코드 구현
@@ -325,8 +328,10 @@ src/test/java/
 │   └── application/        # Service 테스트
 ├── integration/             # Repository 테스트 (@DataJpaTest)
 │   └── repository/         # JPA 연동 검증
-└── e2e/                     # E2E 테스트
-    └── step/               # Cucumber Step Definitions
+├── e2e/                     # E2E 테스트
+│   └── step/               # Cucumber Step Definitions
+└── fixture/                 # TestDataManager (TestData Fixture)
+    └── *TestDataManager.java
 ```
 
 ## 테스트 실행 명령
@@ -338,6 +343,117 @@ src/test/java/
 | `./gradlew cucumber` | E2E 테스트 |
 | `./gradlew check` | 모든 테스트 |
 | `./gradlew jacocoTestReport` | 커버리지 리포트 |
+
+## TestDataManager 패턴
+
+### 개념
+EntityManager를 래핑하여 테스트 데이터 셋업을 자동화하는 유틸리티. Given 절의 데이터 준비를 간소화하고 복잡한 FK 관계를 자동으로 처리한다.
+
+### 사용 시나리오
+1. **E2E 테스트 Given절**: Cucumber Step Definition에서 데이터 셋업
+2. **Repository 테스트 데이터 준비**: @DataJpaTest에서 데이터 생성
+3. **복잡한 FK 관계의 데이터 셋업**: FK 엔티티 자동 조회/생성
+
+### 기본 구조
+```java
+@DataJpaTest
+@Import({UserTestDataManager.class, OrderTestDataManager.class})
+class OrderRepositoryTest {
+
+    @Autowired
+    private OrderTestDataManager orderDataManager;
+
+    @Autowired
+    private UserTestDataManager userDataManager;
+
+    @BeforeEach
+    void setUp() {
+        orderDataManager.deleteAll();
+        userDataManager.deleteAll();
+    }
+
+    @Test
+    void findByUser() {
+        // given - TestDataManager로 간단히 셋업
+        User user = userDataManager.createByEmail("test@test.com");
+        orderDataManager.createDefault(user);
+        orderDataManager.clear();
+
+        // when & then...
+    }
+}
+```
+
+### 주요 메서드 패턴
+
+| 메서드 | 용도 |
+|--------|------|
+| `createFromDataTable(DataTable)` | Gherkin Given절에서 사용 |
+| `createDefault()` | 기본값으로 빠른 생성 |
+| `findByXxxOrCreate(value)` | 조회 후 없으면 생성 |
+| `createWithStatus(status)` | 상태 기반 생성 |
+| `createDaysAgo(days)` | 시간 기반 생성 |
+
+### 참조
+- [test-data-manager-template.md](references/test-data-manager-template.md) - 구현 가이드
+- [advanced-given-patterns.md](../gherkin/references/advanced-given-patterns.md) - Gherkin 패턴
+
+---
+
+## 계층별 TDD (Layered TDD)
+
+### Inside-Out 개발 순서
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                          API Layer                               │
+│                    (Controller, E2E Test)                        │
+│    4단계: Cucumber E2E 테스트 → Controller 구현                   │
+├─────────────────────────────────────────────────────────────────┤
+│                      Application Layer                           │
+│                    (Service, Facade)                             │
+│    3단계: Service 단위 테스트 → Service 구현                       │
+├─────────────────────────────────────────────────────────────────┤
+│                      Repository Layer                            │
+│              (Repository, @DataJpaTest)                          │
+│    2단계: Repository 통합 테스트 → Repository 구현                 │
+├─────────────────────────────────────────────────────────────────┤
+│                        Domain Layer                              │
+│                  (Entity, VO, Domain Service)                    │
+│    1단계: Domain 단위 테스트 → Entity/VO 구현                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 계층별 특징
+
+| 계층 | 테스트 타입 | TestDataManager | 특징 |
+|------|------------|-----------------|------|
+| Domain | 순수 Java 단위 테스트 | ❌ 사용 안 함 | Mock 없음, 빠른 실행 |
+| Repository | @DataJpaTest 통합 테스트 | ✅ 사용 | 실제 DB 테스트 |
+| Application | Mockito 단위 테스트 | ❌ 사용 안 함 | Mock 기반 |
+| API | Cucumber E2E 테스트 | ✅ 사용 | 전체 스택 테스트 |
+
+### 계층별 테스트 실행
+
+```bash
+# 1단계: Domain 단위 테스트
+./gradlew test --tests "*.domain.*"
+
+# 2단계: Repository 통합 테스트
+./gradlew integrationTest
+
+# 3단계: Application 단위 테스트
+./gradlew test --tests "*.application.*"
+
+# 4단계: E2E 테스트
+./gradlew cucumber
+
+# 전체 검증
+./gradlew check
+```
+
+### 참조
+- [layered-tdd-guide.md](references/layered-tdd-guide.md) - 상세 가이드
 
 ## 출력 파일
 
@@ -379,7 +495,10 @@ Repository 테스트 클래스들
 - 단위 템플릿: [unit-test-template.md](references/unit-test-template.md)
 - Repository 템플릿: [repository-test-template.md](references/repository-test-template.md)
 - SQL 가이드: [sql-data-guide.md](references/sql-data-guide.md)
+- TestDataManager 템플릿: [test-data-manager-template.md](references/test-data-manager-template.md)
+- 계층별 TDD 가이드: [layered-tdd-guide.md](references/layered-tdd-guide.md)
 - Step 네이밍 컨벤션: [step-naming-convention.md](../gherkin/references/step-naming-convention.md)
+- 고급 Given 패턴: [advanced-given-patterns.md](../gherkin/references/advanced-given-patterns.md)
 - Agent 정의: [AGENTS.md](../../../AGENTS.md)
 - 워크플로우: [WORKFLOWS.md](../../../WORKFLOWS.md)
 

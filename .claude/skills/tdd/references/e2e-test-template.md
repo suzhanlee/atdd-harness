@@ -296,8 +296,198 @@ public void verifyListItem(int index, String field, String value) {
 
 ---
 
+## TestDataManager 기반 Step Definition
+
+### 개요
+
+EntityManager를 래핑한 TestDataManager를 사용하여 Given 절의 데이터 셋업을 자동화한다. 복잡한 FK 관계, 상태 기반, 시간 기반 데이터 생성을 간소화한다.
+
+### 기본 구조
+
+```java
+package com.example.e2e.step;
+
+import com.example.test.fixture.OrderTestDataManager;
+import com.example.test.fixture.UserTestDataManager;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.server.LocalServerPort;
+
+import static org.hamcrest.Matchers.*;
+
+public class OrderStepDefinitions {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private UserTestDataManager userDataManager;
+
+    @Autowired
+    private OrderTestDataManager orderDataManager;
+
+    private Response response;
+
+    @Before
+    public void setUp() {
+        RestAssured.port = port;
+        RestAssured.basePath = "/api/v1";
+        // DB 클린업 - 테스트 격리
+        orderDataManager.deleteAll();
+        userDataManager.deleteAll();
+    }
+}
+```
+
+### TestDataManager 주입 및 사용
+
+```java
+// 1. @Autowired로 TestDataManager 주입
+@Autowired
+private UserTestDataManager userDataManager;
+
+@Autowired
+private OrderTestDataManager orderDataManager;
+
+// 2. Given 절에서 TestDataManager로 데이터 셋업
+@Given("다음 사용자가 존재한다")
+public void userExists(DataTable dataTable) {
+    // DataTable → Entity 자동 변환
+    userDataManager.createFromDataTable(dataTable);
+}
+
+@Given("기본 사용자가 존재한다")
+public void defaultUserExists() {
+    // 기본값으로 빠른 생성
+    userDataManager.createDefault();
+}
+```
+
+### FK 관계가 있는 엔티티 생성
+
+```gherkin
+# 방법 1: DataTable 내 userEmail 컬럼으로 FK 참조
+Given 다음 주문이 존재한다
+  | userEmail     | amount | status  |
+  | test@test.com | 10000  | PENDING |
+
+# 방법 2: 별도 Step으로 사용자 먼저 생성
+Given test@test.com 사용자가 존재한다
+And 사용자 test@test.com의 주문이 존재한다
+  | amount | status  |
+  | 10000  | PENDING |
+```
+
+```java
+// 방법 1: TestDataManager가 FK 자동 처리
+@Given("다음 주문이 존재한다")
+public void ordersExist(DataTable dataTable) {
+    // OrderDataManager가 내부적으로 User 조회/생성
+    orderDataManager.createFromDataTable(dataTable);
+}
+
+// 방법 2: 명시적 사용자 생성 후 FK 연결
+@Given("{string} 사용자가 존재한다")
+public void userWithEmailExists(String email) {
+    userDataManager.createByEmail(email);
+}
+
+@Given("사용자 {string}의 주문이 존재한다")
+public void orderForUserExists(String email, DataTable dataTable) {
+    User user = userDataManager.findByEmailOrCreate(email);
+    // Order 생성 시 user 연결
+    orderDataManager.createForUser(user, dataTable);
+}
+```
+
+### 상태 기반 엔티티 생성
+
+```gherkin
+Given 상태가 COMPLETED인 주문이 존재한다
+  | userEmail     | amount |
+  | test@test.com | 10000  |
+```
+
+```java
+@Given("상태가 {string}인 주문이 존재한다")
+public void orderWithStatusExists(String status, DataTable dataTable) {
+    OrderStatus orderStatus = OrderStatus.valueOf(status);
+    Map<String, String> row = dataTable.asMaps().get(0);
+
+    User user = userDataManager.findByEmailOrCreate(row.get("userEmail"));
+    orderDataManager.createWithStatus(user, orderStatus);
+}
+```
+
+### 시간 기반 엔티티 생성
+
+```gherkin
+Given 7일 전에 생성된 주문이 존재한다
+  | userEmail     | amount |
+  | test@test.com | 10000  |
+```
+
+```java
+@Given("{int}일 전에 생성된 주문이 존재한다")
+public void orderCreatedDaysAgo(int daysAgo, DataTable dataTable) {
+    Map<String, String> row = dataTable.asMaps().get(0);
+
+    User user = userDataManager.findByEmailOrCreate(row.get("userEmail"));
+    orderDataManager.createDaysAgo(user, daysAgo);
+}
+```
+
+### 복잡한 Given 패턴 조합
+
+```gherkin
+# 상태 + 시간 복합
+Given 7일 전에 생성되고 상태가 PENDING인 주문이 존재한다
+  | userEmail     | amount |
+  | test@test.com | 10000  |
+```
+
+```java
+@Given("{int}일 전에 생성되고 상태가 {string}인 주문이 존재한다")
+public void orderWithStatusAndDaysAgo(int daysAgo, String status, DataTable dataTable) {
+    OrderStatus orderStatus = OrderStatus.valueOf(status);
+    Map<String, String> row = dataTable.asMaps().get(0);
+
+    User user = userDataManager.findByEmailOrCreate(row.get("userEmail"));
+    orderDataManager.createWithStatusAndDaysAgo(user, orderStatus, daysAgo);
+}
+```
+
+### TestDataManager 장점
+
+1. **자동 FK 처리**: userEmail 등으로 FK 엔티티 자동 조회/생성
+2. **재사용성**: 여러 테스트에서 동일한 TestDataManager 사용
+3. **일관성**: 표준화된 데이터 생성 패턴
+4. **유지보수**: 엔티티 변경 시 TestDataManager만 수정
+
+### @Sql vs TestDataManager 선택 가이드
+
+| 상황 | 추천 방식 |
+|------|----------|
+| 복잡한 FK 관계 | TestDataManager |
+| 상태/시간 조건 | TestDataManager |
+| 정적 마스터 데이터 | @Sql |
+| 빠른 프로토타이핑 | TestDataManager |
+| 대량 데이터 | @Sql 또는 TestDataManager |
+
+> **상세 가이드**: [test-data-manager-template.md](test-data-manager-template.md)
+
+---
+
 ## 관련 문서
 
 - [SQL 데이터 가이드](sql-data-guide.md) - INSERT SQL 작성법
 - [단위 테스트 템플릿](unit-test-template.md) - Service/Entity 테스트
 - [통합 테스트 템플릿](integration-test-template.md) - Repository 테스트
+- [TestDataManager 템플릿](test-data-manager-template.md) - EntityManager 래핑 유틸리티
+- [계층별 TDD 가이드](layered-tdd-guide.md) - Inside-Out TDD
+- [고급 Given 패턴](../gherkin/references/advanced-given-patterns.md) - FK, 상태, 시간 기반 패턴

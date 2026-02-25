@@ -331,8 +331,231 @@ void lazyLoading() {
 
 ---
 
+## TestDataManager + TestEntityManager 조합
+
+### 개요
+
+@DataJpaTest에서 TestDataManager를 사용하여 데이터 준비를 간소화한다. TestEntityManager와 함께 사용하여 영속성 컨텍스트를 명확히 제어한다.
+
+### 기본 설정
+
+```java
+@DataJpaTest
+@Import({UserTestDataManager.class, OrderTestDataManager.class})
+@DisplayName("OrderRepository 통합 테스트")
+class OrderRepositoryTest {
+
+    @Autowired
+    private TestEntityManager entityManager;
+
+    @Autowired
+    private OrderTestDataManager orderDataManager;
+
+    @Autowired
+    private UserTestDataManager userDataManager;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @BeforeEach
+    void setUp() {
+        orderDataManager.deleteAll();
+        userDataManager.deleteAll();
+    }
+}
+```
+
+### TestDataManager로 데이터 준비
+
+```java
+@Test
+@DisplayName("사용자별 주문 조회")
+void findByUser() {
+    // given - TestDataManager로 간단히 셋업
+    User user = userDataManager.createByEmail("test@test.com");
+    orderDataManager.createDefault(user);
+    orderDataManager.createDefault(user);
+    orderDataManager.clear();  // 영속성 컨텍스트 초기화
+
+    // when
+    List<Order> orders = orderRepository.findByUser(user);
+
+    // then
+    assertThat(orders).hasSize(2);
+}
+
+@Test
+@DisplayName("상태별 주문 조회")
+void findByStatus() {
+    // given - TestDataManager로 상태 지정 생성
+    User user = userDataManager.createDefault();
+    orderDataManager.createWithStatus(user, OrderStatus.COMPLETED);
+    orderDataManager.createWithStatus(user, OrderStatus.PENDING);
+    orderDataManager.clear();
+
+    // when
+    List<Order> completed = orderRepository.findByStatus(OrderStatus.COMPLETED);
+
+    // then
+    assertThat(completed).hasSize(1);
+    assertThat(completed.get(0).getStatus()).isEqualTo(OrderStatus.COMPLETED);
+}
+```
+
+### TestEntityManager와 TestDataRepository 조합
+
+```java
+@Test
+@DisplayName("FK 관계가 있는 데이터 생성")
+void createWithFK() {
+    // given - TestDataManager가 FK 자동 처리
+    User user = userDataManager.findByEmailOrCreate("test@test.com");
+    Order order = orderDataManager.createForUser(user);
+    entityManager.clear();
+
+    // when
+    Order found = orderRepository.findById(order.getId()).orElseThrow();
+
+    // then
+    assertThat(found.getUser().getEmail().getValue()).isEqualTo("test@test.com");
+}
+
+@Test
+@DisplayName("flush 후 영속성 컨텍스트 초기화로 DB 동기화")
+void flushAndClear() {
+    // given
+    User user = userDataManager.createDefault();
+    Order order = orderDataManager.createDefault(user);
+
+    // when - flush로 DB 반영, clear로 1차 캐시 제거
+    entityManager.flush();
+    entityManager.clear();
+    Order found = orderRepository.findById(order.getId()).orElseThrow();
+
+    // then - DB에서 다시 조회됨
+    assertThat(found).isNotNull();
+    assertThat(found.getId()).isEqualTo(order.getId());
+}
+```
+
+### TestDataManager를 사용한 복잡한 데이터 시나리오
+
+```java
+@Test
+@DisplayName("시간 기반 조회 - N일 전 데이터")
+void findCreatedBefore() {
+    // given
+    User user = userDataManager.createDefault();
+    orderDataManager.createDaysAgo(user, 10);  // 10일 전
+    orderDataManager.createDaysAgo(user, 5);   // 5일 전
+    orderDataManager.createDefault(user);      // 오늘
+    entityManager.clear();
+
+    // when - 7일 전보다 오래된 주문 조회
+    LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
+    List<Order> oldOrders = orderRepository.findByCreatedAtBefore(weekAgo);
+
+    // then
+    assertThat(oldOrders).hasSize(1);
+}
+
+@Test
+@DisplayName("페이징과 정렬 테스트")
+void findAllWithPagingAndSorting() {
+    // given - TestDataManager로 대량 데이터 생성
+    User user = userDataManager.createDefault();
+    for (int i = 0; i < 15; i++) {
+        orderDataManager.createWithAmount(user, 10000 * (i + 1));
+    }
+    entityManager.clear();
+
+    // when
+    Page<Order> page = orderRepository.findByUser(
+            user,
+            PageRequest.of(0, 10, Sort.by("amount").descending())
+    );
+
+    // then
+    assertThat(page.getContent()).hasSize(10);
+    assertThat(page.getTotalElements()).isEqualTo(15);
+    assertThat(page.getContent().get(0).getAmount()).isEqualTo(150000);  // 내림차순
+}
+```
+
+### TestDataManager vs 순수 TestEntityManager
+
+| 상황 | 추천 방식 |
+|------|----------|
+| 단순 엔티티 1-2개 | TestEntityManager 직접 사용 |
+| FK 관계가 있는 데이터 | TestDataManager |
+| 상태/시간 조건 데이터 | TestDataManager |
+| 반복되는 데이터 패턴 | TestDataManager |
+| 특수한 테스트 케이스 | TestEntityManager 직접 사용 |
+
+### @Import로 TestDataManager 등록
+
+```java
+@DataJpaTest
+@Import({
+    UserTestDataManager.class,
+    OrderTestDataManager.class,
+    PaymentEventDataManager.class
+})
+class OrderRepositoryTest {
+    // ...
+}
+```
+
+### TestDataManager 내부 구조
+
+```java
+@Component
+public class OrderTestDataManager extends BaseTestDataManager<Order, Long> {
+
+    @PersistenceContext
+    protected EntityManager entityManager;
+
+    @Autowired
+    private UserTestDataManager userDataManager;
+
+    public Order createDefault(User user) {
+        Order order = Order.builder()
+                .user(user)
+                .amount(10000)
+                .status(OrderStatus.PENDING)
+                .build();
+        return save(order);  // persist + flush
+    }
+
+    public Order createWithStatus(User user, OrderStatus status) {
+        Order order = Order.builder()
+                .user(user)
+                .amount(10000)
+                .status(status)
+                .build();
+        return save(order);
+    }
+
+    public Order createDaysAgo(User user, int daysAgo) {
+        Order order = Order.builder()
+                .user(user)
+                .amount(10000)
+                .status(OrderStatus.PENDING)
+                .createdAt(LocalDateTime.now().minusDays(daysAgo))
+                .build();
+        return save(order);
+    }
+}
+```
+
+> **상세 가이드**: [test-data-manager-template.md](test-data-manager-template.md)
+
+---
+
 ## 관련 문서
 
 - [단위 테스트 템플릿](unit-test-template.md) - Service/Entity 테스트
 - [E2E 테스트 템플릿](e2e-test-template.md) - Cucumber Step Definitions
 - [SQL 데이터 가이드](sql-data-guide.md) - INSERT SQL 작성법
+- [TestDataManager 템플릿](test-data-manager-template.md) - EntityManager 래핑 유틸리티
+- [계층별 TDD 가이드](layered-tdd-guide.md) - Inside-Out TDD
