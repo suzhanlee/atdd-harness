@@ -52,7 +52,7 @@ Feature: 구독 이력 관리
     Given 다음 구독 이력이 존재한다
       | id | userId | action  | fromTier | toTier |
       | 1  | 1      | UPGRADE | BASIC    | PRO    |
-    When 사용자가 구독 이력 조회 요청을 보낸다
+    When 페이징으로 구독 이력 조회 요청을 보낸다
       | page | size |
       | -1   | 10   |
     Then 상태 코드 400을 받는다
@@ -61,7 +61,9 @@ Feature: 구독 이력 관리
   @edge @validation @history
   Scenario: 너무 큰 페이지 크기로 이력 조회
     Given 사용자가 로그인되어 있다
-    When 사용자가 구독 이력 조회 요청을 보낸다
+      | userId | email            |
+      | 1      | user@example.com |
+    When 페이징으로 구독 이력 조회 요청을 보낸다
       | page | size |
       | 0    | 1000 |
     Then 상태 코드 400을 받는다

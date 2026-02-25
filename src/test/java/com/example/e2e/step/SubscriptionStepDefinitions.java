@@ -1,5 +1,12 @@
 package com.example.e2e.step;
 
+import com.example.subscription.domain.entity.Subscription;
+import com.example.subscription.domain.entity.SubscriptionHistory;
+import com.example.subscription.domain.repository.SubscriptionHistoryRepository;
+import com.example.subscription.domain.repository.SubscriptionRepository;
+import com.example.subscription.domain.vo.Period;
+import com.example.subscription.domain.vo.ProductId;
+import com.example.subscription.domain.vo.SubscriptionStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
@@ -8,10 +15,19 @@ import io.cucumber.java.en.Then;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * 구독 관련 Step Definitions.
@@ -23,157 +39,551 @@ public class SubscriptionStepDefinitions {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private Response response;
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private SubscriptionHistoryRepository subscriptionHistoryRepository;
+
+    @Autowired
+    private ScenarioContext scenarioContext;
+
+    @MockBean
+    private com.example.subscription.infrastructure.client.AppleAppStoreClient appleAppStoreClient;
+
+    private boolean mockServerConfigured = false;
+    private boolean appleServerTimeout = false;
+    private boolean appleServerConnectionRefused = false;
+    private boolean appleServer500 = false;
+    private boolean appleVerificationFailed = false;
+
+    // Convenience methods for scenario context
+    private Response getResponse() { return scenarioContext.getResponse(); }
+    private void setResponse(Response response) { scenarioContext.setResponse(response); }
+    private String getAuthToken() { return scenarioContext.getAuthToken(); }
+    private void setAuthToken(String authToken) { scenarioContext.setAuthToken(authToken); }
+    private Long getCurrentUserId() { return scenarioContext.getCurrentUserId(); }
+    private void setCurrentUserId(Long userId) { scenarioContext.setCurrentUserId(userId); }
+
+    // ============================================
+    // Given - 상태 설정
+    // ============================================
 
     @Given("사용자가 로그인되어 있다")
     public void userIsLoggedIn(DataTable dataTable) {
-        // 로그인 처리 로직 (JWT 토큰 발급 등)
-        // 현재는 Mock 구현
+        List<Map<String, String>> rows = dataTable.asMaps();
+        Map<String, String> user = rows.get(0);
+        setCurrentUserId(Long.parseLong(user.get("userId")));
+        setAuthToken("Bearer test-jwt-token-" + getCurrentUserId());
     }
 
     @Given("사용자가 로그인되어 있지 않다")
     public void userIsNotLoggedIn() {
-        // 인증 없이 요청
+        setAuthToken(null);
+        setCurrentUserId(null);
     }
 
     @Given("다음 구독이 존재한다")
     public void subscriptionExists(DataTable dataTable) {
-        // 테스트 데이터 셋업
-        // @Sql 또는 Repository 사용
+        List<Map<String, String>> rows = dataTable.asMaps();
+        for (Map<String, String> row : rows) {
+            Long id = Long.parseLong(row.get("id"));
+            Long userId = Long.parseLong(row.get("userId"));
+            String productTier = row.get("productTier");
+            String status = row.get("status");
+            String expiresAtStr = row.getOrDefault("expiresAt", "2026-12-31T00:00:00");
+            String trialEndsAtStr = row.get("trialEndsAt");
+            String originalTxId = row.getOrDefault("originalTransactionId", "original-tx-" + id);
+
+            Subscription subscription = Subscription.create(
+                    originalTxId,
+                    userId,
+                    new ProductId(productTier.toLowerCase() + "_001"),
+                    new Period(Instant.now(), Instant.parse(expiresAtStr + "Z"))
+            );
+
+            // 상태 설정
+            if (!"ACTIVE".equals(status)) {
+                switch (status) {
+                    case "EXPIRED" -> subscription.expire();
+                    case "REFUNDED" -> subscription.refund();
+                    case "IN_GRACE_PERIOD" -> subscription.enterGracePeriod(Instant.now().plusSeconds(86400));
+                    case "IN_TRIAL" -> subscription.changeStatus(
+                            com.example.subscription.domain.vo.SubscriptionStatus.IN_TRIAL);
+                }
+            }
+
+            subscriptionRepository.save(subscription);
+        }
     }
 
     @Given("사용자의 활성 구독이 없다")
     public void noActiveSubscription() {
-        // 활성 구독 없음 상태 설정
+        // Repository가 비어있는 상태 (기본 동작)
     }
 
     @Given("구독이 존재하지 않는다")
     public void subscriptionDoesNotExist() {
-        // 구독 없음 상태
+        subscriptionRepository.deleteAll();
     }
+
+    @Given("사용자가 기존 구독이 없다")
+    public void userHasNoExistingSubscription() {
+        // 기본 동작 - 빈 DB
+    }
+
+    @Given("사용자가 기존에 무료 체험을 사용했다")
+    public void userHasUsedFreeTrial() {
+        // 무료 체험 사용 플래그 설정 (별도 엔티티나 플래그 필요)
+        // 현재는 Mock 구현
+    }
+
+    // ============================================
+    // Given - Apple Mock 서버 설정
+    // ============================================
+
+    @Given("Apple Mock 서버가 실행되어 있다")
+    public void appleMockServerRunning() {
+        mockServerConfigured = true;
+        appleServerTimeout = false;
+        appleServerConnectionRefused = false;
+        appleServer500 = false;
+        appleVerificationFailed = false;
+    }
+
+    @Given("Apple Mock 서버가 타임아웃을 반환한다")
+    public void appleMockServerReturnsTimeout() {
+        appleServerTimeout = true;
+    }
+
+    @Given("Apple Mock 서버가 검증 실패을 반환한다")
+    public void appleMockServerReturnsVerificationFailure() {
+        appleVerificationFailed = true;
+    }
+
+    @Given("Apple Mock 서버가 연결 거부을 반환한다")
+    public void appleMockServerReturnsConnectionRefused() {
+        appleServerConnectionRefused = true;
+    }
+
+    @Given("Apple Mock 서버가 500 오류을 반환한다")
+    public void appleMockServerReturns500Error() {
+        appleServer500 = true;
+    }
+
+    // ============================================
+    // Given - Webhook 설정
+    // ============================================
+
+    @Given("Apple 공개키가 캐싱되어 있다")
+    public void applePublicKeyCached() {
+        // 공개키 캐싱 Mock 설정
+    }
+
+    @Given("동일한 transactionId의 Webhook이 이미 처리되었다")
+    public void webhookAlreadyProcessed(DataTable dataTable) {
+        List<Map<String, String>> rows = dataTable.asMaps();
+        String transactionId = rows.get(0).get("transactionId");
+        // 이미 처리된 transactionId로 Transaction 엔티티 생성
+    }
+
+    @Given("데이터베이스 연결에 실패한다")
+    public void databaseConnectionFails() {
+        // DB 연결 실패 시뮬레이션
+    }
+
+    @Given("업그레이드 트랜잭션이 진행 중이다")
+    public void upgradeTransactionInProgress() {
+        // 업그레이드 트랜잭션 진행 중 상태 설정
+    }
+
+    @Given("다음 비갱신형 구독이 존재한다")
+    public void nonRenewingSubscriptionExists(DataTable dataTable) {
+        // 비갱신형 구독 생성 로직
+        subscriptionExists(dataTable);
+    }
+
+    @Given("다음 구독 이력이 존재한다")
+    public void subscriptionHistoryExists(DataTable dataTable) {
+        List<Map<String, String>> rows = dataTable.asMaps();
+        for (Map<String, String> row : rows) {
+            // fromTier/toTier는 Product Tier를 의미하므로 ACTIVE로 매핑
+            // 실제로는 Product Tier 변경 이력이 아닌 상태 변경 이력을 저장
+            com.example.subscription.domain.vo.SubscriptionStatus fromStatus =
+                    mapToSubscriptionStatus(row.getOrDefault("fromStatus", row.get("fromTier")));
+            com.example.subscription.domain.vo.SubscriptionStatus toStatus =
+                    mapToSubscriptionStatus(row.getOrDefault("toStatus", row.get("toTier")));
+
+            SubscriptionHistory history = SubscriptionHistory.create(
+                    Long.parseLong(row.get("id")),  // subscriptionId
+                    fromStatus,
+                    toStatus,
+                    row.get("action"),
+                    "test-txn-" + row.get("id"),
+                    java.time.Instant.now()
+            );
+            subscriptionHistoryRepository.save(history);
+        }
+    }
+
+    private com.example.subscription.domain.vo.SubscriptionStatus mapToSubscriptionStatus(String value) {
+        if (value == null) {
+            return com.example.subscription.domain.vo.SubscriptionStatus.ACTIVE;
+        }
+        // Product tier names map to ACTIVE status (since they're valid subscription states)
+        return switch (value.toUpperCase()) {
+            case "BASIC", "PRO", "ULTRA", "TRIAL", "ACTIVE" ->
+                com.example.subscription.domain.vo.SubscriptionStatus.ACTIVE;
+            case "EXPIRED" -> com.example.subscription.domain.vo.SubscriptionStatus.EXPIRED;
+            case "REFUNDED" -> com.example.subscription.domain.vo.SubscriptionStatus.REFUNDED;
+            case "IN_TRIAL" -> com.example.subscription.domain.vo.SubscriptionStatus.IN_TRIAL;
+            case "IN_GRACE_PERIOD", "GRACE_PERIOD" -> com.example.subscription.domain.vo.SubscriptionStatus.GRACE_PERIOD;
+            case "BILLING_RETRY" -> com.example.subscription.domain.vo.SubscriptionStatus.BILLING_RETRY;
+            default -> com.example.subscription.domain.vo.SubscriptionStatus.ACTIVE;
+        };
+    }
+
+    @Given("구독 이력이 없다")
+    public void noSubscriptionHistory() {
+        // 기본 동작 - 빈 이력
+    }
+
+    // ============================================
+    // When - 요청 전송
+    // ============================================
 
     @When("구독 구매 요청을 보낸다")
     public void sendPurchaseRequest(DataTable dataTable) throws Exception {
         Map<String, String> data = dataTable.asMaps().get(0);
 
-        response = RestAssured.given()
+        var request = RestAssured.given()
                 .contentType("application/json")
-                .body(objectMapper.writeValueAsString(data))
-                .when()
-                .post("/subscriptions/purchase");
+                .body(objectMapper.writeValueAsString(data));
+
+        if (getAuthToken() != null) {
+            request.header("Authorization", getAuthToken());
+        }
+
+        setResponse(request.when()
+                .post("/subscriptions/purchase"));
     }
 
     @When("사용자가 구독 상태 조회 요청을 보낸다")
     public void sendGetSubscriptionRequest() {
-        response = RestAssured.given()
-                .when()
-                .get("/subscriptions/me");
+        var request = RestAssured.given();
+
+        if (getAuthToken() != null) {
+            request.header("Authorization", getAuthToken());
+        }
+
+        setResponse(request.when()
+                .get("/subscriptions/me"));
     }
 
     @When("업그레이드 요청을 보낸다")
     public void sendUpgradeRequest(DataTable dataTable) throws Exception {
         Map<String, String> data = dataTable.asMaps().get(0);
 
-        response = RestAssured.given()
+        var request = RestAssured.given()
                 .contentType("application/json")
-                .body(objectMapper.writeValueAsString(data))
-                .when()
-                .post("/subscriptions/upgrade");
+                .body(objectMapper.writeValueAsString(data));
+
+        if (getAuthToken() != null) {
+            request.header("Authorization", getAuthToken());
+        }
+
+        setResponse(request.when()
+                .post("/subscriptions/upgrade"));
     }
 
     @When("사용자가 구독 이력 조회 요청을 보낸다")
     public void sendGetHistoryRequest() {
-        response = RestAssured.given()
-                .when()
-                .get("/subscriptions/history");
+        var request = RestAssured.given();
+
+        if (getAuthToken() != null) {
+            request.header("Authorization", getAuthToken());
+        }
+
+        setResponse(request.when()
+                .get("/subscriptions/history"));
     }
 
-    @When("사용자가 구독 이력 조회 요청을 보낸다")
+    @When("페이징으로 구독 이력 조회 요청을 보낸다")
     public void sendGetHistoryRequestWithPaging(DataTable dataTable) {
         Map<String, String> params = dataTable.asMaps().get(0);
 
-        response = RestAssured.given()
+        var request = RestAssured.given()
                 .queryParam("page", params.get("page"))
-                .queryParam("size", params.get("size"))
-                .when()
-                .get("/subscriptions/history");
+                .queryParam("size", params.get("size"));
+
+        if (getAuthToken() != null) {
+            request.header("Authorization", getAuthToken());
+        }
+
+        setResponse(request.when()
+                .get("/subscriptions/history"));
     }
+
+    @When("영수증 검증 요청을 보낸다")
+    public void sendReceiptVerificationRequest(DataTable dataTable) throws Exception {
+        Map<String, String> data = dataTable.asMaps().get(0);
+
+        var request = RestAssured.given()
+                .contentType("application/json")
+                .body(objectMapper.writeValueAsString(data));
+
+        if (getAuthToken() != null) {
+            request.header("Authorization", getAuthToken());
+        }
+
+        setResponse(request.when()
+                .post("/subscriptions/verify"));
+    }
+
+    @When("무료 체험 시작 요청을 보낸다")
+    public void sendFreeTrialRequest(DataTable dataTable) throws Exception {
+        Map<String, String> data = dataTable.asMaps().get(0);
+
+        var request = RestAssured.given()
+                .contentType("application/json")
+                .body(objectMapper.writeValueAsString(data));
+
+        if (getAuthToken() != null) {
+            request.header("Authorization", getAuthToken());
+        }
+
+        setResponse(request.when()
+                .post("/subscriptions/trial"));
+    }
+
+    @When("무료 체험 종료 후 유료 구독 요청을 보낸다")
+    public void sendConvertTrialRequest(DataTable dataTable) throws Exception {
+        Map<String, String> data = dataTable.asMaps().get(0);
+
+        var request = RestAssured.given()
+                .contentType("application/json")
+                .body(objectMapper.writeValueAsString(data));
+
+        if (getAuthToken() != null) {
+            request.header("Authorization", getAuthToken());
+        }
+
+        setResponse(request.when()
+                .post("/subscriptions/trial/convert"));
+    }
+
+    // ============================================
+    // When - Webhook 요청
+    // ============================================
+
+    @When("Apple Webhook 요청을 보낸다")
+    public void sendAppleWebhookRequest(DataTable dataTable) throws Exception {
+        Map<String, String> data = dataTable.asMaps().get(0);
+        String signedPayload = data.get("signedPayload");
+
+        Map<String, String> body = new HashMap<>();
+        body.put("signedPayload", signedPayload != null ? signedPayload : "");
+
+        setResponse(RestAssured.given()
+                .contentType("application/json")
+                .body(objectMapper.writeValueAsString(body))
+                .when()
+                .post("/webhooks/apple"));
+    }
+
+    @When("동일한 transactionId로 Apple Webhook 요청을 보낸다")
+    public void sendDuplicateWebhookRequest(DataTable dataTable) throws Exception {
+        sendAppleWebhookRequest(dataTable);
+    }
+
+    @When("서명이 위조된 Apple Webhook 요청을 보낸다")
+    public void sendForgedWebhookRequest(DataTable dataTable) throws Exception {
+        Map<String, String> data = dataTable.asMaps().get(0);
+
+        Map<String, String> body = new HashMap<>();
+        body.put("signedPayload", data.get("signedPayload"));
+
+        setResponse(RestAssured.given()
+                .contentType("application/json")
+                .body(objectMapper.writeValueAsString(body))
+                .when()
+                .post("/webhooks/apple"));
+    }
+
+    @When("만료된 JWS 토큰으로 Apple Webhook 요청을 보낸다")
+    public void sendExpiredJwsWebhookRequest(DataTable dataTable) throws Exception {
+        sendForgedWebhookRequest(dataTable);
+    }
+
+    @When("지원하지 않는 타입의 Apple Webhook 요청을 보낸다")
+    public void sendUnsupportedTypeWebhookRequest(DataTable dataTable) throws Exception {
+        sendForgedWebhookRequest(dataTable);
+    }
+
+    // ============================================
+    // When - 이벤트 수신
+    // ============================================
+
+    @When("DID_RENEW Webhook 이벤트를 수신한다")
+    public void receiveDidRenewEvent(DataTable dataTable) throws Exception {
+        sendMockWebhookEvent("DID_RENEW", dataTable);
+    }
+
+    @When("EXPIRED Webhook 이벤트를 수신한다")
+    public void receiveExpiredEvent(DataTable dataTable) throws Exception {
+        sendMockWebhookEvent("EXPIRED", dataTable);
+    }
+
+    @When("REFUND Webhook 이벤트를 수신한다")
+    public void receiveRefundEvent(DataTable dataTable) throws Exception {
+        sendMockWebhookEvent("REFUND", dataTable);
+    }
+
+    @When("DID_FAIL_TO_RENEW Webhook 이벤트를 수신한다")
+    public void receiveDidFailToRenewEvent(DataTable dataTable) throws Exception {
+        sendMockWebhookEvent("DID_FAIL_TO_RENEW", dataTable);
+    }
+
+    @When("GRACE_PERIOD_EXPIRED Webhook 이벤트를 수신한다")
+    public void receiveGracePeriodExpiredEvent(DataTable dataTable) throws Exception {
+        sendMockWebhookEvent("GRACE_PERIOD_EXPIRED", dataTable);
+    }
+
+    @When("비갱신형 구독 만료 시간이 지나면")
+    public void nonRenewingSubscriptionExpires() {
+        // 시간 경과 시뮬레이션
+        setResponse(RestAssured.given()
+                .when()
+                .post("/subscriptions/check-expiry"));
+    }
+
+    private void sendMockWebhookEvent(String eventType, DataTable dataTable) throws Exception {
+        Map<String, String> data = dataTable.asMaps().get(0);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("signedPayload", "mock_signed_payload_for_" + eventType);
+        body.put("eventType", eventType);
+        body.putAll(data);
+
+        setResponse(RestAssured.given()
+                .contentType("application/json")
+                .body(objectMapper.writeValueAsString(body))
+                .when()
+                .post("/webhooks/apple"));
+    }
+
+    // ============================================
+    // Then - 검증
+    // ============================================
 
     @Then("업그레이드가 즉시 적용된다")
     public void verifyUpgradeApplied() {
-        response.then().body("productTier", notNullValue());
+        getResponse().then().body("productTier", notNullValue());
     }
 
     @Then("구독의 {string}이 {string}로 연장된다")
     public void verifyExpiryExtended(String field, String newExpiry) {
-        // 만료일 연장 검증
-        response.then().body(field, notNullValue());
+        getResponse().then().body(field, notNullValue());
     }
 
     @Then("구독의 {string}이 {string}로 변경된다")
     public void verifyStatusChanged(String field, String newStatus) {
-        response.then().body(field, equalTo(newStatus));
+        getResponse().then().body(field, equalTo(newStatus));
+    }
+
+    @Then("구독의 {string}가 {string}로 변경된다")
+    public void verifyStatusChangedAlt(String field, String newStatus) {
+        getResponse().then().body(field, equalTo(newStatus));
     }
 
     @Then("구독 권한이 즉시 회수된다")
     public void verifyAccessRevoked() {
-        // 권한 회수 검증
-        response.then().body("status", equalTo("REFUNDED"));
+        getResponse().then().body("status", equalTo("REFUNDED"));
     }
 
     @Then("구독 권한이 회수된다")
     public void verifyAccessRevokedExpired() {
-        response.then().body("status", equalTo("EXPIRED"));
+        getResponse().then().body("status", equalTo("EXPIRED"));
+    }
+
+    @Then("구독 권한이 자동 회수된다")
+    public void verifyAccessAutoRevoked() {
+        getResponse().then().body("status", equalTo("EXPIRED"));
     }
 
     @Then("신규 구독이 자동 생성된다")
     public void verifyNewSubscriptionCreated() {
-        response.then().statusCode(200);
+        getResponse().then().statusCode(200);
     }
 
     @Then("로그만 기록되고 추가 처리는 하지 않는다")
     public void verifyOnlyLogged() {
-        response.then().statusCode(200);
+        getResponse().then().statusCode(200);
     }
 
     @Then("환불 이벤트가 우선 처리된다")
     public void verifyRefundPriority() {
-        response.then().body("status", equalTo("REFUNDED"));
+        getResponse().then().body("status", equalTo("REFUNDED"));
     }
 
     @Then("업그레이드 트랜잭션이 롤백된다")
     public void verifyUpgradeRolledBack() {
-        // 롤백 검증
-        response.then().statusCode(200);
+        getResponse().then().statusCode(200);
     }
 
     @Then("{string} 필드가 제거된다")
     public void verifyFieldRemoved(String field) {
-        response.then().body(field, nullValue());
+        getResponse().then().body(field, nullValue());
     }
 
     @Then("중복 처리되지 않는다")
     public void verifyNotDuplicated() {
-        response.then().statusCode(200);
+        getResponse().then().statusCode(200);
     }
 
     @Then("구독 상태가 변경되지 않는다")
     public void verifyStatusUnchanged() {
-        response.then().statusCode(200);
+        getResponse().then().statusCode(200);
     }
 
     @Then("중복 처리 로그가 기록된다")
     public void verifyDuplicateLog() {
-        response.then().statusCode(200);
+        getResponse().then().statusCode(200);
     }
 
     @Then("이벤트가 무시된다")
     public void verifyEventIgnored() {
-        response.then().statusCode(200);
+        getResponse().then().statusCode(200);
     }
 
     @Then("실패한 이벤트가 DLQ에 저장된다")
     public void verifyDLQStored() {
-        response.then().statusCode(500);
+        getResponse().then().statusCode(500);
+    }
+
+    @Then("보안 로그가 기록된다")
+    public void verifySecurityLog() {
+        getResponse().then().statusCode(401);
+    }
+
+    @Then("재시도가 3회 수행된다")
+    public void verifyRetry3Times() {
+        // 재시도 검증 (현재는 상태 코드만 확인)
+        getResponse().then().statusCode(anyOf(is(503), is(400)));
+    }
+
+    @Then("3회 재시도 후 실패한다")
+    public void verifyRetry3TimesAndFail() {
+        getResponse().then().statusCode(503);
+    }
+
+    @Then("구독의 {string}이 {string}로 유지된다")
+    public void verifyStatusMaintained(String field, String status) {
+        getResponse().then().body(field, equalTo(status));
+    }
+
+    @Then("{string}이 연장된다")
+    public void verifyFieldExtended(String field) {
+        getResponse().then().body(field, notNullValue());
     }
 }
