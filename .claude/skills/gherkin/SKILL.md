@@ -1,6 +1,6 @@
 ---
 name: gherkin
-description: This skill should be used when the user asks to "/gherkin", "시나리오 추출", "Gherkin 시나리오 작성", "테스트 시나리오 변환", or needs to convert requirements to test scenarios.
+description: Use when the user asks to "/gherkin", "시나리오 추출", "Gherkin 시나리오 작성", "테스트 시나리오 변환", or needs to convert requirements to test scenarios.
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash
@@ -102,14 +102,17 @@ Feature: [기능명 - 요구사항에서 추출]
 
   @happy
   Scenario: 정상적인 [기능명]
+    # WHY: Given은 테스트 전제 조건을 명확히 한다
     Given 다음 [엔티티명]가 존재한다
       | id | 필드1 | 필드2 |
       | 1  | 값1   | 값2   |
 
+    # WHY: When은 단일 행동만 테스트하여 실패 원인 파악이 쉽다
     When [엔티티명] [행동] 요청을 보낸다
       | 필드1 | 필드2 | 필드3 |
       | 값1   | 값2   | 값3   |
 
+    # WHY: Then은 구체적인 상태 코드로 검증 가능해야 한다
     Then 상태 코드 201을 받는다
     And 응답의 "필드1" 필드는 "값1"이다
 
@@ -119,6 +122,7 @@ Feature: [기능명 - 요구사항에서 추출]
 
   @edge @validation
   Scenario: [필수값 누락/형식 오류]
+    # WHY: Edge Case는 Given 없이 When부터 시작 가능 (입력 검증)
     When [엔티티명] [행동] 요청을 보낸다
       | 필드1 | 필드2 |
       |       | 값2   |
@@ -332,6 +336,7 @@ Edit: .atdd/context.json
       password: password123!
 
 # 변환 후 (Gherkin)
+# WHY: Data Table은 테스트 데이터를 구조화하여 TDD 구현 시 명확한 입력을 제공한다.
 When 회원가입 요청을 보낸다
   | email         | password     |
   | test@test.com | password123! |
@@ -450,6 +455,8 @@ Gherkin 품질 검증 ✅
 ## MUST 체크리스트 (실행 전)
 - [ ] `{basePath}/validate/refined-requirements.md` 존재
 
+**YOU MUST complete all items before proceeding.**
+
 ## MUST 체크리스트 (실행 후)
 - [ ] Phase A: Happy Path 작성 완료
 - [ ] Phase B: 예외 케이스 5개 이상 식별
@@ -457,6 +464,11 @@ Gherkin 품질 검증 ✅
 - [ ] Phase D: 커버리지 검증 (Must Have 100%)
 - [ ] `{basePath}/scenarios/scenarios-summary.md` 생성
 - [ ] context.json 업데이트: `status`를 "completed"로 변경
+
+**No exceptions:**
+- Don't skip Edge Case Hunt
+- Don't proceed without 5+ edge cases
+- Don't ignore coverage gaps
 
 ### 완료 시 context.json 업데이트
 
@@ -489,6 +501,7 @@ Feature: 회원가입
   Background:
     Given 데이터베이스가 초기화되어 있다
 
+  # WHY: Happy Path는 정상 흐름을 명확히 문서화한다
   Scenario: 정상적인 회원가입
     Given 회원가입 페이지에 접속한다
     When 다음 정보로 회원가입 요청을 보낸다
@@ -497,6 +510,7 @@ Feature: 회원가입
     Then 상태 코드 201을 받는다
     And 응답의 "email" 필드는 "test@test.com"이다
 
+  # WHY: Edge Case는 비즈니스 규칙 위반을 검증한다
   Scenario: 중복 이메일로 회원가입
     Given 다음 사용자가 이미 존재한다
       | id | email         |
@@ -506,6 +520,7 @@ Feature: 회원가입
       | test@test.com | password456! | 테스터2 |
     Then 상태 코드 409를 받는다
 
+  # WHY: Scenario Outline은 여러 입력 케이스를 효율적으로 테스트한다
   Scenario Outline: 잘못된 형식으로 회원가입
     When 다음 정보로 회원가입 요청을 보낸다
       | email    | password   | name    |
@@ -540,6 +555,89 @@ Feature: 회원가입
 
 ---
 
+## Common Mistakes
+
+### ❌ BAD vs ✅ GOOD
+
+#### ❌ BAD: 모호한 시나리오
+```gherkin
+# BAD: "어떤 데이터" - 구체적이지 않음
+Scenario: 회원가입
+  Given 데이터가 있다
+  When 회원가입한다
+  Then 성공한다
+```
+
+#### ✅ GOOD: 구체적인 시나리오
+```gherkin
+# GOOD: 구체적인 데이터, 명확한 검증
+# WHY: Data Table을 사용하면 테스트 데이터를 한눈에 볼 수 있고,
+#      TDD 구현 시 어떤 데이터가 필요한지 명확해진다.
+Scenario: 정상적인 회원가입
+  Given 데이터베이스가 초기화되어 있다
+  When 다음 정보로 회원가입 요청을 보낸다
+    | email         | password     | name   |
+    | test@test.com | password123! | 테스터 |
+  Then 상태 코드 201을 받는다
+  And 응답의 "email" 필드는 "test@test.com"이다
+```
+
+#### ❌ BAD: 여러 행동 혼합
+```gherkin
+# BAD: 하나의 시나리오에 여러 행동
+Scenario: 회원가입하고 로그인하고 프로필 수정
+  When 회원가입하고 로그인하고 프로필을 수정한다
+  Then 모두 성공한다
+```
+
+#### ✅ GOOD: 단일 행동
+```gherkin
+# GOOD: 하나의 행동만 테스트
+# WHY: 단일 행동 테스트는 실패 원인을 쉽게 파악할 수 있다.
+Scenario: 정상적인 회원가입
+  When 회원가입 요청을 보낸다
+  Then 상태 코드 201을 받는다
+```
+
+### ❌ Step Naming Anti-Patterns
+
+| ❌ BAD | ✅ GOOD | 이유 |
+|--------|---------|------|
+| `유저를 만든다` | `사용자 생성 요청을 보낸다` | TDD에서 인식 가능한 패턴 |
+| `성공한다` | `상태 코드 201을 받는다` | 구체적인 검증 |
+| `실패한다` | `상태 코드 400을 받는다` | 구체적인 검증 |
+| `어떤 데이터` | Data Table 사용 | 재현 가능한 테스트 |
+
+---
+
+## Red Flags - STOP and Start Over
+
+다음 중 하나라도 해당하면 **시나리오를 삭제하고 다시 작성**:
+
+- "어떤 데이터", "특정 값" 등 모호한 표현 사용
+- 하나의 시나리오에 여러 행동 혼합
+- Then에 상태 코드가 없음
+- Given 없이 When부터 시작
+- Data Table 없이 문장으로만 데이터 표현
+- "성공한다", "실패한다" 등 구체적이지 않은 검증
+
+**All of these mean: Delete scenario. Rewrite with specific data. No exceptions.**
+
+---
+
+## Gherkin 합리화 차단
+
+| Excuse | Reality |
+|--------|---------|
+| "데이터는 나중에 채우면 돼" | 나중에 채워지지 않는다. 지금 작성하라. |
+| "성공/실패만 알면 돼" | 상태 코드 없이는 TDD가 불가능하다. |
+| "Edge Case는 나중에" | 나중에 오는 버그 리포트가 더 비싸다. |
+| "Happy Path면 충분해" | Happy Path만 테스트하면 80%의 버그를 놓친다. |
+| "이건 너무 간단해서" | 간단한 기능이 가장 많이 망가진다. |
+| "문서화가 귀찮아" | Gherkin이 곧 문서이자 테스트다. |
+
+---
+
 ## 다음 단계
 커버리지 검증 완료 후 `/adr` 실행 (또는 `/epic-split`으로 Epic 분해)
 
@@ -547,7 +645,7 @@ Feature: 회원가입
 
 ## Definition of Done (DoD)
 
-**⚠️ 스킬 완료로 인정받기 위해 다음 조건을 모두 충족해야 함:**
+**⚠️ YOU MUST complete all items before proceeding. No exceptions.**
 
 | # | 조건 | 검증 |
 |---|------|------|
@@ -555,6 +653,11 @@ Feature: 회원가입
 | 2 | context.json `updated_at` = 현재 시간 | 필수 |
 | 3 | 산출물 파일 생성 완료 (`.feature`, `scenarios-summary.md`) | 필수 |
 | 4 | 품질 기준 달성 (Must Have 100%) | 필수 |
+
+**No exceptions:**
+- Don't skip Edge Case Hunt
+- Don't proceed without 5+ edge cases
+- Don't ignore coverage gaps
 
 **context.json 업데이트 예시:**
 ```json
@@ -564,6 +667,19 @@ Feature: 회원가입
   "updated_at": "{ISO8601}"
 }
 ```
+
+---
+
+## Self-Check (스킬 완료 후 검증)
+
+**스킬 실행 완료 후 스스로 확인:**
+- [ ] 모든 시나리오에 Given-When-Then이 있는가?
+- [ ] 모든 Then에 상태 코드가 명시되어 있는가?
+- [ ] Data Table이 모든 데이터를 구체화하고 있는가?
+- [ ] Edge Case가 최소 5개 이상인가?
+- [ ] Must Have 요구사항 커버리지가 100%인가?
+
+**하나라도 "아니오"라면 시나리오를 보완해야 합니다.**
 
 ---
 
