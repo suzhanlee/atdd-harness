@@ -54,11 +54,29 @@ public class WebhookController {
      */
     @PostMapping("/apple")
     public ResponseEntity<WebhookResponse> handleAppleWebhook(@RequestBody WebhookRequest request) {
-        // TODO: TDD에서 구현
-        // 1. signedPayload 추출
-        // 2. ProcessWebhookUseCase.process() 호출
-        // 3. 결과 반환 (Apple은 200 OK만 확인)
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        // 1. signedPayload 추출 및 검증
+        if (request.signedPayload() == null || request.signedPayload().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(WebhookResponse.failure("signedPayload is required"));
+        }
+
+        try {
+            // 2. ProcessWebhookUseCase.process() 호출
+            WebhookEvent event = processWebhookUseCase.process(request.signedPayload());
+
+            // 3. 결과 반환 (Apple은 200 OK만 확인)
+            return ResponseEntity.ok(WebhookResponse.success(event.getNotificationType()));
+
+        } catch (SecurityException e) {
+            // 서명 검증 실패
+            return ResponseEntity.status(401)
+                .body(WebhookResponse.failure("JWS verification failed: " + e.getMessage()));
+
+        } catch (Exception e) {
+            // 기타 예외
+            return ResponseEntity.status(500)
+                .body(WebhookResponse.failure("Webhook processing failed: " + e.getMessage()));
+        }
     }
 
     /**
@@ -68,7 +86,7 @@ public class WebhookController {
      */
     @PostMapping("/apple/health")
     public ResponseEntity<String> healthCheck() {
-        throw new UnsupportedOperationException("TODO: TDD에서 구현");
+        return ResponseEntity.ok("OK");
     }
 
     /** Apple Webhook 요청 */
