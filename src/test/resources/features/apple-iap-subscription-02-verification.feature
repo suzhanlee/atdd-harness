@@ -27,6 +27,9 @@ Feature: Apple 영수증 검증
 
   @edge @validation @verification
   Scenario: 빈 영수증 데이터 검증 요청
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
     When 영수증 검증 요청을 보낸다
       | receiptData |
       |             |
@@ -35,6 +38,9 @@ Feature: Apple 영수증 검증
 
   @edge @validation @verification
   Scenario: 잘못된 Base64 형식의 영수증
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
     When 영수증 검증 요청을 보낸다
       | receiptData    |
       | not_base64!@#$ |
@@ -47,7 +53,10 @@ Feature: Apple 영수증 검증
 
   @edge @external @verification
   Scenario: Apple 서버 연결 실패
-    Given Apple Mock 서버가 연결 거부을 반환한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And Apple Mock 서버가 연결 거부을 반환한다
     When 영수증 검증 요청을 보낸다
       | receiptData        |
       | valid_receipt_data |
@@ -56,7 +65,10 @@ Feature: Apple 영수증 검증
 
   @edge @external @verification
   Scenario: Apple 서버 5xx 응답
-    Given Apple Mock 서버가 500 오류을 반환한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And Apple Mock 서버가 500 오류을 반환한다
     When 영수증 검증 요청을 보낸다
       | receiptData        |
       | valid_receipt_data |

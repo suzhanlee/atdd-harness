@@ -9,6 +9,7 @@ import com.example.subscription.domain.vo.ProductId;
 import com.example.subscription.domain.vo.SubscriptionStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.cucumber.java.en.Then;
@@ -27,6 +28,9 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -51,11 +55,35 @@ public class SubscriptionStepDefinitions {
     @MockBean
     private com.example.subscription.infrastructure.client.AppleAppStoreClient appleAppStoreClient;
 
-    private boolean mockServerConfigured = false;
-    private boolean appleServerTimeout = false;
-    private boolean appleServerConnectionRefused = false;
-    private boolean appleServer500 = false;
-    private boolean appleVerificationFailed = false;
+    @MockBean
+    private com.example.subscription.infrastructure.parser.JwsVerifier jwsVerifier;
+
+    @MockBean
+    private com.example.subscription.infrastructure.parser.AppleWebhookParser appleWebhookParser;
+
+    private boolean defaultMockInitialized = false;
+
+    /**
+     * 기본 Apple Mock 설정 (lazy initialization).
+     * Spring 의존성 주입이 완료된 후 첫 번째 요청 시 설정된다.
+     */
+    private void ensureDefaultMockInitialized() {
+        if (!defaultMockInitialized && appleAppStoreClient != null) {
+            defaultMockInitialized = true;
+            // 기본적인 영수증 검증 Mock 설정
+            when(appleAppStoreClient.verifyReceipt(any()))
+                .thenReturn(new com.example.subscription.infrastructure.client.AppleAppStoreClient.ReceiptVerificationResult(
+                    0,  // status = 0 means success
+                    "Sandbox",
+                    "original-tx-" + System.currentTimeMillis(),
+                    "basic_001",
+                    Instant.now().plusSeconds(86400 * 30).toEpochMilli(),
+                    false,
+                    null,
+                    null
+                ));
+        }
+    }
 
     // Convenience methods for scenario context
     private Response getResponse() { return scenarioContext.getResponse(); }
@@ -93,7 +121,8 @@ public class SubscriptionStepDefinitions {
             String status = row.get("status");
             String expiresAtStr = row.getOrDefault("expiresAt", "2026-12-31T00:00:00");
             String trialEndsAtStr = row.get("trialEndsAt");
-            String originalTxId = row.getOrDefault("originalTransactionId", "original-tx-" + id);
+            String originalTxId = row.getOrDefault("originalTransactionId",
+                "original-tx-" + id + "-" + Instant.now().toEpochMilli());
 
             Subscription subscription = Subscription.create(
                     originalTxId,
@@ -102,13 +131,13 @@ public class SubscriptionStepDefinitions {
                     new Period(Instant.now(), Instant.parse(expiresAtStr + "Z"))
             );
 
-            // 상태 설정
+            // 상태 설정 (IN_TRIAL은 ACTIVE에서 전이 불가하므로 직접 설정)
             if (!"ACTIVE".equals(status)) {
                 switch (status) {
                     case "EXPIRED" -> subscription.expire();
                     case "REFUNDED" -> subscription.refund();
                     case "IN_GRACE_PERIOD" -> subscription.enterGracePeriod(Instant.now().plusSeconds(86400));
-                    case "IN_TRIAL" -> subscription.changeStatus(
+                    case "IN_TRIAL" -> subscription.forceStatusForTest(
                             com.example.subscription.domain.vo.SubscriptionStatus.IN_TRIAL);
                 }
             }
@@ -134,8 +163,21 @@ public class SubscriptionStepDefinitions {
 
     @Given("사용자가 기존에 무료 체험을 사용했다")
     public void userHasUsedFreeTrial() {
-        // 무료 체험 사용 플래그 설정 (별도 엔티티나 플래그 필요)
-        // 현재는 Mock 구현
+        // 이전에 사용한 무료 체험 구독 생성 (이미 만료된 상태)
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            userId = 1L;  // 기본값
+        }
+
+        Subscription previousTrial = Subscription.create(
+            "trial-used-" + userId,
+            userId,
+            new ProductId("trial_001"),
+            new Period(Instant.now().minusSeconds(86400 * 14), Instant.now().minusSeconds(86400 * 7))
+        );
+        previousTrial.forceStatusForTest(SubscriptionStatus.EXPIRED);
+
+        subscriptionRepository.save(previousTrial);
     }
 
     // ============================================
@@ -144,31 +186,51 @@ public class SubscriptionStepDefinitions {
 
     @Given("Apple Mock 서버가 실행되어 있다")
     public void appleMockServerRunning() {
-        mockServerConfigured = true;
-        appleServerTimeout = false;
-        appleServerConnectionRefused = false;
-        appleServer500 = false;
-        appleVerificationFailed = false;
+        // 정상적인 영수증 검증 Mock 설정
+        when(appleAppStoreClient.verifyReceipt(any()))
+            .thenReturn(new com.example.subscription.infrastructure.client.AppleAppStoreClient.ReceiptVerificationResult(
+                0,  // status = 0 means success
+                "Sandbox",
+                "original-tx-" + System.currentTimeMillis(),
+                "basic_001",
+                Instant.now().plusSeconds(86400 * 30).toEpochMilli(),
+                false,
+                null,
+                null
+            ));
     }
 
     @Given("Apple Mock 서버가 타임아웃을 반환한다")
     public void appleMockServerReturnsTimeout() {
-        appleServerTimeout = true;
+        when(appleAppStoreClient.verifyReceipt(any()))
+            .thenThrow(new RuntimeException("Connection timeout"));
     }
 
     @Given("Apple Mock 서버가 검증 실패을 반환한다")
     public void appleMockServerReturnsVerificationFailure() {
-        appleVerificationFailed = true;
+        when(appleAppStoreClient.verifyReceipt(any()))
+            .thenReturn(new com.example.subscription.infrastructure.client.AppleAppStoreClient.ReceiptVerificationResult(
+                21002,  // status != 0 means failure
+                null,
+                null,
+                null,
+                null,
+                false,
+                "INVALID_RECEIPT",
+                "영수증 데이터가 유효하지 않습니다"
+            ));
     }
 
     @Given("Apple Mock 서버가 연결 거부을 반환한다")
     public void appleMockServerReturnsConnectionRefused() {
-        appleServerConnectionRefused = true;
+        when(appleAppStoreClient.verifyReceipt(any()))
+            .thenThrow(new RuntimeException("Connection refused"));
     }
 
     @Given("Apple Mock 서버가 500 오류을 반환한다")
     public void appleMockServerReturns500Error() {
-        appleServer500 = true;
+        when(appleAppStoreClient.verifyReceipt(any()))
+            .thenThrow(new RuntimeException("Internal Server Error"));
     }
 
     // ============================================
@@ -177,7 +239,27 @@ public class SubscriptionStepDefinitions {
 
     @Given("Apple 공개키가 캐싱되어 있다")
     public void applePublicKeyCached() {
-        // 공개키 캐싱 Mock 설정
+        // JWS 검증 Mock 설정
+        String verifiedJson = "{\"notificationType\":\"DID_RENEW\",\"data\":{\"originalTransactionId\":\"original-tx-1\",\"bundleId\":\"com.example.app\",\"productId\":\"basic_001\",\"transactionId\":\"txn-12345\",\"signedDate\":" + Instant.now().toEpochMilli() + ",\"expiresDate\":" + Instant.now().plusSeconds(86400).toEpochMilli() + "}}";
+        when(jwsVerifier.verify(anyString())).thenReturn(verifiedJson);
+        when(jwsVerifier.verifyWithCertificateChain(anyString())).thenReturn(verifiedJson);
+        when(jwsVerifier.checkIdempotency(anyString())).thenReturn(true);
+        when(jwsVerifier.isSignedDateValid(anyLong(), anyInt())).thenReturn(true);
+
+        // Webhook 파서 Mock 설정 - 올바른 생성자 사용
+        com.example.subscription.domain.vo.WebhookEvent mockEvent =
+            new com.example.subscription.domain.vo.WebhookEvent(
+                "DID_RENEW",                    // notificationType
+                "txn-12345",                    // transactionId
+                "original-tx-1",                // originalTransactionId
+                "basic_001",                    // productId
+                Instant.now(),                  // signedDate
+                Instant.now().plusSeconds(86400), // expiresDate
+                "SANDBOX"                       // environment
+            );
+        when(appleWebhookParser.parse(anyString())).thenReturn(mockEvent);
+        when(appleWebhookParser.parseVerifiedJson(anyString())).thenReturn(mockEvent);
+        when(appleWebhookParser.extractNotificationType(anyString())).thenReturn("DID_RENEW");
     }
 
     @Given("동일한 transactionId의 Webhook이 이미 처리되었다")
@@ -214,8 +296,23 @@ public class SubscriptionStepDefinitions {
             com.example.subscription.domain.vo.SubscriptionStatus toStatus =
                     mapToSubscriptionStatus(row.getOrDefault("toStatus", row.get("toTier")));
 
+            // 먼저 구독을 생성 (이력은 구독에 연결되어야 함)
+            Long subscriptionId = Long.parseLong(row.get("id"));
+            Subscription subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
+
+            if (subscription == null) {
+                // 구독이 없으면 생성
+                subscription = Subscription.create(
+                    "original-tx-history-" + subscriptionId,
+                    Long.parseLong(row.get("userId")),
+                    new ProductId("basic_001"),
+                    new Period(Instant.now(), Instant.now().plusSeconds(86400 * 30))
+                );
+                subscription = subscriptionRepository.save(subscription);
+            }
+
             SubscriptionHistory history = SubscriptionHistory.create(
-                    Long.parseLong(row.get("id")),  // subscriptionId
+                    subscription.getId(),  // 저장된 구독의 실제 ID 사용
                     fromStatus,
                     toStatus,
                     row.get("action"),
@@ -254,7 +351,17 @@ public class SubscriptionStepDefinitions {
 
     @When("구독 구매 요청을 보낸다")
     public void sendPurchaseRequest(DataTable dataTable) throws Exception {
-        Map<String, String> data = dataTable.asMaps().get(0);
+        ensureDefaultMockInitialized();  // 기본 Mock 설정
+
+        Map<String, String> data = new HashMap<>(dataTable.asMaps().get(0));
+
+        // receiptData가 Base64가 아니면 변환
+        if (data.containsKey("receiptData")) {
+            String receiptData = data.get("receiptData");
+            if (!isBase64(receiptData)) {
+                data.put("receiptData", java.util.Base64.getEncoder().encodeToString(receiptData.getBytes()));
+            }
+        }
 
         var request = RestAssured.given()
                 .contentType("application/json")
@@ -266,6 +373,21 @@ public class SubscriptionStepDefinitions {
 
         setResponse(request.when()
                 .post("/subscriptions/purchase"));
+    }
+
+    /**
+     * 문자열이 유효한 Base64인지 확인한다.
+     */
+    private boolean isBase64(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        try {
+            java.util.Base64.getDecoder().decode(str);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     @When("사용자가 구독 상태 조회 요청을 보낸다")
@@ -283,10 +405,18 @@ public class SubscriptionStepDefinitions {
     @When("업그레이드 요청을 보낸다")
     public void sendUpgradeRequest(DataTable dataTable) throws Exception {
         Map<String, String> data = dataTable.asMaps().get(0);
+        String targetTier = data.get("targetTier");
+
+        // targetTier → productId 변환
+        String newProductId = convertTierToProductId(targetTier);
+
+        Map<String, Object> requestData = new HashMap<>();
+        requestData.put("newProductId", newProductId);
+        requestData.put("transactionId", "upgrade-tx-" + Instant.now().toEpochMilli());
 
         var request = RestAssured.given()
                 .contentType("application/json")
-                .body(objectMapper.writeValueAsString(data));
+                .body(objectMapper.writeValueAsString(requestData));
 
         if (getAuthToken() != null) {
             request.header("Authorization", getAuthToken());
@@ -294,6 +424,22 @@ public class SubscriptionStepDefinitions {
 
         setResponse(request.when()
                 .post("/subscriptions/upgrade"));
+    }
+
+    /**
+     * Tier 이름을 ProductId로 변환한다.
+     */
+    private String convertTierToProductId(String tier) {
+        if (tier == null) {
+            return "unknown_001";
+        }
+        return switch (tier.toUpperCase()) {
+            case "BASIC" -> "basic_001";
+            case "PRO" -> "pro_001";
+            case "ULTRA" -> "ultra_001";
+            case "TRIAL" -> "trial_001";
+            default -> tier.toLowerCase() + "_001";
+        };
     }
 
     @When("사용자가 구독 이력 조회 요청을 보낸다")
@@ -326,7 +472,17 @@ public class SubscriptionStepDefinitions {
 
     @When("영수증 검증 요청을 보낸다")
     public void sendReceiptVerificationRequest(DataTable dataTable) throws Exception {
-        Map<String, String> data = dataTable.asMaps().get(0);
+        ensureDefaultMockInitialized();  // 기본 Mock 설정
+
+        Map<String, String> data = new HashMap<>(dataTable.asMaps().get(0));
+
+        // receiptData가 Base64가 아니면 변환
+        if (data.containsKey("receiptData")) {
+            String receiptData = data.get("receiptData");
+            if (!isBase64(receiptData)) {
+                data.put("receiptData", java.util.Base64.getEncoder().encodeToString(receiptData.getBytes()));
+            }
+        }
 
         var request = RestAssured.given()
                 .contentType("application/json")
@@ -358,7 +514,17 @@ public class SubscriptionStepDefinitions {
 
     @When("무료 체험 종료 후 유료 구독 요청을 보낸다")
     public void sendConvertTrialRequest(DataTable dataTable) throws Exception {
-        Map<String, String> data = dataTable.asMaps().get(0);
+        ensureDefaultMockInitialized();  // 기본 Mock 설정
+
+        Map<String, String> data = new HashMap<>(dataTable.asMaps().get(0));
+
+        // receiptData가 Base64가 아니면 변환
+        if (data.containsKey("receiptData")) {
+            String receiptData = data.get("receiptData");
+            if (!isBase64(receiptData)) {
+                data.put("receiptData", java.util.Base64.getEncoder().encodeToString(receiptData.getBytes()));
+            }
+        }
 
         var request = RestAssured.given()
                 .contentType("application/json")

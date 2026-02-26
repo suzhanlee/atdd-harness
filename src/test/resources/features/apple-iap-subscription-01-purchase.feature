@@ -23,7 +23,10 @@ Feature: 구독 구매 및 상태 조회
 
   @happy @status
   Scenario: 구독 상태 조회
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status  | expiresAt           |
       | 1  | 1      | BASIC       | ACTIVE  | 2026-03-24T00:00:00 |
     When 사용자가 구독 상태 조회 요청을 보낸다
@@ -33,7 +36,10 @@ Feature: 구독 구매 및 상태 조회
 
   @happy @duplicate @purchase
   Scenario: 활성 구독이 있는 사용자의 중복 구매 방지
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status  | expiresAt           |
       | 1  | 1      | BASIC       | ACTIVE  | 2026-03-24T00:00:00 |
     When 사용자가 구독 구매 요청을 보낸다
@@ -74,7 +80,10 @@ Feature: 구독 구매 및 상태 조회
 
   @edge @business @purchase
   Scenario: 이미 활성 구독이 있는 사용자의 구매
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status  | expiresAt           |
       | 1  | 1      | BASIC       | ACTIVE  | 2026-03-24T00:00:00 |
     When 구독 구매 요청을 보낸다

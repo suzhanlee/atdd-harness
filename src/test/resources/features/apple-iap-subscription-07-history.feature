@@ -11,7 +11,10 @@ Feature: 구독 이력 관리
 
   @happy @history
   Scenario: 구독 이력 조회
-    Given 다음 구독 이력이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독 이력이 존재한다
       | id | userId | action  | fromTier | toTier | changedAt           |
       | 1  | 1      | UPGRADE | BASIC    | PRO    | 2026-02-20T00:00:00 |
       | 2  | 1      | RENEW   | PRO      | PRO    | 2026-03-20T00:00:00 |
@@ -49,7 +52,10 @@ Feature: 구독 이력 관리
 
   @edge @validation @history
   Scenario: 잘못된 페이지 번호로 이력 조회
-    Given 다음 구독 이력이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독 이력이 존재한다
       | id | userId | action  | fromTier | toTier |
       | 1  | 1      | UPGRADE | BASIC    | PRO    |
     When 페이징으로 구독 이력 조회 요청을 보낸다

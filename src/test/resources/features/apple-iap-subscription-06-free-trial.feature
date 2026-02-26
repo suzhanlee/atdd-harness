@@ -24,7 +24,10 @@ Feature: 무료 체험
 
   @happy @freetrial_convert
   Scenario: 무료 체험 종료 후 유료 구독 전환
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status   | trialEndsAt         |
       | 1  | 1      | BASIC       | IN_TRIAL | 2026-02-24T00:00:00 |
     When 무료 체험 종료 후 유료 구독 요청을 보낸다
@@ -40,7 +43,10 @@ Feature: 무료 체험
 
   @edge @business @freetrial
   Scenario: 이미 활성 구독이 있는 사용자의 무료 체험 요청
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status |
       | 1  | 1      | BASIC       | ACTIVE |
     When 무료 체험 시작 요청을 보낸다
@@ -51,7 +57,10 @@ Feature: 무료 체험
 
   @edge @business @freetrial
   Scenario: 이미 무료 체험을 사용한 사용자의 재요청
-    Given 사용자가 기존에 무료 체험을 사용했다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 사용자가 기존에 무료 체험을 사용했다
     When 무료 체험 시작 요청을 보낸다
       | productId |
       | trial_001 |
@@ -91,7 +100,10 @@ Feature: 무료 체험
 
   @edge @boundary @freetrial
   Scenario: 무료 체험 종료 직전 유료 전환
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status   | trialEndsAt         |
       | 1  | 1      | BASIC       | IN_TRIAL | 2026-02-24T00:00:01 |
     When 무료 체험 종료 후 유료 구독 요청을 보낸다

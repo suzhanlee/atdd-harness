@@ -11,7 +11,10 @@ Feature: 구독 업그레이드
 
   @happy @upgrade
   Scenario: Basic에서 Pro로 업그레이드
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status |
       | 1  | 1      | BASIC       | ACTIVE |
     When 업그레이드 요청을 보낸다
@@ -23,7 +26,10 @@ Feature: 구독 업그레이드
 
   @happy @upgrade
   Scenario: Basic에서 Ultra로 업그레이드
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status |
       | 1  | 1      | BASIC       | ACTIVE |
     When 업그레이드 요청을 보낸다
@@ -34,7 +40,10 @@ Feature: 구독 업그레이드
 
   @happy @upgrade
   Scenario: Pro에서 Ultra로 업그레이드
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status |
       | 1  | 1      | PRO         | ACTIVE |
     When 업그레이드 요청을 보낸다
@@ -49,7 +58,10 @@ Feature: 구독 업그레이드
 
   @edge @business @upgrade
   Scenario: 동일 등급으로 업그레이드 요청
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status |
       | 1  | 1      | PRO         | ACTIVE |
     When 업그레이드 요청을 보낸다
@@ -60,7 +72,10 @@ Feature: 구독 업그레이드
 
   @edge @business @upgrade
   Scenario: 다운그레이드 요청 (Pro → Basic)
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status |
       | 1  | 1      | PRO         | ACTIVE |
     When 업그레이드 요청을 보낸다
@@ -71,7 +86,10 @@ Feature: 구독 업그레이드
 
   @edge @business @upgrade
   Scenario: Ultra에서 Pro로 다운그레이드 시도
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status |
       | 1  | 1      | ULTRA       | ACTIVE |
     When 업그레이드 요청을 보낸다
@@ -86,7 +104,10 @@ Feature: 구독 업그레이드
 
   @edge @notfound @upgrade
   Scenario: 활성 구독 없이 업그레이드 요청
-    Given 사용자의 활성 구독이 없다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 사용자의 활성 구독이 없다
     When 업그레이드 요청을 보낸다
       | targetTier |
       | PRO        |
@@ -95,7 +116,10 @@ Feature: 구독 업그레이드
 
   @edge @notfound @upgrade
   Scenario: 만료된 구독으로 업그레이드 요청
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status  |
       | 1  | 1      | BASIC       | EXPIRED |
     When 업그레이드 요청을 보낸다
@@ -122,7 +146,10 @@ Feature: 구독 업그레이드
 
   @edge @validation @upgrade
   Scenario: 유효하지 않은 targetTier 값
-    Given 다음 구독이 존재한다
+    Given 사용자가 로그인되어 있다
+      | userId | email            |
+      | 1      | user@example.com |
+    And 다음 구독이 존재한다
       | id | userId | productTier | status |
       | 1  | 1      | BASIC       | ACTIVE |
     When 업그레이드 요청을 보낸다

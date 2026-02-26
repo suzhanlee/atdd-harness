@@ -1,5 +1,7 @@
 package com.example.e2e.step;
 
+import com.example.subscription.domain.repository.SubscriptionHistoryRepository;
+import com.example.subscription.domain.repository.SubscriptionRepository;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -25,6 +27,12 @@ public class CommonStepDefinitions {
     @Autowired
     private ScenarioContext scenarioContext;
 
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private SubscriptionHistoryRepository subscriptionHistoryRepository;
+
     @Before
     public void setUp() {
         RestAssured.port = port;
@@ -35,8 +43,9 @@ public class CommonStepDefinitions {
 
     @Given("데이터베이스가 초기화되어 있다")
     public void databaseIsInitialized() {
-        // @DataJpaTest의 기본 동작으로 자동 초기화됨
-        // 필요시 여기서 추가 초기화 로직 구현
+        // FK 관계 고려하여 history 먼저 삭제
+        subscriptionHistoryRepository.deleteAll();
+        subscriptionRepository.deleteAll();
     }
 
     @Then("상태 코드 {int}를 받는다")
