@@ -116,6 +116,38 @@ public class Subscription {
     }
 
     /**
+     * 무료 체험 구독을 생성한다.
+     *
+     * <p>무료 체험 구독은 IN_TRIAL 상태로 생성된다.
+     *
+     * @param originalTransactionId Apple 원본 트랜잭션 ID
+     * @param userId 사용자 ID
+     * @param productId 제품 ID
+     * @param period 체험 기간
+     * @return 생성된 무료 체험 구독
+     */
+    public static Subscription createForTrial(
+            String originalTransactionId, Long userId, ProductId productId, Period period) {
+        Objects.requireNonNull(originalTransactionId, "originalTransactionId must not be null");
+        Objects.requireNonNull(userId, "userId must not be null");
+        Objects.requireNonNull(productId, "productId must not be null");
+        Objects.requireNonNull(period, "period must not be null");
+
+        Subscription subscription = new Subscription();
+        subscription.originalTransactionId = originalTransactionId;
+        subscription.userId = userId;
+        subscription.productId = productId;
+        subscription.status = SubscriptionStatus.IN_TRIAL;
+        subscription.expiresAt = period.getEndAt();
+        subscription.currentPeriodStart = period.getStartAt();
+        subscription.currentPeriodEnd = period.getEndAt();
+        subscription.createdAt = Instant.now();
+        subscription.updatedAt = Instant.now();
+
+        return subscription;
+    }
+
+    /**
      * 구독을 갱신한다.
      *
      * <p>갱신 성공 시 상태를 ACTIVE로 변경하고 만료일을 연장한다.
@@ -308,5 +340,17 @@ public class Subscription {
      */
     public boolean isExpired() {
         return status == SubscriptionStatus.EXPIRED;
+    }
+
+    /**
+     * 테스트용 상태 강제 설정.
+     *
+     * <p>상태 전이 규칙을 무시하고 상태를 설정한다. 테스트 전용 메서드이다.
+     *
+     * @param newStatus 새 상태
+     */
+    public void forceStatusForTest(SubscriptionStatus newStatus) {
+        this.status = newStatus;
+        this.updatedAt = Instant.now();
     }
 }
